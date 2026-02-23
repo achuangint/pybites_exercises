@@ -9163,18 +9163,109 @@ enumerate through the text by letter
 #         statement = select(Exercise).order_by(Exercise.name)
 #         results = session.exec(statement)
 #         return results.fetchall()
+#
+# from sqlmodel import Field, SQLModel, create_engine, Session, select
+#
+#
+# class Workout(SQLModel, table=True):
+#     id: int | None = Field(default=None, primary_key=True)
+#     name: str
+#
+#
+# class Exercise(SQLModel, table=True):
+#     id: int | None = Field(default=None, primary_key=True)
+#     name: str
+#
+#
+# sqlite_url = "sqlite:///:memory:"
+# engine = create_engine(sqlite_url, echo=False)
+#
+#
+# def create_tables() -> None:
+#     SQLModel.metadata.create_all(engine)
+#
+#
+# def update_workout(workout_id: int, new_name: str) -> Workout | None:
+#     """Update a workout's name. Return None if not found."""
+#     with Session(engine) as session:
+#         statement = select(Workout).where(Workout.id == workout_id)
+#         results = session.exec(statement)
+#
+#         workout = results.one_or_none()
+#         if not workout:
+#             return None
+#         workout.name = new_name
+#         session.add(workout)
+#         session.commit()
+#         session.refresh(workout)
+#         return workout
+#
+#
+# def delete_workout(workout_id: int) -> bool:
+#     """Delete a workout. Return False if not found."""
+#     with Session(engine) as session:
+#         statement = select(Workout).where(Workout.id == workout_id)
+#         results = session.exec(statement)
+#
+#         workout = results.one_or_none()
+#         if not workout:
+#             return False
+#         session.delete(workout)
+#         session.commit()
+#         return True
+#
+#
+# def update_exercise(exercise_id: int, new_name: str) -> Exercise | None:
+#     """Update an exercise's name. Return None if not found."""
+#     with Session(engine) as session:
+#         statement = select(Exercise).where(Exercise.id == exercise_id)
+#         results = session.exec(statement)
+#         exercise = results.one_or_none()
+#         if not exercise:
+#             return None
+#         exercise.name = new_name
+#         session.add(exercise)
+#         session.commit()
+#         session.refresh(exercise)
+#         return exercise
+#
+#
+# def delete_exercise(exercise_id: int) -> bool:
+#     """Delete an exercise. Return False if not found."""
+#     with Session(engine) as session:
+#         statement = select(Exercise).where(Exercise.id == exercise_id)
+#         results = session.exec(statement)
+#
+#         exercise = results.one_or_none()
+#         if not exercise:
+#             return False
+#         session.delete(exercise)
+#         session.commit()
+#         return True
 
-from sqlmodel import Field, SQLModel, create_engine, Session, select
-
+from sqlmodel import Field, SQLModel, create_engine, Relationship, Session, select
+from datetime import date
 
 class Workout(SQLModel, table=True):
     id: int | None = Field(default=None, primary_key=True)
     name: str
+    # Add log_entries relationship
+    log_entries : list["LogEntry"] = Relationship(back_populates="workout")
 
 
-class Exercise(SQLModel, table=True):
+class LogEntry(SQLModel, table=True):
+    """
+    Fields needed: workout_id (foreign key), set_number, weight, reps, date_recorded.
+    Also add a relationship back to Workout.
+    """
+
     id: int | None = Field(default=None, primary_key=True)
-    name: str
+    workout_id : int | None = Field(default=None, foreign_key="workout.id")
+    set_number : int
+    weight : float
+    reps: int
+    date_recorded : date | None = Field(default=date.today())
+    workout: Workout | None = Relationship(back_populates="log_entries")
 
 
 sqlite_url = "sqlite:///:memory:"
@@ -9184,65 +9275,38 @@ engine = create_engine(sqlite_url, echo=False)
 def create_tables() -> None:
     SQLModel.metadata.create_all(engine)
 
-
-def update_workout(workout_id: int, new_name: str) -> Workout | None:
-    """Update a workout's name. Return None if not found."""
+def get_workout(workout_id: int) -> Workout | None:
+    """Fetch a workout by its primary key."""
     with Session(engine) as session:
-        statement = select(Workout).where(Workout.id == workout_id)
+        statement =  select(Workout).where(Workout.id==workout_id)
         results = session.exec(statement)
+        return results.one_or_none()
 
+def add_log_entry(workout_id: int, set_number: int, weight: int, reps: int) -> LogEntry:
+    """Create a log entry for a workout. Raise ValueError if workout doesn't exist."""
+    workout = get_workout(workout_id)
+    if workout is None:
+        raise ValueError("does not exist")
+
+    with Session(engine) as session:
+        log_entry = LogEntry(workout_id=workout_id, set_number=set_number, weight=weight, reps=reps, workout=workout )
+        session.add(log_entry)
+        workout.log_entries.append(log_entry)
+        session.commit()
+        session.refresh(log_entry)
+        return log_entry
+
+def get_log_entries(workout_id: int) -> list[LogEntry]:
+    """Get all log entries for a workout, ordered by set_number."""
+
+    with Session(engine) as session:
+        statement =  select(Workout).where(Workout.id==workout_id)
+        results = session.exec(statement)
         workout = results.one_or_none()
-        if not workout:
-            return None
-        workout.name = new_name
-        session.add(workout)
-        session.commit()
-        session.refresh(workout)
-        return workout
-
-
-def delete_workout(workout_id: int) -> bool:
-    """Delete a workout. Return False if not found."""
-    with Session(engine) as session:
-        statement = select(Workout).where(Workout.id == workout_id)
-        results = session.exec(statement)
-
-        workout = results.one_or_none()
-        if not workout:
-            return False
-        session.delete(workout)
-        session.commit()
-        return True
-
-
-def update_exercise(exercise_id: int, new_name: str) -> Exercise | None:
-    """Update an exercise's name. Return None if not found."""
-    with Session(engine) as session:
-        statement = select(Exercise).where(Exercise.id == exercise_id)
-        results = session.exec(statement)
-        exercise = results.one_or_none()
-        if not exercise:
-            return None
-        exercise.name = new_name
-        session.add(exercise)
-        session.commit()
-        session.refresh(exercise)
-        return exercise
-
-
-def delete_exercise(exercise_id: int) -> bool:
-    """Delete an exercise. Return False if not found."""
-    with Session(engine) as session:
-        statement = select(Exercise).where(Exercise.id == exercise_id)
-        results = session.exec(statement)
-
-        exercise = results.one_or_none()
-        if not exercise:
-            return False
-        session.delete(exercise)
-        session.commit()
-        return True
-
+        if workout is None:
+            raise ValueError("does not exist")
+        entry_list =workout.log_entries
+    return sorted(entry_list, key=lambda item: item.set_number)
 
 
 

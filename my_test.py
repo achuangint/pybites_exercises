@@ -9342,17 +9342,145 @@ Inputs are modified to check how the function deals with unknown characters
 #     assert exercises == []
 #     assert isinstance(exercises, list)
 
+#
+# import pytest
+# from wc import (
+#     Exercise,
+#     Workout,
+#     create_tables,
+#     delete_exercise,
+#     delete_workout,
+#     engine,
+#     update_exercise,
+#     update_workout,
+# )
+# from sqlmodel import Session
+#
+#
+# @pytest.fixture(autouse=True)
+# def setup_database():
+#     """Create tables before each test."""
+#     create_tables()
+#
+#
+# @pytest.fixture
+# def sample_workout():
+#     """Create a test workout."""
+#     workout = Workout(name="Upper Body Day")
+#     with Session(engine) as session:
+#         session.add(workout)
+#         session.commit()
+#         session.refresh(workout)
+#     return workout
+#
+#
+# @pytest.fixture
+# def sample_exercise():
+#     """Create a test exercise."""
+#     exercise = Exercise(name="Bench Press")
+#     with Session(engine) as session:
+#         session.add(exercise)
+#         session.commit()
+#         session.refresh(exercise)
+#     return exercise
+#
+#
+# def test_update_workout_changes_name(sample_workout):
+#     updated = update_workout(sample_workout.id, "Leg Day")
+#
+#     assert updated is not None
+#     assert updated.id == sample_workout.id
+#     assert updated.name == "Leg Day"
+#
+#
+# def test_update_workout_persists_to_database(sample_workout):
+#     update_workout(sample_workout.id, "Core Workout")
+#
+#     # Query database to verify
+#     with Session(engine) as session:
+#         workout = session.get(Workout, sample_workout.id)
+#         assert workout.name == "Core Workout"
+#
+#
+# def test_update_workout_returns_none_for_invalid_id():
+#     result = update_workout(999, "New Name")
+#     assert result is None
+#
+#
+# def test_delete_workout_removes_from_database(sample_workout):
+#     result = delete_workout(sample_workout.id)
+#
+#     assert result is True
+#
+#     # Verify it's gone from database
+#     with Session(engine) as session:
+#         workout = session.get(Workout, sample_workout.id)
+#         assert workout is None
+#
+#
+# def test_delete_workout_returns_false_for_invalid_id():
+#     result = delete_workout(999)
+#     assert result is False
+#
+#
+# def test_update_exercise_changes_name(sample_exercise):
+#     updated = update_exercise(sample_exercise.id, "Squats")
+#
+#     assert updated is not None
+#     assert updated.id == sample_exercise.id
+#     assert updated.name == "Squats"
+#
+#
+# def test_update_exercise_persists_to_database(sample_exercise):
+#     update_exercise(sample_exercise.id, "Deadlift")
+#
+#     # Query database to verify
+#     with Session(engine) as session:
+#         exercise = session.get(Exercise, sample_exercise.id)
+#         assert exercise.name == "Deadlift"
+#
+#
+# def test_update_exercise_returns_none_for_invalid_id():
+#     result = update_exercise(999, "New Exercise")
+#     assert result is None
+#
+#
+# def test_delete_exercise_removes_from_database(sample_exercise):
+#     result = delete_exercise(sample_exercise.id)
+#
+#     assert result is True
+#
+#     # Verify it's gone from database
+#     with Session(engine) as session:
+#         exercise = session.get(Exercise, sample_exercise.id)
+#         assert exercise is None
+#
+#
+# def test_delete_exercise_returns_false_for_invalid_id():
+#     result = delete_exercise(999)
+#     assert result is False
+#
+#
+# def test_multiple_updates_on_same_workout(sample_workout):
+#     update_workout(sample_workout.id, "First Update")
+#     updated = update_workout(sample_workout.id, "Second Update")
+#
+#     assert updated.name == "Second Update"
+#
+#     with Session(engine) as session:
+#         workout = session.get(Workout, sample_workout.id)
+#         assert workout.name == "Second Update"
+
+from datetime import date
 
 import pytest
 from wc import (
-    Exercise,
+    LogEntry,
     Workout,
+    add_log_entry,
     create_tables,
-    delete_exercise,
-    delete_workout,
     engine,
-    update_exercise,
-    update_workout,
+    get_log_entries,
 )
 from sqlmodel import Session
 
@@ -9374,99 +9502,100 @@ def sample_workout():
     return workout
 
 
-@pytest.fixture
-def sample_exercise():
-    """Create a test exercise."""
-    exercise = Exercise(name="Bench Press")
+def test_log_entry_has_foreign_key():
+    columns = {col.name: col for col in LogEntry.__table__.columns}
+    assert "workout_id" in columns
+    assert len(columns["workout_id"].foreign_keys) > 0
+
+
+def test_workout_has_log_entries_relationship():
+    workout = Workout(name="Test")
+    assert hasattr(workout, "log_entries")
+
+
+def test_log_entry_has_workout_relationship():
+    log = LogEntry(set_number=1, weight=100, reps=10)
+    assert hasattr(log, "workout")
+
+
+def test_add_log_entry_creates_entry(sample_workout):
+    log_entry = add_log_entry(
+        workout_id=sample_workout.id, set_number=1, weight=100, reps=10
+    )
+
+    assert log_entry.id is not None
+    assert log_entry.workout_id == sample_workout.id
+    assert log_entry.set_number == 1
+    assert log_entry.weight == 100
+    assert log_entry.reps == 10
+
+
+def test_add_log_entry_sets_date_default(sample_workout):
+    log_entry = add_log_entry(
+        workout_id=sample_workout.id, set_number=1, weight=100, reps=10
+    )
+
+    assert log_entry.date_recorded == date.today()
+
+
+def test_add_log_entry_raises_for_invalid_workout():
+    with pytest.raises(ValueError, match="does not exist"):
+        add_log_entry(workout_id=999, set_number=1, weight=100, reps=10)
+
+
+def test_get_log_entries_returns_entries(sample_workout):
+    add_log_entry(sample_workout.id, set_number=1, weight=100, reps=10)
+    add_log_entry(sample_workout.id, set_number=2, weight=110, reps=8)
+    add_log_entry(sample_workout.id, set_number=3, weight=120, reps=6)
+
+    entries = get_log_entries(sample_workout.id)
+
+    assert len(entries) == 3
+    assert all(isinstance(e, LogEntry) for e in entries)
+
+
+def test_get_log_entries_ordered_by_set_number(sample_workout):
+    add_log_entry(sample_workout.id, set_number=3, weight=120, reps=6)
+    add_log_entry(sample_workout.id, set_number=1, weight=100, reps=10)
+    add_log_entry(sample_workout.id, set_number=2, weight=110, reps=8)
+
+    entries = get_log_entries(sample_workout.id)
+    set_numbers = [e.set_number for e in entries]
+
+    assert set_numbers == [1, 2, 3]
+
+
+def test_get_log_entries_filters_by_workout(sample_workout):
+    # Create another workout
+    other_workout = Workout(name="Leg Day")
     with Session(engine) as session:
-        session.add(exercise)
+        session.add(other_workout)
         session.commit()
-        session.refresh(exercise)
-    return exercise
+        session.refresh(other_workout)
+
+    # Add entries to both workouts
+    add_log_entry(sample_workout.id, set_number=1, weight=100, reps=10)
+    add_log_entry(other_workout.id, set_number=1, weight=200, reps=5)
+
+    entries = get_log_entries(sample_workout.id)
+
+    assert len(entries) == 1
+    assert entries[0].workout_id == sample_workout.id
 
 
-def test_update_workout_changes_name(sample_workout):
-    updated = update_workout(sample_workout.id, "Leg Day")
-
-    assert updated is not None
-    assert updated.id == sample_workout.id
-    assert updated.name == "Leg Day"
+def test_get_log_entries_empty_for_no_entries(sample_workout):
+    entries = get_log_entries(sample_workout.id)
+    assert entries == []
 
 
-def test_update_workout_persists_to_database(sample_workout):
-    update_workout(sample_workout.id, "Core Workout")
+def test_bidirectional_relationship(sample_workout):
+    log_entry = add_log_entry(sample_workout.id, 1, 100, 10)
 
-    # Query database to verify
+    # Access from workout to log entries
     with Session(engine) as session:
         workout = session.get(Workout, sample_workout.id)
-        assert workout.name == "Core Workout"
+        assert len(workout.log_entries) > 0
 
-
-def test_update_workout_returns_none_for_invalid_id():
-    result = update_workout(999, "New Name")
-    assert result is None
-
-
-def test_delete_workout_removes_from_database(sample_workout):
-    result = delete_workout(sample_workout.id)
-
-    assert result is True
-
-    # Verify it's gone from database
-    with Session(engine) as session:
-        workout = session.get(Workout, sample_workout.id)
-        assert workout is None
-
-
-def test_delete_workout_returns_false_for_invalid_id():
-    result = delete_workout(999)
-    assert result is False
-
-
-def test_update_exercise_changes_name(sample_exercise):
-    updated = update_exercise(sample_exercise.id, "Squats")
-
-    assert updated is not None
-    assert updated.id == sample_exercise.id
-    assert updated.name == "Squats"
-
-
-def test_update_exercise_persists_to_database(sample_exercise):
-    update_exercise(sample_exercise.id, "Deadlift")
-
-    # Query database to verify
-    with Session(engine) as session:
-        exercise = session.get(Exercise, sample_exercise.id)
-        assert exercise.name == "Deadlift"
-
-
-def test_update_exercise_returns_none_for_invalid_id():
-    result = update_exercise(999, "New Exercise")
-    assert result is None
-
-
-def test_delete_exercise_removes_from_database(sample_exercise):
-    result = delete_exercise(sample_exercise.id)
-
-    assert result is True
-
-    # Verify it's gone from database
-    with Session(engine) as session:
-        exercise = session.get(Exercise, sample_exercise.id)
-        assert exercise is None
-
-
-def test_delete_exercise_returns_false_for_invalid_id():
-    result = delete_exercise(999)
-    assert result is False
-
-
-def test_multiple_updates_on_same_workout(sample_workout):
-    update_workout(sample_workout.id, "First Update")
-    updated = update_workout(sample_workout.id, "Second Update")
-
-    assert updated.name == "Second Update"
-
-    with Session(engine) as session:
-        workout = session.get(Workout, sample_workout.id)
-        assert workout.name == "Second Update"
+        # Access from log entry to workout
+        log = session.get(LogEntry, log_entry.id)
+        assert log.workout is not None
