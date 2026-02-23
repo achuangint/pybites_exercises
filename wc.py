@@ -9110,8 +9110,61 @@ enumerate through the text by letter
 #         session.refresh(excercise)
 #     return excercise
 
+#
+# from sqlmodel import Field, SQLModel, create_engine, select, Session
+#
+#
+# class Workout(SQLModel, table=True):
+#     id: int | None = Field(default=None, primary_key=True)
+#     name: str
+#
+#
+# class Exercise(SQLModel, table=True):
+#     id: int | None = Field(default=None, primary_key=True)
+#     name: str
+#
+#
+# sqlite_url = "sqlite:///:memory:"
+# engine = create_engine(sqlite_url, echo=False)
+#
+#
+# def create_tables() -> None:
+#     SQLModel.metadata.create_all(engine)
+#
+#
+# def get_workout(workout_id: int) -> Workout | None:
+#     """Fetch a workout by its primary key."""
+#
+#     with Session(engine) as session:
+#         statement =  select(Workout).where(Workout.id==workout_id)
+#         results = session.exec(statement)
+#         return results.first()
+#
+#
+# def list_workouts() -> list[Workout]:
+#     """Return all workouts ordered by id."""
+#     with Session(engine) as session:
+#         statement = select(Workout).order_by(Workout.id)
+#         results = session.exec(statement)
+#         return results.fetchall()
+#
+#
+# def find_exercise_by_name(name: str) -> Exercise | None:
+#     """Find an exercise by exact name match."""
+#     with Session(engine) as session:
+#         statement = select(Exercise).where(Exercise.name == name)
+#         results = session.exec(statement)
+#         return results.first()
+#
+#
+# def list_exercises() -> list[Exercise]:
+#     """Return all exercises ordered by name."""
+#     with Session(engine) as session:
+#         statement = select(Exercise).order_by(Exercise.name)
+#         results = session.exec(statement)
+#         return results.fetchall()
 
-from sqlmodel import Field, SQLModel, create_engine, select, Session
+from sqlmodel import Field, SQLModel, create_engine, Session, select
 
 
 class Workout(SQLModel, table=True):
@@ -9132,37 +9185,64 @@ def create_tables() -> None:
     SQLModel.metadata.create_all(engine)
 
 
-def get_workout(workout_id: int) -> Workout | None:
-    """Fetch a workout by its primary key."""
-
+def update_workout(workout_id: int, new_name: str) -> Workout | None:
+    """Update a workout's name. Return None if not found."""
     with Session(engine) as session:
-        statement =  select(Workout).where(Workout.id==workout_id)
+        statement = select(Workout).where(Workout.id == workout_id)
         results = session.exec(statement)
-        return results.first()
+
+        workout = results.one_or_none()
+        if not workout:
+            return None
+        workout.name = new_name
+        session.add(workout)
+        session.commit()
+        session.refresh(workout)
+        return workout
 
 
-def list_workouts() -> list[Workout]:
-    """Return all workouts ordered by id."""
+def delete_workout(workout_id: int) -> bool:
+    """Delete a workout. Return False if not found."""
     with Session(engine) as session:
-        statement = select(Workout).order_by(Workout.id)
+        statement = select(Workout).where(Workout.id == workout_id)
         results = session.exec(statement)
-        return results.fetchall()
+
+        workout = results.one_or_none()
+        if not workout:
+            return False
+        session.delete(workout)
+        session.commit()
+        return True
 
 
-def find_exercise_by_name(name: str) -> Exercise | None:
-    """Find an exercise by exact name match."""
+def update_exercise(exercise_id: int, new_name: str) -> Exercise | None:
+    """Update an exercise's name. Return None if not found."""
     with Session(engine) as session:
-        statement = select(Exercise).where(Exercise.name == name)
+        statement = select(Exercise).where(Exercise.id == exercise_id)
         results = session.exec(statement)
-        return results.first()
+        exercise = results.one_or_none()
+        if not exercise:
+            return None
+        exercise.name = new_name
+        session.add(exercise)
+        session.commit()
+        session.refresh(exercise)
+        return exercise
 
 
-def list_exercises() -> list[Exercise]:
-    """Return all exercises ordered by name."""
+def delete_exercise(exercise_id: int) -> bool:
+    """Delete an exercise. Return False if not found."""
     with Session(engine) as session:
-        statement = select(Exercise).order_by(Exercise.name)
+        statement = select(Exercise).where(Exercise.id == exercise_id)
         results = session.exec(statement)
-        return results.fetchall()
+
+        exercise = results.one_or_none()
+        if not exercise:
+            return False
+        session.delete(exercise)
+        session.commit()
+        return True
+
 
 
 
