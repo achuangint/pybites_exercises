@@ -9126,85 +9126,219 @@ Inputs are modified to check how the function deals with unknown characters
 #
 # def test_engine_is_sqlite():
 #     assert "sqlite" in str(engine.url), "Engine should use SQLite"
+#
+# import pytest
+# from wc import (
+#     Exercise,
+#     Workout,
+#     add_exercise,
+#     add_workout,
+#     create_tables,
+#     engine,
+# )
+# from sqlmodel import Session, select
+#
+#
+# @pytest.fixture(autouse=True)
+# def setup_database():
+#     """Create tables before each test."""
+#     create_tables()
+#
+#
+# def test_add_workout_returns_workout_with_id():
+#     workout = add_workout("Upper Body Day")
+#
+#     assert isinstance(workout, Workout)
+#     assert workout.id is not None, "Workout id should be populated after insert"
+#     assert workout.name == "Upper Body Day"
+#
+#
+# def test_add_workout_saves_to_database():
+#     workout = add_workout("Leg Day")
+#
+#     # Query the database to confirm it was saved
+#     with Session(engine) as session:
+#         statement = select(Workout).where(Workout.id == workout.id)
+#         result = session.exec(statement).first()
+#
+#         assert result is not None, "Workout should exist in database"
+#         assert result.name == "Leg Day"
+#
+#
+# def test_add_multiple_workouts():
+#     workout1 = add_workout("Push Day")
+#     workout2 = add_workout("Pull Day")
+#
+#     assert workout1.id != workout2.id, "Each workout should have unique id"
+#     assert workout1.id is not None
+#     assert workout2.id is not None
+#
+#
+# def test_add_exercise_returns_exercise_with_id():
+#     exercise = add_exercise("Bench Press")
+#
+#     assert isinstance(exercise, Exercise)
+#     assert exercise.id is not None, "Exercise id should be populated after insert"
+#     assert exercise.name == "Bench Press"
+#
+#
+# def test_add_exercise_saves_to_database():
+#     exercise = add_exercise("Squats")
+#
+#     # Query the database to confirm it was saved
+#     with Session(engine) as session:
+#         statement = select(Exercise).where(Exercise.id == exercise.id)
+#         result = session.exec(statement).first()
+#
+#         assert result is not None, "Exercise should exist in database"
+#         assert result.name == "Squats"
+#
+#
+# def test_add_multiple_exercises():
+#     exercise1 = add_exercise("Deadlift")
+#     exercise2 = add_exercise("Pull Ups")
+#
+#     assert exercise1.id != exercise2.id, "Each exercise should have unique id"
+#     assert exercise1.id is not None
+#     assert exercise2.id is not None
+#
+#
+# def test_ids_are_auto_incremented():
+#     workout1 = add_workout("Workout 1")
+#     workout2 = add_workout("Workout 2")
+#
+#     assert workout2.id == workout1.id + 1, "IDs should auto-increment"
 
 import pytest
 from wc import (
     Exercise,
     Workout,
-    add_exercise,
-    add_workout,
     create_tables,
     engine,
+    find_exercise_by_name,
+    get_workout,
+    list_exercises,
+    list_workouts,
 )
-from sqlmodel import Session, select
+from sqlmodel import Session, delete
 
 
 @pytest.fixture(autouse=True)
 def setup_database():
     """Create tables before each test."""
     create_tables()
-
-
-def test_add_workout_returns_workout_with_id():
-    workout = add_workout("Upper Body Day")
-
-    assert isinstance(workout, Workout)
-    assert workout.id is not None, "Workout id should be populated after insert"
-    assert workout.name == "Upper Body Day"
-
-
-def test_add_workout_saves_to_database():
-    workout = add_workout("Leg Day")
-
-    # Query the database to confirm it was saved
+    yield
+    # Clear all data after each test
     with Session(engine) as session:
-        statement = select(Workout).where(Workout.id == workout.id)
-        result = session.exec(statement).first()
-
-        assert result is not None, "Workout should exist in database"
-        assert result.name == "Leg Day"
+        session.exec(delete(Workout))
+        session.exec(delete(Exercise))
+        session.commit()
 
 
-def test_add_multiple_workouts():
-    workout1 = add_workout("Push Day")
-    workout2 = add_workout("Pull Day")
+@pytest.fixture
+def seed_workouts():
+    """Add some test workouts to the database."""
+    workouts_data = [
+        Workout(name="Upper Body Day"),
+        Workout(name="Leg Day"),
+        Workout(name="Core Workout"),
+    ]
+    with Session(engine) as session:
+        for workout in workouts_data:
+            session.add(workout)
+        session.commit()
+        for workout in workouts_data:
+            session.refresh(workout)
+    return workouts_data
 
-    assert workout1.id != workout2.id, "Each workout should have unique id"
-    assert workout1.id is not None
-    assert workout2.id is not None
+
+@pytest.fixture
+def seed_exercises():
+    """Add some test exercises to the database."""
+    exercises_data = [
+        Exercise(name="Squats"),
+        Exercise(name="Bench Press"),
+        Exercise(name="Deadlift"),
+        Exercise(name="Pull Ups"),
+    ]
+    with Session(engine) as session:
+        for exercise in exercises_data:
+            session.add(exercise)
+        session.commit()
+        for exercise in exercises_data:
+            session.refresh(exercise)
+    return exercises_data
 
 
-def test_add_exercise_returns_exercise_with_id():
-    exercise = add_exercise("Bench Press")
+def test_get_workout_by_id(seed_workouts):
+    workout = seed_workouts[0]
+    result = get_workout(workout.id)
 
+    assert result is not None
+    assert result.id == workout.id
+    assert result.name == workout.name
+
+
+def test_get_workout_returns_none_for_invalid_id():
+    result = get_workout(999)
+    assert result is None
+
+
+def test_list_workouts_returns_all_workouts(seed_workouts):
+    workouts = list_workouts()
+
+    assert len(workouts) == 3
+    assert all(isinstance(w, Workout) for w in workouts)
+
+
+def test_list_workouts_ordered_by_id(seed_workouts):
+    workouts = list_workouts()
+
+    ids = [w.id for w in workouts]
+    assert ids == sorted(ids), "Workouts should be ordered by id"
+
+
+def test_list_workouts_empty_database():
+    workouts = list_workouts()
+    assert workouts == []
+    assert isinstance(workouts, list)
+
+
+def test_find_exercise_by_name(seed_exercises):
+    exercise = find_exercise_by_name("Squats")
+
+    assert exercise is not None
+    assert exercise.name == "Squats"
     assert isinstance(exercise, Exercise)
-    assert exercise.id is not None, "Exercise id should be populated after insert"
-    assert exercise.name == "Bench Press"
 
 
-def test_add_exercise_saves_to_database():
-    exercise = add_exercise("Squats")
-
-    # Query the database to confirm it was saved
-    with Session(engine) as session:
-        statement = select(Exercise).where(Exercise.id == exercise.id)
-        result = session.exec(statement).first()
-
-        assert result is not None, "Exercise should exist in database"
-        assert result.name == "Squats"
+def test_find_exercise_by_name_case_sensitive(seed_exercises):
+    exercise = find_exercise_by_name("squats")  # lowercase
+    assert exercise is None, "Search should be case-sensitive"
 
 
-def test_add_multiple_exercises():
-    exercise1 = add_exercise("Deadlift")
-    exercise2 = add_exercise("Pull Ups")
-
-    assert exercise1.id != exercise2.id, "Each exercise should have unique id"
-    assert exercise1.id is not None
-    assert exercise2.id is not None
+def test_find_exercise_returns_none_for_nonexistent():
+    exercise = find_exercise_by_name("Burpees")
+    assert exercise is None
 
 
-def test_ids_are_auto_incremented():
-    workout1 = add_workout("Workout 1")
-    workout2 = add_workout("Workout 2")
+def test_list_exercises_returns_all(seed_exercises):
+    exercises = list_exercises()
 
-    assert workout2.id == workout1.id + 1, "IDs should auto-increment"
+    assert len(exercises) == 4
+    assert all(isinstance(e, Exercise) for e in exercises)
+
+
+def test_list_exercises_ordered_alphabetically(seed_exercises):
+    exercises = list_exercises()
+    names = [e.name for e in exercises]
+
+    expected = ["Bench Press", "Deadlift", "Pull Ups", "Squats"]
+    assert names == expected, "Exercises should be ordered alphabetically"
+
+
+def test_list_exercises_empty_database():
+    exercises = list_exercises()
+    assert exercises == []
+    assert isinstance(exercises, list)
+

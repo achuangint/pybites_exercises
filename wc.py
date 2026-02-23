@@ -9070,8 +9070,48 @@ enumerate through the text by letter
 # def create_tables() -> None:
 #     """Create all tables in the database."""
 #     SQLModel.metadata.create_all(engine)
+#
+# from sqlmodel import Field, SQLModel, create_engine, Session
+#
+#
+# class Workout(SQLModel, table=True):
+#     id: int | None = Field(default=None, primary_key=True)
+#     name: str
+#
+#
+# class Exercise(SQLModel, table=True):
+#     id: int | None = Field(default=None, primary_key=True)
+#     name: str
+#
+#
+# sqlite_url = "sqlite:///:memory:"
+# engine = create_engine(sqlite_url, echo=False)
+#
+#
+# def create_tables() -> None:
+#     SQLModel.metadata.create_all(engine)
+#
+#
+# def add_workout(name: str) -> Workout:
+#     """Create a workout, save it to the database, and return it with its id."""
+#     workout = Workout(name=name)
+#     with Session(engine) as session:
+#         session.add(workout)
+#         session.commit()
+#         session.refresh(workout)
+#     return workout
+#
+# def add_exercise(name: str) -> Exercise:
+#     """Create an exercise, save it to the database, and return it with its id."""
+#     excercise = Exercise(name=name)
+#     with Session(engine) as session:
+#         session.add(excercise)
+#         session.commit()
+#         session.refresh(excercise)
+#     return excercise
 
-from sqlmodel import Field, SQLModel, create_engine, Session
+
+from sqlmodel import Field, SQLModel, create_engine, select, Session
 
 
 class Workout(SQLModel, table=True):
@@ -9092,23 +9132,37 @@ def create_tables() -> None:
     SQLModel.metadata.create_all(engine)
 
 
-def add_workout(name: str) -> Workout:
-    """Create a workout, save it to the database, and return it with its id."""
-    workout = Workout(name=name)
-    with Session(engine) as session:
-        session.add(workout)
-        session.commit()
-        session.refresh(workout)
-    return workout
+def get_workout(workout_id: int) -> Workout | None:
+    """Fetch a workout by its primary key."""
 
-def add_exercise(name: str) -> Exercise:
-    """Create an exercise, save it to the database, and return it with its id."""
-    excercise = Exercise(name=name)
     with Session(engine) as session:
-        session.add(excercise)
-        session.commit()
-        session.refresh(excercise)
-    return excercise
+        statement =  select(Workout).where(Workout.id==workout_id)
+        results = session.exec(statement)
+        return results.first()
+
+
+def list_workouts() -> list[Workout]:
+    """Return all workouts ordered by id."""
+    with Session(engine) as session:
+        statement = select(Workout).order_by(Workout.id)
+        results = session.exec(statement)
+        return results.fetchall()
+
+
+def find_exercise_by_name(name: str) -> Exercise | None:
+    """Find an exercise by exact name match."""
+    with Session(engine) as session:
+        statement = select(Exercise).where(Exercise.name == name)
+        results = session.exec(statement)
+        return results.first()
+
+
+def list_exercises() -> list[Exercise]:
+    """Return all exercises ordered by name."""
+    with Session(engine) as session:
+        statement = select(Exercise).order_by(Exercise.name)
+        results = session.exec(statement)
+        return results.fetchall()
 
 
 
