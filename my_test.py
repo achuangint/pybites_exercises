@@ -9069,60 +9069,142 @@ Inputs are modified to check how the function deals with unknown characters
 # def test_median_from_dict_raises_error(test_input):
 #     with pytest.raises(TypeError):
 #         calc_median_from_dict(test_input)
+#
+# from wc import Exercise, Workout, create_tables, engine
+# from sqlalchemy import inspect
+#
+#
+# def test_workout_is_a_table():
+#     assert hasattr(Workout, "__table__"), "Workout must have table=True"
+#
+#
+# def test_exercise_is_a_table():
+#     assert hasattr(Exercise, "__table__"), "Exercise must have table=True"
+#
+#
+# def test_workout_table_name():
+#     assert Workout.__tablename__ == "workout"
+#
+#
+# def test_exercise_table_name():
+#     assert Exercise.__tablename__ == "exercise"
+#
+#
+# def test_workout_has_id_field():
+#     columns = {col.name: col for col in Workout.__table__.columns}
+#     assert "id" in columns, "Workout must have 'id' field"
+#     assert columns["id"].primary_key, "id must be a primary key"
+#
+#
+# def test_workout_has_name_field():
+#     columns = {col.name: col for col in Workout.__table__.columns}
+#     assert "name" in columns, "Workout must have 'name' field"
+#
+#
+# def test_exercise_has_id_field():
+#     columns = {col.name: col for col in Exercise.__table__.columns}
+#     assert "id" in columns, "Exercise must have 'id' field"
+#     assert columns["id"].primary_key, "id must be a primary key"
+#
+#
+# def test_exercise_has_name_field():
+#     columns = {col.name: col for col in Exercise.__table__.columns}
+#     assert "name" in columns, "Exercise must have 'name' field"
+#
+#
+# def test_create_tables_creates_tables():
+#     create_tables()
+#
+#     inspector = inspect(engine)
+#     table_names = inspector.get_table_names()
+#
+#     assert "workout" in table_names, "workout table should exist after create_tables()"
+#     assert (
+#         "exercise" in table_names
+#     ), "exercise table should exist after create_tables()"
+#
+#
+# def test_engine_is_sqlite():
+#     assert "sqlite" in str(engine.url), "Engine should use SQLite"
 
-from wc import Exercise, Workout, create_tables, engine
-from sqlalchemy import inspect
+import pytest
+from wc import (
+    Exercise,
+    Workout,
+    add_exercise,
+    add_workout,
+    create_tables,
+    engine,
+)
+from sqlmodel import Session, select
 
 
-def test_workout_is_a_table():
-    assert hasattr(Workout, "__table__"), "Workout must have table=True"
-
-
-def test_exercise_is_a_table():
-    assert hasattr(Exercise, "__table__"), "Exercise must have table=True"
-
-
-def test_workout_table_name():
-    assert Workout.__tablename__ == "workout"
-
-
-def test_exercise_table_name():
-    assert Exercise.__tablename__ == "exercise"
-
-
-def test_workout_has_id_field():
-    columns = {col.name: col for col in Workout.__table__.columns}
-    assert "id" in columns, "Workout must have 'id' field"
-    assert columns["id"].primary_key, "id must be a primary key"
-
-
-def test_workout_has_name_field():
-    columns = {col.name: col for col in Workout.__table__.columns}
-    assert "name" in columns, "Workout must have 'name' field"
-
-
-def test_exercise_has_id_field():
-    columns = {col.name: col for col in Exercise.__table__.columns}
-    assert "id" in columns, "Exercise must have 'id' field"
-    assert columns["id"].primary_key, "id must be a primary key"
-
-
-def test_exercise_has_name_field():
-    columns = {col.name: col for col in Exercise.__table__.columns}
-    assert "name" in columns, "Exercise must have 'name' field"
-
-
-def test_create_tables_creates_tables():
+@pytest.fixture(autouse=True)
+def setup_database():
+    """Create tables before each test."""
     create_tables()
 
-    inspector = inspect(engine)
-    table_names = inspector.get_table_names()
 
-    assert "workout" in table_names, "workout table should exist after create_tables()"
-    assert (
-        "exercise" in table_names
-    ), "exercise table should exist after create_tables()"
+def test_add_workout_returns_workout_with_id():
+    workout = add_workout("Upper Body Day")
+
+    assert isinstance(workout, Workout)
+    assert workout.id is not None, "Workout id should be populated after insert"
+    assert workout.name == "Upper Body Day"
 
 
-def test_engine_is_sqlite():
-    assert "sqlite" in str(engine.url), "Engine should use SQLite"
+def test_add_workout_saves_to_database():
+    workout = add_workout("Leg Day")
+
+    # Query the database to confirm it was saved
+    with Session(engine) as session:
+        statement = select(Workout).where(Workout.id == workout.id)
+        result = session.exec(statement).first()
+
+        assert result is not None, "Workout should exist in database"
+        assert result.name == "Leg Day"
+
+
+def test_add_multiple_workouts():
+    workout1 = add_workout("Push Day")
+    workout2 = add_workout("Pull Day")
+
+    assert workout1.id != workout2.id, "Each workout should have unique id"
+    assert workout1.id is not None
+    assert workout2.id is not None
+
+
+def test_add_exercise_returns_exercise_with_id():
+    exercise = add_exercise("Bench Press")
+
+    assert isinstance(exercise, Exercise)
+    assert exercise.id is not None, "Exercise id should be populated after insert"
+    assert exercise.name == "Bench Press"
+
+
+def test_add_exercise_saves_to_database():
+    exercise = add_exercise("Squats")
+
+    # Query the database to confirm it was saved
+    with Session(engine) as session:
+        statement = select(Exercise).where(Exercise.id == exercise.id)
+        result = session.exec(statement).first()
+
+        assert result is not None, "Exercise should exist in database"
+        assert result.name == "Squats"
+
+
+def test_add_multiple_exercises():
+    exercise1 = add_exercise("Deadlift")
+    exercise2 = add_exercise("Pull Ups")
+
+    assert exercise1.id != exercise2.id, "Each exercise should have unique id"
+    assert exercise1.id is not None
+    assert exercise2.id is not None
+
+
+def test_ids_are_auto_incremented():
+    workout1 = add_workout("Workout 1")
+    workout2 = add_workout("Workout 2")
+
+    assert workout2.id == workout1.id + 1, "IDs should auto-increment"
