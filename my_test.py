@@ -9009,63 +9009,120 @@ Inputs are modified to check how the function deals with unknown characters
 #     rows = db.select(table, target=target)
 #     assert rows == []
 #
+#
+# from wc import calc_median_from_dict
+# import pytest
+#
+#
+# # Small Numbers
+# @pytest.mark.parametrize(
+#     "test_input,expected",
+#     [
+#         ({1: 1}, 1),
+#         ({1: 1, 2: 1}, 1.5),
+#         ({1: 2, 2: 1, 3: 2}, 2),
+#         ({2: 1, 1: 2, 3: 2}, 2),
+#         ({1.5: 2, 2.5: 2}, 2),
+#         ({1.75: 2, 2.25: 2}, 2),
+#         ({-1: 22, +4: 22}, 1.5),
+#     ],
+# )
+# def test_median_from_dict__valid_numbers(test_input, expected):
+#     assert calc_median_from_dict(test_input) == expected
+#
+#
+# # Huge numbers
+# @pytest.mark.parametrize(
+#     "test_input,expected",
+#     [
+#         ({1: 1_000_000_000_000_000, 2: 1, 3: 1_000_000_000_000_000}, 2),
+#         ({1: 1_000_000_000_000_000, 3: 1_000_000_000_000_000}, 2),
+#         (
+#             {
+#                 0: 800_000_000,
+#                 1: 200_000_000,
+#                 2: 200_000_000,
+#                 3: 200_000_000,
+#                 4: 200_000_000,
+#                 5: 1_000_000_000,
+#                 6: 20_000_000_000,
+#                 7: 4_000_000_000,
+#                 8: 8_000_000_000,
+#                 9: 16_000_000_000,
+#             },
+#             7,
+#         ),
+#     ],
+# )
+# def test_median_from_dict_valid_huge_numbers(test_input, expected):
+#     assert calc_median_from_dict(test_input) == expected
+#
+#
+# # Errors should be raised when the dict value is not a number
+# @pytest.mark.parametrize(
+#     "test_input",
+#     [
+#         ({1: "a"}),
+#         ({3: []}),
+#     ],
+# )
+# def test_median_from_dict_raises_error(test_input):
+#     with pytest.raises(TypeError):
+#         calc_median_from_dict(test_input)
 
-from wc import calc_median_from_dict
-import pytest
+from wc import Exercise, Workout, create_tables, engine
+from sqlalchemy import inspect
 
 
-# Small Numbers
-@pytest.mark.parametrize(
-    "test_input,expected",
-    [
-        ({1: 1}, 1),
-        ({1: 1, 2: 1}, 1.5),
-        ({1: 2, 2: 1, 3: 2}, 2),
-        ({2: 1, 1: 2, 3: 2}, 2),
-        ({1.5: 2, 2.5: 2}, 2),
-        ({1.75: 2, 2.25: 2}, 2),
-        ({-1: 22, +4: 22}, 1.5),
-    ],
-)
-def test_median_from_dict__valid_numbers(test_input, expected):
-    assert calc_median_from_dict(test_input) == expected
+def test_workout_is_a_table():
+    assert hasattr(Workout, "__table__"), "Workout must have table=True"
 
 
-# Huge numbers
-@pytest.mark.parametrize(
-    "test_input,expected",
-    [
-        ({1: 1_000_000_000_000_000, 2: 1, 3: 1_000_000_000_000_000}, 2),
-        ({1: 1_000_000_000_000_000, 3: 1_000_000_000_000_000}, 2),
-        (
-            {
-                0: 800_000_000,
-                1: 200_000_000,
-                2: 200_000_000,
-                3: 200_000_000,
-                4: 200_000_000,
-                5: 1_000_000_000,
-                6: 20_000_000_000,
-                7: 4_000_000_000,
-                8: 8_000_000_000,
-                9: 16_000_000_000,
-            },
-            7,
-        ),
-    ],
-)
-def test_median_from_dict_valid_huge_numbers(test_input, expected):
-    assert calc_median_from_dict(test_input) == expected
+def test_exercise_is_a_table():
+    assert hasattr(Exercise, "__table__"), "Exercise must have table=True"
 
 
-# Errors should be raised when the dict value is not a number
-@pytest.mark.parametrize(
-    "test_input",
-    [
-        ({1: "a"}),
-        ({3: []}),
-    ],
-)
-def test_median_from_dict_raises_error(test_input):
-    with pytest.raises(TypeError):
-        calc_median_from_dict(test_input)
+def test_workout_table_name():
+    assert Workout.__tablename__ == "workout"
+
+
+def test_exercise_table_name():
+    assert Exercise.__tablename__ == "exercise"
+
+
+def test_workout_has_id_field():
+    columns = {col.name: col for col in Workout.__table__.columns}
+    assert "id" in columns, "Workout must have 'id' field"
+    assert columns["id"].primary_key, "id must be a primary key"
+
+
+def test_workout_has_name_field():
+    columns = {col.name: col for col in Workout.__table__.columns}
+    assert "name" in columns, "Workout must have 'name' field"
+
+
+def test_exercise_has_id_field():
+    columns = {col.name: col for col in Exercise.__table__.columns}
+    assert "id" in columns, "Exercise must have 'id' field"
+    assert columns["id"].primary_key, "id must be a primary key"
+
+
+def test_exercise_has_name_field():
+    columns = {col.name: col for col in Exercise.__table__.columns}
+    assert "name" in columns, "Exercise must have 'name' field"
+
+
+def test_create_tables_creates_tables():
+    create_tables()
+
+    inspector = inspect(engine)
+    table_names = inspector.get_table_names()
+
+    assert "workout" in table_names, "workout table should exist after create_tables()"
+    assert (
+        "exercise" in table_names
+    ), "exercise table should exist after create_tables()"
+
+
+def test_engine_is_sqlite():
+    assert "sqlite" in str(engine.url), "Engine should use SQLite"

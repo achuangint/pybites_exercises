@@ -8992,55 +8992,81 @@ enumerate through the text by letter
 #         """
 #         self._num_transactions = value
 #
-import math
-def calc_median_from_dict(d: dict) -> float:
-    """
-    :param d: dict of numbers and their occurrences
-    :return: float: median
-    Example:
-    {1: 2, 3: 1, 4: 2} -> [1, 1, 3, 4, 4] --> 3 is median
-    """
-    total_number_of_items = sum(d.values())
-    first_index, second_index = find_index_of_mid_two_nums(total_number_of_items)
-    # Isolate the middle two numbers
+# import math
+# def calc_median_from_dict(d: dict) -> float:
+#     """
+#     :param d: dict of numbers and their occurrences
+#     :return: float: median
+#     Example:
+#     {1: 2, 3: 1, 4: 2} -> [1, 1, 3, 4, 4] --> 3 is median
+#     """
+#     total_number_of_items = sum(d.values())
+#     first_index, second_index = find_index_of_mid_two_nums(total_number_of_items)
+#     # Isolate the middle two numbers
+#
+#     # Find the value of the nth value in the list
+#     # sort the keys by
+#     first_val = find_nth_value_from_dict(d, first_index)
+#     second_val = find_nth_value_from_dict(d, second_index)
+#     median = (first_val + second_val) / 2
+#     return median
+#
+#
+#     # Find the mid points.
+# def find_index_of_mid_two_nums(total_number_of_items)-> tuple:
+#         mid_point = total_number_of_items/2
+#         if total_number_of_items%2 == 0: #even
+#                 first_item = int(mid_point)
+#                 second_item = first_item + 1
+#
+#         else: # odd
+#                 first_item = math.ceil(mid_point)
+#                 second_item = first_item
+#         return first_item, second_item
+#
+# def make_intervals(slots):
+#         beginning = 1
+#         intervals = []
+#         for slot in slots:
+#                 intervals.append((beginning, beginning + slot - 1))
+#                 beginning = beginning + slot
+#         return intervals
+#
+#
+# def find_nth_value_from_dict(my_dict, target) -> int | None:
+#     ordered_keys = sorted(my_dict.keys())
+#     ordered_slots = list([my_dict[i] for i in ordered_keys])
+#
+#     for key, current_range in zip(ordered_keys, make_intervals(ordered_slots)):
+#         if current_range[1] >= target >= current_range[0]:
+#             return key
+#
+#     return None
+#
+#
 
-    # Find the value of the nth value in the list
-    # sort the keys by
-    first_val = find_nth_value_from_dict(d, first_index)
-    second_val = find_nth_value_from_dict(d, second_index)
-    median = (first_val + second_val) / 2
-    return median
 
 
-    # Find the mid points.
-def find_index_of_mid_two_nums(total_number_of_items)-> tuple:
-        mid_point = total_number_of_items/2
-        if total_number_of_items%2 == 0: #even
-                first_item = int(mid_point)
-                second_item = first_item + 1
+from sqlmodel import Field, SQLModel, create_engine
 
-        else: # odd
-                first_item = math.ceil(mid_point)
-                second_item = first_item
-        return first_item, second_item
-
-def make_intervals(slots):
-        beginning = 1
-        intervals = []
-        for slot in slots:
-                intervals.append((beginning, beginning + slot - 1))
-                beginning = beginning + slot
-        return intervals
+class Workout(SQLModel, table=True):
+    """Define id (primary key) and name fields."""
+    id: int | None = Field(default=None, primary_key=True)
+    name: str
 
 
-def find_nth_value_from_dict(my_dict, target) -> int | None:
-    ordered_keys = sorted(my_dict.keys())
-    ordered_slots = list([my_dict[i] for i in ordered_keys])
 
-    for key, current_range in zip(ordered_keys, make_intervals(ordered_slots)):
-        if current_range[1] >= target >= current_range[0]:
-            return key
-
-    return None
+class Exercise(SQLModel, table=True):
+    """Define id (primary key) and name fields."""
+    id: int | None = Field(default=None, primary_key=True)
+    name: str
 
 
+
+sqlite_url = "sqlite:///:memory:"
+engine = create_engine(sqlite_url, echo=False)  # Create engine using sqlite_url
+
+
+def create_tables() -> None:
+    """Create all tables in the database."""
+    SQLModel.metadata.create_all(engine)
