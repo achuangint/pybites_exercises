@@ -1,3 +1,4 @@
+from __future__ import annotations
 # from pathlib import Path
 #
 #
@@ -9242,71 +9243,233 @@ enumerate through the text by letter
 #         session.delete(exercise)
 #         session.commit()
 #         return True
+#
+# from sqlmodel import Field, SQLModel, create_engine, Relationship, Session, select
+# from datetime import date
+#
+# class Workout(SQLModel, table=True):
+#     id: int | None = Field(default=None, primary_key=True)
+#     name: str
+#     # Add log_entries relationship
+#     log_entries : list["LogEntry"] = Relationship(back_populates="workout")
+#
+#
+# class LogEntry(SQLModel, table=True):
+#     """
+#     Fields needed: workout_id (foreign key), set_number, weight, reps, date_recorded.
+#     Also add a relationship back to Workout.
+#     """
+#
+#     id: int | None = Field(default=None, primary_key=True)
+#     workout_id : int | None = Field(default=None, foreign_key="workout.id")
+#     set_number : int
+#     weight : float
+#     reps: int
+#     date_recorded : date | None = Field(default=date.today())
+#     workout: Workout | None = Relationship(back_populates="log_entries")
+#
+#
+# sqlite_url = "sqlite:///:memory:"
+# engine = create_engine(sqlite_url, echo=False)
+#
+#
+# def create_tables() -> None:
+#     SQLModel.metadata.create_all(engine)
+#
+# def get_workout(workout_id: int) -> Workout | None:
+#     """Fetch a workout by its primary key."""
+#     with Session(engine) as session:
+#         statement =  select(Workout).where(Workout.id==workout_id)
+#         results = session.exec(statement)
+#         return results.one_or_none()
+#
+# def add_log_entry(workout_id: int, set_number: int, weight: int, reps: int) -> LogEntry:
+#     """Create a log entry for a workout. Raise ValueError if workout doesn't exist."""
+#     workout = get_workout(workout_id)
+#     if workout is None:
+#         raise ValueError("does not exist")
+#
+#     with Session(engine) as session:
+#         log_entry = LogEntry(workout_id=workout_id, set_number=set_number, weight=weight, reps=reps, workout=workout )
+#         session.add(log_entry)
+#         workout.log_entries.append(log_entry)
+#         session.commit()
+#         session.refresh(log_entry)
+#         return log_entry
+#
+# def get_log_entries(workout_id: int) -> list[LogEntry]:
+#     """Get all log entries for a workout, ordered by set_number."""
+#
+#     with Session(engine) as session:
+#         statement =  select(Workout).where(Workout.id==workout_id)
+#         results = session.exec(statement)
+#         workout = results.one_or_none()
+#         if workout is None:
+#             raise ValueError("does not exist")
+#         entry_list =workout.log_entries
+#     return sorted(entry_list, key=lambda item: item.set_number)
 
-from sqlmodel import Field, SQLModel, create_engine, Relationship, Session, select
-from datetime import date
+#from __future__ import annotations
+import string
 
-class Workout(SQLModel, table=True):
-    id: int | None = Field(default=None, primary_key=True)
-    name: str
-    # Add log_entries relationship
-    log_entries : list["LogEntry"] = Relationship(back_populates="workout")
+EOL_PUNCTUATION = ".!?"
 
 
-class LogEntry(SQLModel, table=True):
-    """
-    Fields needed: workout_id (foreign key), set_number, weight, reps, date_recorded.
-    Also add a relationship back to Workout.
-    """
-
-    id: int | None = Field(default=None, primary_key=True)
-    workout_id : int | None = Field(default=None, foreign_key="workout.id")
-    set_number : int
-    weight : float
-    reps: int
-    date_recorded : date | None = Field(default=date.today())
-    workout: Workout | None = Relationship(back_populates="log_entries")
+class Document:
+    def __init__(self) -> None:
+        # it is up to you how to implement this method
+        # feel free to alter this method and its parameters to your liking
+        # make a list of strings
+        self.lines: list[str] = []
 
 
-sqlite_url = "sqlite:///:memory:"
-engine = create_engine(sqlite_url, echo=False)
+    def add_line(self, line: str, index: int = None) -> Document:
+        """Add a new line to the document.
+
+        Args:
+            line (str): The line,
+                expected to end with some kind of punctuation.
+            index (int, optional): The place where to add the line into the document.
+                If None, the line is added at the end. Defaults to None.
+
+        Returns:
+            Document: The changed document with the new line.
+        """
+        if index is None:
+            self.lines.append(line)
+        else:
+            self.lines.insert(index,line)
+
+        return self
+
+    def swap_lines(self, index_one: int, index_two: int) -> Document:
+        """Swap two lines.
+
+        Args:
+            index_one (int): The first line.
+            index_two (int): The second line.
+
+        Returns:
+            Document: The changed document with the swapped lines.
+        """
+        self.lines[index_one] , self.lines[index_two] =  self.lines[index_two],  self.lines[index_one]
+        return self
+
+    def merge_lines(self, indices: list) -> Document:
+        """Merge several lines into a single line.
+
+        If indices are not in a row, the merged line is added at the first index.
+
+        Args:
+            indices (list): The lines to be merged.
+
+        Returns:
+            Document: The changed document with the merged lines.
+        """
+        # Get all the lines from the list
+        indices = sorted(indices)
+        # Merge the lines
+        new_line = ' '.join([self.lines[index] for index in indices])
+
+        # Set new line
+        self.lines[indices[0]]=new_line
+
+        # take out the other lines (Keep in mind that the other lines need to be decremented by 1 each time)
+        reverse_indices = reversed(indices[1:])
+        for i in reverse_indices:
+            del self.lines[i]
+        return self
+
+    def add_punctuation(self, punctuation: str, index: int) -> Document:
+        """Add punctuation to the end of a sentence.
+
+        Overwrites existing punctuation.
+
+        Args:
+            punctuation (str): The punctuation. One of EOL_PUNCTUATION.
+            index (int): The line to change.
+
+        Returns:
+            Document: The document with the changed line.
+        """
+        current_line = self.lines[index]
+        if len(current_line)>1:
+            if current_line[-1] in EOL_PUNCTUATION:
+                new_line = current_line[:-1] + punctuation
+            else:
+                new_line = current_line + punctuation
+        else:
+            new_line=punctuation
+
+        self.lines[index]=new_line
+        return self
 
 
-def create_tables() -> None:
-    SQLModel.metadata.create_all(engine)
 
-def get_workout(workout_id: int) -> Workout | None:
-    """Fetch a workout by its primary key."""
-    with Session(engine) as session:
-        statement =  select(Workout).where(Workout.id==workout_id)
-        results = session.exec(statement)
-        return results.one_or_none()
+    def word_count(self) -> int:
+        """Return the total number of words in the document."""
 
-def add_log_entry(workout_id: int, set_number: int, weight: int, reps: int) -> LogEntry:
-    """Create a log entry for a workout. Raise ValueError if workout doesn't exist."""
-    workout = get_workout(workout_id)
-    if workout is None:
-        raise ValueError("does not exist")
+        def _remove_punctuation(line: str) -> str:
+            """Remove punctuation from a line."""
+            # you can use this function as helper method for
+            # Document.word_count() and Document.words
+            # or you can totally ignore it
+            return ''.join([char for char in line if char not in EOL_PUNCTUATION])
 
-    with Session(engine) as session:
-        log_entry = LogEntry(workout_id=workout_id, set_number=set_number, weight=weight, reps=reps, workout=workout )
-        session.add(log_entry)
-        workout.log_entries.append(log_entry)
-        session.commit()
-        session.refresh(log_entry)
-        return log_entry
+        def _word_helper(sentence:str):
+            clean_list =[word for word in _remove_punctuation(sentence).split(' ') if word !='']
+            return len (clean_list)
+        return sum([_word_helper(line) for line in self.lines ])
 
-def get_log_entries(workout_id: int) -> list[LogEntry]:
-    """Get all log entries for a workout, ordered by set_number."""
+    @property
+    def words(self) -> list:
+        """Return a list of unique words, sorted and case insensitive."""
 
-    with Session(engine) as session:
-        statement =  select(Workout).where(Workout.id==workout_id)
-        results = session.exec(statement)
-        workout = results.one_or_none()
-        if workout is None:
-            raise ValueError("does not exist")
-        entry_list =workout.log_entries
-    return sorted(entry_list, key=lambda item: item.set_number)
+        def _remove_punctuation(line: str) -> str:
+            """Remove punctuation from a line."""
+            # you can use this function as helper method for
+            # Document.word_count() and Document.words
+            # or you can totally ignore it
+            return ''.join([char for char in line if char not in EOL_PUNCTUATION]).replace(',','')
 
 
+        def _words_from_sentence(sentence:str):
+            removed_sentence = _remove_punctuation(sentence)
+            print(f"remove_punc:{ removed_sentence}")
+            return [_remove_punctuation(word) for word in removed_sentence.split(' ') if word != '']
+
+        nested = [_words_from_sentence(line) for line in self.lines]
+        flat_set = set([i.lower() for sub in nested for i in sub])
+        clean_list = [word for word in flat_set]
+        return list(sorted(clean_list))
+
+
+
+    def __len__(self):
+        """Return the length of the document (i.e. line count)."""
+        return len(self.lines)
+
+    def __str__(self):
+        """Return the content of the document as string."""
+        return '\n'.join([line for line in self.lines])
+
+
+
+if __name__ == "__main__":
+    # this part is only executed when you run the file and is ignored by the tests
+    # you can use this section for debugging and testing
+    d = (
+        Document()
+        .add_line("My first sentence.")
+        .add_line("My second sentence.")
+        .add_line("Introduction", 0)
+        .swap_lines(1,2)
+        .add_punctuation(',',2)
+        .merge_lines([1, 2])
+    )
+
+    print(d)
+    print(len(d))
+    print(d.word_count())
+    print(d.words)
 

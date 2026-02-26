@@ -9470,132 +9470,300 @@ Inputs are modified to check how the function deals with unknown characters
 #     with Session(engine) as session:
 #         workout = session.get(Workout, sample_workout.id)
 #         assert workout.name == "Second Update"
-
-from datetime import date
+#
+# from datetime import date
+#
+# import pytest
+# from wc import (
+#     LogEntry,
+#     Workout,
+#     add_log_entry,
+#     create_tables,
+#     engine,
+#     get_log_entries,
+# )
+# from sqlmodel import Session
+#
+#
+# @pytest.fixture(autouse=True)
+# def setup_database():
+#     """Create tables before each test."""
+#     create_tables()
+#
+#
+# @pytest.fixture
+# def sample_workout():
+#     """Create a test workout."""
+#     workout = Workout(name="Upper Body Day")
+#     with Session(engine) as session:
+#         session.add(workout)
+#         session.commit()
+#         session.refresh(workout)
+#     return workout
+#
+#
+# def test_log_entry_has_foreign_key():
+#     columns = {col.name: col for col in LogEntry.__table__.columns}
+#     assert "workout_id" in columns
+#     assert len(columns["workout_id"].foreign_keys) > 0
+#
+#
+# def test_workout_has_log_entries_relationship():
+#     workout = Workout(name="Test")
+#     assert hasattr(workout, "log_entries")
+#
+#
+# def test_log_entry_has_workout_relationship():
+#     log = LogEntry(set_number=1, weight=100, reps=10)
+#     assert hasattr(log, "workout")
+#
+#
+# def test_add_log_entry_creates_entry(sample_workout):
+#     log_entry = add_log_entry(
+#         workout_id=sample_workout.id, set_number=1, weight=100, reps=10
+#     )
+#
+#     assert log_entry.id is not None
+#     assert log_entry.workout_id == sample_workout.id
+#     assert log_entry.set_number == 1
+#     assert log_entry.weight == 100
+#     assert log_entry.reps == 10
+#
+#
+# def test_add_log_entry_sets_date_default(sample_workout):
+#     log_entry = add_log_entry(
+#         workout_id=sample_workout.id, set_number=1, weight=100, reps=10
+#     )
+#
+#     assert log_entry.date_recorded == date.today()
+#
+#
+# def test_add_log_entry_raises_for_invalid_workout():
+#     with pytest.raises(ValueError, match="does not exist"):
+#         add_log_entry(workout_id=999, set_number=1, weight=100, reps=10)
+#
+#
+# def test_get_log_entries_returns_entries(sample_workout):
+#     add_log_entry(sample_workout.id, set_number=1, weight=100, reps=10)
+#     add_log_entry(sample_workout.id, set_number=2, weight=110, reps=8)
+#     add_log_entry(sample_workout.id, set_number=3, weight=120, reps=6)
+#
+#     entries = get_log_entries(sample_workout.id)
+#
+#     assert len(entries) == 3
+#     assert all(isinstance(e, LogEntry) for e in entries)
+#
+#
+# def test_get_log_entries_ordered_by_set_number(sample_workout):
+#     add_log_entry(sample_workout.id, set_number=3, weight=120, reps=6)
+#     add_log_entry(sample_workout.id, set_number=1, weight=100, reps=10)
+#     add_log_entry(sample_workout.id, set_number=2, weight=110, reps=8)
+#
+#     entries = get_log_entries(sample_workout.id)
+#     set_numbers = [e.set_number for e in entries]
+#
+#     assert set_numbers == [1, 2, 3]
+#
+#
+# def test_get_log_entries_filters_by_workout(sample_workout):
+#     # Create another workout
+#     other_workout = Workout(name="Leg Day")
+#     with Session(engine) as session:
+#         session.add(other_workout)
+#         session.commit()
+#         session.refresh(other_workout)
+#
+#     # Add entries to both workouts
+#     add_log_entry(sample_workout.id, set_number=1, weight=100, reps=10)
+#     add_log_entry(other_workout.id, set_number=1, weight=200, reps=5)
+#
+#     entries = get_log_entries(sample_workout.id)
+#
+#     assert len(entries) == 1
+#     assert entries[0].workout_id == sample_workout.id
+#
+#
+# def test_get_log_entries_empty_for_no_entries(sample_workout):
+#     entries = get_log_entries(sample_workout.id)
+#     assert entries == []
+#
+#
+# def test_bidirectional_relationship(sample_workout):
+#     log_entry = add_log_entry(sample_workout.id, 1, 100, 10)
+#
+#     # Access from workout to log entries
+#     with Session(engine) as session:
+#         workout = session.get(Workout, sample_workout.id)
+#         assert len(workout.log_entries) > 0
+#
+#         # Access from log entry to workout
+#         log = session.get(LogEntry, log_entry.id)
+#         assert log.workout is not None
 
 import pytest
-from wc import (
-    LogEntry,
-    Workout,
-    add_log_entry,
-    create_tables,
-    engine,
-    get_log_entries,
+
+from wc import Document
+
+
+EOL_PUNCTUATION = ".!?"
+
+DOCS = {
+    "four-liner": (
+        Document()
+        .add_line("first")
+        .add_line("fourth")
+        .add_line("third", 1)
+        .add_line("second", 1)
+    ),
+    "tale": (
+        Document()
+        .add_line("This is the tale of a dwarf.")
+        .add_line("")
+        .add_line("A dwarf you ask?")
+        .add_line("Yes, a dwarf and not any dwarf, so you know!")
+    ),
+    "complex": (
+        Document()
+        .add_line("My second sentence.")
+        .add_line("My first sentence.")
+        .swap_lines(0, 1)
+        .add_line("Introduction", 0)
+        .add_punctuation("!", 0)
+        .add_line("")
+        .add_line("My second paragraph.")
+        .merge_lines([1, 2])
+    ),
+    "edgy": (
+        Document().add_line("").swap_lines(0, 0).merge_lines([0]).add_punctuation(".", 0)
+    ),
+    "full-case": (
+        Document()
+        .add_line("1")  # 1
+        .add_line("2", 0)  # 2\n1
+        .add_line("3", 1)  # 2\n3\n1
+        .swap_lines(0, 1)  # 3\n2\n1
+        .swap_lines(1, 2)  # 3\n1\n2
+        .swap_lines(2, 1)  # 3\n2\n1
+        .merge_lines([0, 2])  # 3 1\n2
+        .merge_lines([0, 1])  # 3 1 2
+    ),
+    "punctuation": (
+        Document()
+        .add_line("")
+        .add_punctuation(".", 0)
+        .add_punctuation("!", 0)
+        .add_punctuation("?", 0)
+        .add_line(".")
+        .add_punctuation("?", 1)  # ?\n?
+    ),
+}
+
+
+@pytest.fixture()
+def doc(request):
+    """Factory method for test documents"""
+    return DOCS.get(request.param, Document())
+
+
+@pytest.mark.parametrize(
+    "doc, expected",
+    [
+        ("complex", Document),
+    ],
+    indirect=["doc"],
 )
-from sqlmodel import Session
+def test_correct_return_type(doc, expected):
+    assert isinstance(doc, expected)
 
 
-@pytest.fixture(autouse=True)
-def setup_database():
-    """Create tables before each test."""
-    create_tables()
+@pytest.mark.parametrize(
+    "doc, expected",
+    [
+        ("tale", 4),
+        ("complex", 4),
+        ("four-liner", 4),
+        ("edgy", 1),
+        ("full-case", 1),
+        ("punctuation", 2),
+    ],
+    indirect=["doc"],
+)
+def test_len_implementation(doc, expected):
+    assert len(doc) == expected
 
 
-@pytest.fixture
-def sample_workout():
-    """Create a test workout."""
-    workout = Workout(name="Upper Body Day")
-    with Session(engine) as session:
-        session.add(workout)
-        session.commit()
-        session.refresh(workout)
-    return workout
+@pytest.mark.parametrize(
+    "doc, expected",
+    [
+        ("tale", 21),
+        ("complex", 10),
+        ("four-liner", 4),
+        ("edgy", 0),
+        ("full-case", 3),
+        ("punctuation", 0),
+    ],
+    indirect=["doc"],
+)
+def test_word_count_implementation(doc, expected):
+    assert doc.word_count() == expected
 
 
-def test_log_entry_has_foreign_key():
-    columns = {col.name: col for col in LogEntry.__table__.columns}
-    assert "workout_id" in columns
-    assert len(columns["workout_id"].foreign_keys) > 0
+@pytest.mark.parametrize(
+    "doc, expected",
+    [
+        ("four-liner", "first\nsecond\nthird\nfourth"),
+        (
+            "tale",
+            "This is the tale of a dwarf.\n\nA dwarf you ask?\nYes, a dwarf and not any dwarf, so you know!",
+        ),
+        (
+            "complex",
+            "Introduction!\nMy first sentence. My second sentence.\n\nMy second paragraph.",
+        ),
+        ("edgy", "."),
+        ("full-case", "3 1 2"),
+        ("punctuation", "?\n?"),
+    ],
+    indirect=["doc"],
+)
+def test_correct_chaining(doc, expected):
+    assert str(doc) == expected
 
 
-def test_workout_has_log_entries_relationship():
-    workout = Workout(name="Test")
-    assert hasattr(workout, "log_entries")
-
-
-def test_log_entry_has_workout_relationship():
-    log = LogEntry(set_number=1, weight=100, reps=10)
-    assert hasattr(log, "workout")
-
-
-def test_add_log_entry_creates_entry(sample_workout):
-    log_entry = add_log_entry(
-        workout_id=sample_workout.id, set_number=1, weight=100, reps=10
-    )
-
-    assert log_entry.id is not None
-    assert log_entry.workout_id == sample_workout.id
-    assert log_entry.set_number == 1
-    assert log_entry.weight == 100
-    assert log_entry.reps == 10
-
-
-def test_add_log_entry_sets_date_default(sample_workout):
-    log_entry = add_log_entry(
-        workout_id=sample_workout.id, set_number=1, weight=100, reps=10
-    )
-
-    assert log_entry.date_recorded == date.today()
-
-
-def test_add_log_entry_raises_for_invalid_workout():
-    with pytest.raises(ValueError, match="does not exist"):
-        add_log_entry(workout_id=999, set_number=1, weight=100, reps=10)
-
-
-def test_get_log_entries_returns_entries(sample_workout):
-    add_log_entry(sample_workout.id, set_number=1, weight=100, reps=10)
-    add_log_entry(sample_workout.id, set_number=2, weight=110, reps=8)
-    add_log_entry(sample_workout.id, set_number=3, weight=120, reps=6)
-
-    entries = get_log_entries(sample_workout.id)
-
-    assert len(entries) == 3
-    assert all(isinstance(e, LogEntry) for e in entries)
-
-
-def test_get_log_entries_ordered_by_set_number(sample_workout):
-    add_log_entry(sample_workout.id, set_number=3, weight=120, reps=6)
-    add_log_entry(sample_workout.id, set_number=1, weight=100, reps=10)
-    add_log_entry(sample_workout.id, set_number=2, weight=110, reps=8)
-
-    entries = get_log_entries(sample_workout.id)
-    set_numbers = [e.set_number for e in entries]
-
-    assert set_numbers == [1, 2, 3]
-
-
-def test_get_log_entries_filters_by_workout(sample_workout):
-    # Create another workout
-    other_workout = Workout(name="Leg Day")
-    with Session(engine) as session:
-        session.add(other_workout)
-        session.commit()
-        session.refresh(other_workout)
-
-    # Add entries to both workouts
-    add_log_entry(sample_workout.id, set_number=1, weight=100, reps=10)
-    add_log_entry(other_workout.id, set_number=1, weight=200, reps=5)
-
-    entries = get_log_entries(sample_workout.id)
-
-    assert len(entries) == 1
-    assert entries[0].workout_id == sample_workout.id
-
-
-def test_get_log_entries_empty_for_no_entries(sample_workout):
-    entries = get_log_entries(sample_workout.id)
-    assert entries == []
-
-
-def test_bidirectional_relationship(sample_workout):
-    log_entry = add_log_entry(sample_workout.id, 1, 100, 10)
-
-    # Access from workout to log entries
-    with Session(engine) as session:
-        workout = session.get(Workout, sample_workout.id)
-        assert len(workout.log_entries) > 0
-
-        # Access from log entry to workout
-        log = session.get(LogEntry, log_entry.id)
-        assert log.workout is not None
+@pytest.mark.parametrize(
+    "doc, expected",
+    [
+        (
+            "tale",
+            sorted(
+                [
+                    "this",
+                    "is",
+                    "the",
+                    "tale",
+                    "of",
+                    "a",
+                    "dwarf",
+                    "you",
+                    "ask",
+                    "yes",
+                    "and",
+                    "not",
+                    "any",
+                    "so",
+                    "know",
+                ]
+            ),
+        ),
+        (
+            "complex",
+            sorted(["my", "first", "second", "sentence", "introduction", "paragraph"]),
+        ),
+        ("edgy", []),
+        ("full-case", ["1", "2", "3"]),
+        ("punctuation", []),
+    ],
+    indirect=["doc"],
+)
+def test_words_property(doc, expected):
+    assert doc.words == expected
