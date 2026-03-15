@@ -1,4 +1,9 @@
 from __future__ import annotations
+
+from sys import exc_info
+
+from sqlalchemy import true
+
 # from pathlib import Path
 #
 #
@@ -9310,166 +9315,315 @@ enumerate through the text by letter
 #     return sorted(entry_list, key=lambda item: item.set_number)
 
 #from __future__ import annotations
-import string
+# import string
+#
+# EOL_PUNCTUATION = ".!?"
+#
+#
+# class Document:
+#     def __init__(self) -> None:
+#         # it is up to you how to implement this method
+#         # feel free to alter this method and its parameters to your liking
+#         # make a list of strings
+#         self.lines: list[str] = []
+#
+#
+#     def add_line(self, line: str, index: int = None) -> Document:
+#         """Add a new line to the document.
+#
+#         Args:
+#             line (str): The line,
+#                 expected to end with some kind of punctuation.
+#             index (int, optional): The place where to add the line into the document.
+#                 If None, the line is added at the end. Defaults to None.
+#
+#         Returns:
+#             Document: The changed document with the new line.
+#         """
+#         if index is None:
+#             self.lines.append(line)
+#         else:
+#             self.lines.insert(index,line)
+#
+#         return self
+#
+#     def swap_lines(self, index_one: int, index_two: int) -> Document:
+#         """Swap two lines.
+#
+#         Args:
+#             index_one (int): The first line.
+#             index_two (int): The second line.
+#
+#         Returns:
+#             Document: The changed document with the swapped lines.
+#         """
+#         self.lines[index_one] , self.lines[index_two] =  self.lines[index_two],  self.lines[index_one]
+#         return self
+#
+#     def merge_lines(self, indices: list) -> Document:
+#         """Merge several lines into a single line.
+#
+#         If indices are not in a row, the merged line is added at the first index.
+#
+#         Args:
+#             indices (list): The lines to be merged.
+#
+#         Returns:
+#             Document: The changed document with the merged lines.
+#         """
+#         # Get all the lines from the list
+#         indices = sorted(indices)
+#         # Merge the lines
+#         new_line = ' '.join([self.lines[index] for index in indices])
+#
+#         # Set new line
+#         self.lines[indices[0]]=new_line
+#
+#         # take out the other lines (Keep in mind that the other lines need to be decremented by 1 each time)
+#         reverse_indices = reversed(indices[1:])
+#         for i in reverse_indices:
+#             del self.lines[i]
+#         return self
+#
+#     def add_punctuation(self, punctuation: str, index: int) -> Document:
+#         """Add punctuation to the end of a sentence.
+#
+#         Overwrites existing punctuation.
+#
+#         Args:
+#             punctuation (str): The punctuation. One of EOL_PUNCTUATION.
+#             index (int): The line to change.
+#
+#         Returns:
+#             Document: The document with the changed line.
+#         """
+#         current_line = self.lines[index]
+#         if len(current_line)>1:
+#             if current_line[-1] in EOL_PUNCTUATION:
+#                 new_line = current_line[:-1] + punctuation
+#             else:
+#                 new_line = current_line + punctuation
+#         else:
+#             new_line=punctuation
+#
+#         self.lines[index]=new_line
+#         return self
+#
+#
+#
+#     def word_count(self) -> int:
+#         """Return the total number of words in the document."""
+#
+#         def _remove_punctuation(line: str) -> str:
+#             """Remove punctuation from a line."""
+#             # you can use this function as helper method for
+#             # Document.word_count() and Document.words
+#             # or you can totally ignore it
+#             return ''.join([char for char in line if char not in EOL_PUNCTUATION])
+#
+#         def _word_helper(sentence:str):
+#             clean_list =[word for word in _remove_punctuation(sentence).split(' ') if word !='']
+#             return len (clean_list)
+#         return sum([_word_helper(line) for line in self.lines ])
+#
+#     @property
+#     def words(self) -> list:
+#         """Return a list of unique words, sorted and case insensitive."""
+#
+#         def _remove_punctuation(line: str) -> str:
+#             """Remove punctuation from a line."""
+#             # you can use this function as helper method for
+#             # Document.word_count() and Document.words
+#             # or you can totally ignore it
+#             return ''.join([char for char in line if char not in EOL_PUNCTUATION]).replace(',','')
+#
+#
+#         def _words_from_sentence(sentence:str):
+#             removed_sentence = _remove_punctuation(sentence)
+#             print(f"remove_punc:{ removed_sentence}")
+#             return [_remove_punctuation(word) for word in removed_sentence.split(' ') if word != '']
+#
+#         nested = [_words_from_sentence(line) for line in self.lines]
+#         flat_set = set([i.lower() for sub in nested for i in sub])
+#         clean_list = [word for word in flat_set]
+#         return list(sorted(clean_list))
+#
+#
+#
+#     def __len__(self):
+#         """Return the length of the document (i.e. line count)."""
+#         return len(self.lines)
+#
+#     def __str__(self):
+#         """Return the content of the document as string."""
+#         return '\n'.join([line for line in self.lines])
+#
+#
+#
+# if __name__ == "__main__":
+#     # this part is only executed when you run the file and is ignored by the tests
+#     # you can use this section for debugging and testing
+#     d = (
+#         Document()
+#         .add_line("My first sentence.")
+#         .add_line("My second sentence.")
+#         .add_line("Introduction", 0)
+#         .swap_lines(1,2)
+#         .add_punctuation(',',2)
+#         .merge_lines([1, 2])
+#     )
+#
+#     print(d)
+#     print(len(d))
+#     print(d.word_count())
+#     print(d.words)
+#
+# from typing import Dict, List
+# import keyword
+# import sys
+# import builtins
+#
+# scores = {
+#     "builtin": 1,
+#     "keyword": 2,
+#     "module": 3,
+# }
+#
+# std_names = sys.modules
+# build_in_names= builtins.__dict__
+#
+# def get_score(name:str, scores)->int:
+#     if keyword.iskeyword(name):
+#         return scores['keyword']
+#     elif name in std_names:
+#         return scores['module']
+#     elif name in build_in_names:
+#         return scores['builtin']
+#     else:
+#         return 0
+#
+# def score_objects(objects: List[str],
+#                   scores: Dict[str, int] = scores) -> int:
+#     return sum([get_score(item, scores) for item in objects])
+#
+# get_score('None', scores)
+#
+#
+# my_list = ['hashlib', 'base64', 'nonlocal']
+# print(score_objects(my_list))
 
-EOL_PUNCTUATION = ".!?"
+#
+# import re
+#
+#
+# class DomainException(Exception):
+#     """Raised when an invalid is created."""
+#
+#
+# class Domain:
+#
+#     def __init__(self, name):
+#         # validate a current domain (r'.*\.[a-z]{2,3}$' is fine)
+#         # if not valid, raise a DomainException
+#         self.name = name
+#
+#     # next add a __str__ method and write 2 class methods
+#     # called parse_url and parse_email to construct domains
+#     # from an URL and email respectively
+#
+# import re
+#
+#
+# class DomainException(Exception):
+#     """Raised when an invalid is created."""
+#
+#
+# class Domain:
+#
+#     def __init__(self, name):
+#         # validate a current domain (r'.*\.[a-z]{2,3}$' is fine)
+#         # if not valid, raise a DomainException
+#         pattern = r'.*\.[a-z]{2,3}$'
+#         match = re.match(pattern, name)
+#         if match:
+#             self.name = name
+#         else:
+#             raise DomainException
+#
+#     def __str__(self):
+#         return self.name
+#
+#     @classmethod
+#     def parse_url(cls, url:str):
+#         address = url.split('//')[1]
+#         return cls(address.split("/")[0])
+#
+#     @classmethod
+#     def parse_email(cls, email:str):
+#         return cls(email.split('@')[1])
+#     # next add a __str__ method and write 2 class methods
+#     # called parse_url and parse_email to construct domains
+#     # from an URL and email respectively
+#
+# import logging
+# from typing import List  # python 3.9 we can drop this
+#
+#
+# logger = logging.getLogger('app')
+#
+#
+# def sum_even_numbers(numbers: List) -> float:
+#     total = 0
+#     try:
+#         for num in numbers:
+#             # Check if input is a valid number (int or float)
+#             if not isinstance(num, (int, float)):
+#                 # This string matches your specific error requirement
+#                 raise TypeError('not all arguments converted during string formatting')
+#
+#             if num % 2 == 0:
+#                 total += num
+#
+#     except TypeError:
+#         # logger.exception automatically captures the traceback (exc_info=True)
+#         logger.exception(f"Bad inputs: {numbers}")
+#         raise
+#
+#     logger.info(f"Input: {numbers} -> output: {total}")
+#     return total
+from datetime import date
+from typing import Dict, Sequence, NamedTuple
+from collections import defaultdict
+
+class MovieRented(NamedTuple):
+    title: str
+    price: int
+    date: date
 
 
-class Document:
-    def __init__(self) -> None:
-        # it is up to you how to implement this method
-        # feel free to alter this method and its parameters to your liking
-        # make a list of strings
-        self.lines: list[str] = []
+RentingHistory = Sequence[MovieRented]
+STREAMING_COST_PER_MONTH = 12
+STREAM, RENT = 'stream', 'rent'
 
 
-    def add_line(self, line: str, index: int = None) -> Document:
-        """Add a new line to the document.
+def rent_or_stream(
+    renting_history: RentingHistory,
+    streaming_cost_per_month: int = STREAMING_COST_PER_MONTH
+) -> Dict[str, str]:
+    """Function that calculates if renting movies one by one is
+       cheaper than streaming movies by months.
 
-        Args:
-            line (str): The line,
-                expected to end with some kind of punctuation.
-            index (int, optional): The place where to add the line into the document.
-                If None, the line is added at the end. Defaults to None.
+       Determine this PER MONTH for the movies in renting_history.
 
-        Returns:
-            Document: The changed document with the new line.
-        """
-        if index is None:
-            self.lines.append(line)
-        else:
-            self.lines.insert(index,line)
+       Return a dict of:
+       keys = months (YYYY-MM)
+       values = 'rent' or 'stream' based on what is cheaper
 
-        return self
+       Check out the tests for examples.
+    """
 
-    def swap_lines(self, index_one: int, index_two: int) -> Document:
-        """Swap two lines.
-
-        Args:
-            index_one (int): The first line.
-            index_two (int): The second line.
-
-        Returns:
-            Document: The changed document with the swapped lines.
-        """
-        self.lines[index_one] , self.lines[index_two] =  self.lines[index_two],  self.lines[index_one]
-        return self
-
-    def merge_lines(self, indices: list) -> Document:
-        """Merge several lines into a single line.
-
-        If indices are not in a row, the merged line is added at the first index.
-
-        Args:
-            indices (list): The lines to be merged.
-
-        Returns:
-            Document: The changed document with the merged lines.
-        """
-        # Get all the lines from the list
-        indices = sorted(indices)
-        # Merge the lines
-        new_line = ' '.join([self.lines[index] for index in indices])
-
-        # Set new line
-        self.lines[indices[0]]=new_line
-
-        # take out the other lines (Keep in mind that the other lines need to be decremented by 1 each time)
-        reverse_indices = reversed(indices[1:])
-        for i in reverse_indices:
-            del self.lines[i]
-        return self
-
-    def add_punctuation(self, punctuation: str, index: int) -> Document:
-        """Add punctuation to the end of a sentence.
-
-        Overwrites existing punctuation.
-
-        Args:
-            punctuation (str): The punctuation. One of EOL_PUNCTUATION.
-            index (int): The line to change.
-
-        Returns:
-            Document: The document with the changed line.
-        """
-        current_line = self.lines[index]
-        if len(current_line)>1:
-            if current_line[-1] in EOL_PUNCTUATION:
-                new_line = current_line[:-1] + punctuation
-            else:
-                new_line = current_line + punctuation
-        else:
-            new_line=punctuation
-
-        self.lines[index]=new_line
-        return self
-
-
-
-    def word_count(self) -> int:
-        """Return the total number of words in the document."""
-
-        def _remove_punctuation(line: str) -> str:
-            """Remove punctuation from a line."""
-            # you can use this function as helper method for
-            # Document.word_count() and Document.words
-            # or you can totally ignore it
-            return ''.join([char for char in line if char not in EOL_PUNCTUATION])
-
-        def _word_helper(sentence:str):
-            clean_list =[word for word in _remove_punctuation(sentence).split(' ') if word !='']
-            return len (clean_list)
-        return sum([_word_helper(line) for line in self.lines ])
-
-    @property
-    def words(self) -> list:
-        """Return a list of unique words, sorted and case insensitive."""
-
-        def _remove_punctuation(line: str) -> str:
-            """Remove punctuation from a line."""
-            # you can use this function as helper method for
-            # Document.word_count() and Document.words
-            # or you can totally ignore it
-            return ''.join([char for char in line if char not in EOL_PUNCTUATION]).replace(',','')
-
-
-        def _words_from_sentence(sentence:str):
-            removed_sentence = _remove_punctuation(sentence)
-            print(f"remove_punc:{ removed_sentence}")
-            return [_remove_punctuation(word) for word in removed_sentence.split(' ') if word != '']
-
-        nested = [_words_from_sentence(line) for line in self.lines]
-        flat_set = set([i.lower() for sub in nested for i in sub])
-        clean_list = [word for word in flat_set]
-        return list(sorted(clean_list))
-
-
-
-    def __len__(self):
-        """Return the length of the document (i.e. line count)."""
-        return len(self.lines)
-
-    def __str__(self):
-        """Return the content of the document as string."""
-        return '\n'.join([line for line in self.lines])
-
-
-
-if __name__ == "__main__":
-    # this part is only executed when you run the file and is ignored by the tests
-    # you can use this section for debugging and testing
-    d = (
-        Document()
-        .add_line("My first sentence.")
-        .add_line("My second sentence.")
-        .add_line("Introduction", 0)
-        .swap_lines(1,2)
-        .add_punctuation(',',2)
-        .merge_lines([1, 2])
-    )
-
-    print(d)
-    print(len(d))
-    print(d.word_count())
-    print(d.words)
-
+    monthly_cost=defaultdict(int)
+    for movie in renting_history:
+        year_month=f"{movie.date.year}-{movie.date.month}"
+        monthly_cost[year_month]+=movie.price
+    return {key: ( STREAM if val > 12 else RENT ) for key,val in monthly_cost.items()}

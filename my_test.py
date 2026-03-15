@@ -9599,171 +9599,348 @@ Inputs are modified to check how the function deals with unknown characters
 #         # Access from log entry to workout
 #         log = session.get(LogEntry, log_entry.id)
 #         assert log.workout is not None
+#
+# import pytest
+#
+# from wc import Document
+#
+#
+# EOL_PUNCTUATION = ".!?"
+#
+# DOCS = {
+#     "four-liner": (
+#         Document()
+#         .add_line("first")
+#         .add_line("fourth")
+#         .add_line("third", 1)
+#         .add_line("second", 1)
+#     ),
+#     "tale": (
+#         Document()
+#         .add_line("This is the tale of a dwarf.")
+#         .add_line("")
+#         .add_line("A dwarf you ask?")
+#         .add_line("Yes, a dwarf and not any dwarf, so you know!")
+#     ),
+#     "complex": (
+#         Document()
+#         .add_line("My second sentence.")
+#         .add_line("My first sentence.")
+#         .swap_lines(0, 1)
+#         .add_line("Introduction", 0)
+#         .add_punctuation("!", 0)
+#         .add_line("")
+#         .add_line("My second paragraph.")
+#         .merge_lines([1, 2])
+#     ),
+#     "edgy": (
+#         Document().add_line("").swap_lines(0, 0).merge_lines([0]).add_punctuation(".", 0)
+#     ),
+#     "full-case": (
+#         Document()
+#         .add_line("1")  # 1
+#         .add_line("2", 0)  # 2\n1
+#         .add_line("3", 1)  # 2\n3\n1
+#         .swap_lines(0, 1)  # 3\n2\n1
+#         .swap_lines(1, 2)  # 3\n1\n2
+#         .swap_lines(2, 1)  # 3\n2\n1
+#         .merge_lines([0, 2])  # 3 1\n2
+#         .merge_lines([0, 1])  # 3 1 2
+#     ),
+#     "punctuation": (
+#         Document()
+#         .add_line("")
+#         .add_punctuation(".", 0)
+#         .add_punctuation("!", 0)
+#         .add_punctuation("?", 0)
+#         .add_line(".")
+#         .add_punctuation("?", 1)  # ?\n?
+#     ),
+# }
+#
+#
+# @pytest.fixture()
+# def doc(request):
+#     """Factory method for test documents"""
+#     return DOCS.get(request.param, Document())
+#
+#
+# @pytest.mark.parametrize(
+#     "doc, expected",
+#     [
+#         ("complex", Document),
+#     ],
+#     indirect=["doc"],
+# )
+# def test_correct_return_type(doc, expected):
+#     assert isinstance(doc, expected)
+#
+#
+# @pytest.mark.parametrize(
+#     "doc, expected",
+#     [
+#         ("tale", 4),
+#         ("complex", 4),
+#         ("four-liner", 4),
+#         ("edgy", 1),
+#         ("full-case", 1),
+#         ("punctuation", 2),
+#     ],
+#     indirect=["doc"],
+# )
+# def test_len_implementation(doc, expected):
+#     assert len(doc) == expected
+#
+#
+# @pytest.mark.parametrize(
+#     "doc, expected",
+#     [
+#         ("tale", 21),
+#         ("complex", 10),
+#         ("four-liner", 4),
+#         ("edgy", 0),
+#         ("full-case", 3),
+#         ("punctuation", 0),
+#     ],
+#     indirect=["doc"],
+# )
+# def test_word_count_implementation(doc, expected):
+#     assert doc.word_count() == expected
+#
+#
+# @pytest.mark.parametrize(
+#     "doc, expected",
+#     [
+#         ("four-liner", "first\nsecond\nthird\nfourth"),
+#         (
+#             "tale",
+#             "This is the tale of a dwarf.\n\nA dwarf you ask?\nYes, a dwarf and not any dwarf, so you know!",
+#         ),
+#         (
+#             "complex",
+#             "Introduction!\nMy first sentence. My second sentence.\n\nMy second paragraph.",
+#         ),
+#         ("edgy", "."),
+#         ("full-case", "3 1 2"),
+#         ("punctuation", "?\n?"),
+#     ],
+#     indirect=["doc"],
+# )
+# def test_correct_chaining(doc, expected):
+#     assert str(doc) == expected
+#
+#
+# @pytest.mark.parametrize(
+#     "doc, expected",
+#     [
+#         (
+#             "tale",
+#             sorted(
+#                 [
+#                     "this",
+#                     "is",
+#                     "the",
+#                     "tale",
+#                     "of",
+#                     "a",
+#                     "dwarf",
+#                     "you",
+#                     "ask",
+#                     "yes",
+#                     "and",
+#                     "not",
+#                     "any",
+#                     "so",
+#                     "know",
+#                 ]
+#             ),
+#         ),
+#         (
+#             "complex",
+#             sorted(["my", "first", "second", "sentence", "introduction", "paragraph"]),
+#         ),
+#         ("edgy", []),
+#         ("full-case", ["1", "2", "3"]),
+#         ("punctuation", []),
+#     ],
+#     indirect=["doc"],
+# )
+# def test_words_property(doc, expected):
+#     assert doc.words == expected
+#
+# import pytest
+#
+# from wc import score_objects
+#
+#
+# @pytest.mark.parametrize("arg, expected", [
+#     pytest.param(['none', '1', 'nonsense'], 0, id="nothing_matches"),
+#     pytest.param(['random'], 3, id="one_module"),
+#     pytest.param(['raise', 'random'], 5, id="one_keyword_one_module"),
+#     pytest.param(['any', 'all', 'max'], 3, id="three_builtins"),
+#     pytest.param(['and', 'if', 'is'], 6, id="three_keywords"),
+#     pytest.param(['builtins', 'numbers', 'os'], 9, id="three_modules"),
+#     pytest.param(['zip', 'itertools'], 4, id="one_builtin_one_module"),
+#     pytest.param(['pytest', 'os'], 6, id="external_and_stdlib"),
+#     pytest.param(['re', 'pathlib'], 6, id="two_modules"),
+#     pytest.param(['objects'], 3, id="import_self"),
+#     pytest.param(['sys', 'global'], 5, id="one_module_one_keyword"),
+#     pytest.param(['json', 'dict', 're'], 7, id="two_modules_one_builtin"),
+#     pytest.param(['hashlib', 'base64', 'nonlocal'], 8, id="two_modules_one_keyword"),
+#     pytest.param(['global', '4', 'sys.exit'], 2, id="one_keyword_and_nomatches"),
+#     pytest.param(['None', 'False', 'True'], 9, id="three_keywords_and_builtins"),
+# ])
+# def test_score_objects(arg, expected):
+#     assert score_objects(arg) == expected
+#
+#
+# import pytest
+#
+# from wc import Domain, DomainException
+#
+#
+# def test_create_domain_from_name():
+#     domain = Domain("google.com")
+#     assert str(domain) == "google.com"
+#     domain = Domain("nu.nl")
+#     assert str(domain) == "nu.nl"
+#
+#
+# def test_invalid_domain():
+#     with pytest.raises(DomainException):
+#         Domain("nu.nlll")
+#
+#
+# @pytest.mark.parametrize("arg, expected", [
+#     ("https://pybit.es", "pybit.es"),
+#     ("http://pybit.es", "pybit.es"),
+#     ("https://pybit.es/get-python-source.html", "pybit.es"),
+#     ("https://nu.nl", "nu.nl"),
+#     ("https://python.org/", "python.org"),
+#     ("https://stackoverflow.com/a/14836456", "stackoverflow.com"),
+# ])
+# def test_create_domain_from_url(arg, expected):
+#     domain = Domain.parse_url(arg)
+#     assert type(domain) == Domain
+#     assert str(domain) == expected
+#
+#
+# @pytest.mark.parametrize("arg, expected", [
+#     ("bob@pybit.es", "pybit.es"),
+#     ("bob@gmail.com", "gmail.com"),
+#     ("tim@example.net", "example.net"),
+#     ("sara@hotmail.co.uk", "hotmail.co.uk"),
+# ])
+# def test_create_domain_from_email(arg, expected):
+#     domain = Domain.parse_email(arg)
+#     assert type(domain) == Domain
+#     assert str(domain) == expected
+#
+
+#
+# import pytest
+#
+# from wc import Domain, DomainException
+#
+#
+# def test_create_domain_from_name():
+#     domain = Domain("google.com")
+#     assert str(domain) == "google.com"
+#     domain = Domain("nu.nl")
+#     assert str(domain) == "nu.nl"
+#
+#
+# def test_invalid_domain():
+#     with pytest.raises(DomainException):
+#         Domain("nu.nlll")
+#
+#
+# @pytest.mark.parametrize("arg, expected", [
+#     ("https://pybit.es", "pybit.es"),
+#     ("http://pybit.es", "pybit.es"),
+#     ("https://pybit.es/get-python-source.html", "pybit.es"),
+#     ("https://nu.nl", "nu.nl"),
+#     ("https://python.org/", "python.org"),
+#     ("https://stackoverflow.com/a/14836456", "stackoverflow.com"),
+# ])
+# def test_create_domain_from_url(arg, expected):
+#     domain = Domain.parse_url(arg)
+#     assert type(domain) == Domain
+#     assert str(domain) == expected
+#
+#
+# @pytest.mark.parametrize("arg, expected", [
+#     ("bob@pybit.es", "pybit.es"),
+#     ("bob@gmail.com", "gmail.com"),
+#     ("tim@example.net", "example.net"),
+#     ("sara@hotmail.co.uk", "hotmail.co.uk"),
+# ])
+# def test_create_domain_from_email(arg, expected):
+#     domain = Domain.parse_email(arg)
+#     assert type(domain) == Domain
+#     assert str(domain) == expected
+#
+# import logging
+#
+# import pytest
+#
+# from wc import sum_even_numbers
+#
+#
+# def test_sum_numbers_function_works(caplog):
+#     assert sum_even_numbers([2, 9, 4, 11, 6]) == 12
+#
+#
+# def test_sum_numbers_logging(caplog):
+#     caplog.set_level(logging.INFO, logger="app")
+#     sum_even_numbers(list(range(1, 11)))
+#     assert len(caplog.records) == 1
+#     record = caplog.records[0]
+#     assert record.module == 'logger'
+#     assert record.name == 'app'
+#     assert record.levelname == 'INFO'
+#     expected = 'Input: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10] -> output: 30'
+#     assert record.message == expected
+#
+#
+# def test_sum_numbers_throws_exception(caplog):
+#     caplog.set_level(logging.INFO, logger="app")
+#     with pytest.raises(TypeError):
+#         sum_even_numbers([1, 'a', 2, 3])
+#     assert len(caplog.records) == 1
+#     record = caplog.records[0]
+#     assert record.levelname == 'ERROR'
+#     expected = "Bad inputs: [1, 'a', 2, 3]"
+#     assert record.message == expected
+#     assert record.exc_text.startswith('Traceback')
+#     assert record.exc_text.endswith(
+#         ('TypeError: not all arguments converted during '
+#          'string formatting'))
+
+from datetime import date
 
 import pytest
 
-from wc import Document
+from wc import rent_or_stream, MovieRented
 
 
-EOL_PUNCTUATION = ".!?"
-
-DOCS = {
-    "four-liner": (
-        Document()
-        .add_line("first")
-        .add_line("fourth")
-        .add_line("third", 1)
-        .add_line("second", 1)
-    ),
-    "tale": (
-        Document()
-        .add_line("This is the tale of a dwarf.")
-        .add_line("")
-        .add_line("A dwarf you ask?")
-        .add_line("Yes, a dwarf and not any dwarf, so you know!")
-    ),
-    "complex": (
-        Document()
-        .add_line("My second sentence.")
-        .add_line("My first sentence.")
-        .swap_lines(0, 1)
-        .add_line("Introduction", 0)
-        .add_punctuation("!", 0)
-        .add_line("")
-        .add_line("My second paragraph.")
-        .merge_lines([1, 2])
-    ),
-    "edgy": (
-        Document().add_line("").swap_lines(0, 0).merge_lines([0]).add_punctuation(".", 0)
-    ),
-    "full-case": (
-        Document()
-        .add_line("1")  # 1
-        .add_line("2", 0)  # 2\n1
-        .add_line("3", 1)  # 2\n3\n1
-        .swap_lines(0, 1)  # 3\n2\n1
-        .swap_lines(1, 2)  # 3\n1\n2
-        .swap_lines(2, 1)  # 3\n2\n1
-        .merge_lines([0, 2])  # 3 1\n2
-        .merge_lines([0, 1])  # 3 1 2
-    ),
-    "punctuation": (
-        Document()
-        .add_line("")
-        .add_punctuation(".", 0)
-        .add_punctuation("!", 0)
-        .add_punctuation("?", 0)
-        .add_line(".")
-        .add_punctuation("?", 1)  # ?\n?
-    ),
-}
-
-
-@pytest.fixture()
-def doc(request):
-    """Factory method for test documents"""
-    return DOCS.get(request.param, Document())
-
-
-@pytest.mark.parametrize(
-    "doc, expected",
-    [
-        ("complex", Document),
-    ],
-    indirect=["doc"],
-)
-def test_correct_return_type(doc, expected):
-    assert isinstance(doc, expected)
-
-
-@pytest.mark.parametrize(
-    "doc, expected",
-    [
-        ("tale", 4),
-        ("complex", 4),
-        ("four-liner", 4),
-        ("edgy", 1),
-        ("full-case", 1),
-        ("punctuation", 2),
-    ],
-    indirect=["doc"],
-)
-def test_len_implementation(doc, expected):
-    assert len(doc) == expected
-
-
-@pytest.mark.parametrize(
-    "doc, expected",
-    [
-        ("tale", 21),
-        ("complex", 10),
-        ("four-liner", 4),
-        ("edgy", 0),
-        ("full-case", 3),
-        ("punctuation", 0),
-    ],
-    indirect=["doc"],
-)
-def test_word_count_implementation(doc, expected):
-    assert doc.word_count() == expected
-
-
-@pytest.mark.parametrize(
-    "doc, expected",
-    [
-        ("four-liner", "first\nsecond\nthird\nfourth"),
-        (
-            "tale",
-            "This is the tale of a dwarf.\n\nA dwarf you ask?\nYes, a dwarf and not any dwarf, so you know!",
-        ),
-        (
-            "complex",
-            "Introduction!\nMy first sentence. My second sentence.\n\nMy second paragraph.",
-        ),
-        ("edgy", "."),
-        ("full-case", "3 1 2"),
-        ("punctuation", "?\n?"),
-    ],
-    indirect=["doc"],
-)
-def test_correct_chaining(doc, expected):
-    assert str(doc) == expected
-
-
-@pytest.mark.parametrize(
-    "doc, expected",
-    [
-        (
-            "tale",
-            sorted(
-                [
-                    "this",
-                    "is",
-                    "the",
-                    "tale",
-                    "of",
-                    "a",
-                    "dwarf",
-                    "you",
-                    "ask",
-                    "yes",
-                    "and",
-                    "not",
-                    "any",
-                    "so",
-                    "know",
-                ]
-            ),
-        ),
-        (
-            "complex",
-            sorted(["my", "first", "second", "sentence", "introduction", "paragraph"]),
-        ),
-        ("edgy", []),
-        ("full-case", ["1", "2", "3"]),
-        ("punctuation", []),
-    ],
-    indirect=["doc"],
-)
-def test_words_property(doc, expected):
-    assert doc.words == expected
+@pytest.mark.parametrize("arg, expected", [
+   ([MovieRented('Mad Max Fury Road', 4, date(2020, 12, 1))],
+    {"2020-12": "rent"}),
+   ([MovieRented('Mad Max Fury Road', 4, date(2020, 12, 17)),
+     MovieRented('Die Hard', 4, date(2020, 12, 3)),
+     MovieRented('Wonder Woman', 4, date(2020, 12, 28))],
+    {"2020-12": "rent"}),
+   ([MovieRented('Tenet', 20, date(2020, 12, 1))],
+    {"2020-12": "stream"}),
+   ([MovieRented('Breach', 7, date(2020, 11, 17)),
+     MovieRented('Die Hard', 4, date(2020, 11, 3)),
+     MovieRented('Tenet', 20, date(2020, 12, 28))],
+    {"2020-11": "rent", "2020-12": 'stream'}),
+   ([MovieRented('Spider-Man', 12, date(2020, 12, 28)),
+     MovieRented('Sonic', 10, date(2020, 11, 4)),
+     MovieRented('Die Hard', 3, date(2020, 11, 3))],
+    {"2020-11": "stream", "2020-12": 'rent'}),
+])
+def test_rent_or_stream(arg, expected):
+    assert rent_or_stream(arg) == expected
