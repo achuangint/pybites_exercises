@@ -9916,31 +9916,849 @@ Inputs are modified to check how the function deals with unknown characters
 #     assert record.exc_text.endswith(
 #         ('TypeError: not all arguments converted during '
 #          'string formatting'))
-
-from datetime import date
+#
+# from datetime import date
+#
+# import pytest
+#
+# from wc import rent_or_stream, MovieRented
+#
+#
+# @pytest.mark.parametrize("arg, expected", [
+#    ([MovieRented('Mad Max Fury Road', 4, date(2020, 12, 1))],
+#     {"2020-12": "rent"}),
+#    ([MovieRented('Mad Max Fury Road', 4, date(2020, 12, 17)),
+#      MovieRented('Die Hard', 4, date(2020, 12, 3)),
+#      MovieRented('Wonder Woman', 4, date(2020, 12, 28))],
+#     {"2020-12": "rent"}),
+#    ([MovieRented('Tenet', 20, date(2020, 12, 1))],
+#     {"2020-12": "stream"}),
+#    ([MovieRented('Breach', 7, date(2020, 11, 17)),
+#      MovieRented('Die Hard', 4, date(2020, 11, 3)),
+#      MovieRented('Tenet', 20, date(2020, 12, 28))],
+#     {"2020-11": "rent", "2020-12": 'stream'}),
+#    ([MovieRented('Spider-Man', 12, date(2020, 12, 28)),
+#      MovieRented('Sonic', 10, date(2020, 11, 4)),
+#      MovieRented('Die Hard', 3, date(2020, 11, 3))],
+#     {"2020-11": "stream", "2020-12": 'rent'}),
+# ])
+# def test_rent_or_stream(arg, expected):
+#     assert rent_or_stream(arg) == expected
+#
+# import dataclasses
+# import enum
+# import operator
+#
+# import pytest
+#
+# from wc import BiteLevel, create_bites
+#
+# NUMBERS = [101, 1, 97, 2]
+# TITLES = 'f-string,sum numbers,scrape holidays,regex fun'.split(',')
+#
+#
+# @pytest.fixture(scope="module")
+# def some_bites():
+#     return list(create_bites(NUMBERS, TITLES,
+#                              BiteLevel.__members__.values()))
+#
+#
+# def test_bite_level_type():
+#     assert type(BiteLevel) is enum.EnumMeta
+#
+#
+# @pytest.mark.parametrize(
+#     "level, score",
+#     zip(BiteLevel.__members__.keys(), range(1, 5))
+# )
+# def test_bite_level_values(level, score):
+#     assert getattr(BiteLevel, level) == score
+#
+#
+# def test_create_bites_return_objects(some_bites):
+#     assert all(dataclasses.is_dataclass(bite) for bite in some_bites)
+#
+#
+# def test_create_bites_content(some_bites):
+#     assert [b.number for b in some_bites] == NUMBERS
+#     assert [b.title for b in some_bites] == TITLES
+#     assert [b.level for b in some_bites] == list(BiteLevel.__members__.values())
+#
+#
+# def test_create_bites_can_be_sorted(some_bites):
+#     first, *_, last = sorted(some_bites)
+#     assert first.number == 1
+#     assert last.number == 101
+#     first, *_, last = sorted(some_bites, key=operator.attrgetter('level'),
+#                              reverse=True)
+#     assert first.level == BiteLevel.ADVANCED
+#     assert last.level == BiteLevel.INTRO
+#
+# from wc import calc_sums, VALUES
+#
+#
+# EXPECTED = (
+#     ("0.1", "0.2", "0.30"),
+#     ("0.2", "0.3", "0.50"),
+#     ("0.3", "0.005", "0.31"),
+#     ("0.005", "0.005", "0.01"),
+#     ("0.005", "2.67", "2.68"),
+# )
+#
+#
+# def test_calc_sums():
+#     i = 0
+#     for i, line in enumerate(calc_sums(VALUES)):
+#         n1, n2, sum_ = EXPECTED[i]
+#         assert (
+#             line == f"The sum of {n1} and {n2}, rounded to two decimal places, is {sum_}."
+#         )
+#
+#     # Confirm all output was generated
+#     assert i == len(EXPECTED) - 1, "Not all output was generated!"
 
 import pytest
+import ast
 
-from wc import rent_or_stream, MovieRented
+from wc import AstPrinter
+
+CODE_ONE_LINE = """
+one_plus_two = 1+2
+"""
+
+CODE_ONE_LINE_AST = """
+Module()
+   .type_ignores: []
+   .body:
+      Assign()
+         .type_comment: None
+         .targets:
+            Name()
+               .id: 'one_plus_two'
+               .ctx:
+                  Store()
+         .value:
+            BinOp()
+               .left:
+                  Constant()
+                     .kind: None
+                     .value: 1
+               .op:
+                  Add()
+               .right:
+                  Constant()
+                     .kind: None
+                     .value: 2
+"""
+
+CODE_ONE_LINE_AST_NO_EMPTY = """
+Module()
+   .body:
+      Assign()
+         .targets:
+            Name()
+               .id: 'one_plus_two'
+               .ctx:
+                  Store()
+         .value:
+            BinOp()
+               .left:
+                  Constant()
+                     .value: 1
+               .op:
+                  Add()
+               .right:
+                  Constant()
+                     .value: 2
+"""
+
+CODE_TWO_LINES = """
+one_plus_two = 1+2
+one_plus_two+10
+"""
+
+CODE_TWO_LINES_AST = """
+Module()
+   .type_ignores: []
+   .body:
+      Assign()
+         .type_comment: None
+         .targets:
+            Name()
+               .id: 'one_plus_two'
+               .ctx:
+                  Store()
+         .value:
+            BinOp()
+               .left:
+                  Constant()
+                     .kind: None
+                     .value: 1
+               .op:
+                  Add()
+               .right:
+                  Constant()
+                     .kind: None
+                     .value: 2
+      Expr()
+         .value:
+            BinOp()
+               .left:
+                  Name()
+                     .id: 'one_plus_two'
+                     .ctx:
+                        Load()
+               .op:
+                  Add()
+               .right:
+                  Constant()
+                     .kind: None
+                     .value: 10
+"""
+
+CODE_TWO_LINES_AST_NO_EMPTY = """
+Module()
+   .body:
+      Assign()
+         .targets:
+            Name()
+               .id: 'one_plus_two'
+               .ctx:
+                  Store()
+         .value:
+            BinOp()
+               .left:
+                  Constant()
+                     .value: 1
+               .op:
+                  Add()
+               .right:
+                  Constant()
+                     .value: 2
+      Expr()
+         .value:
+            BinOp()
+               .left:
+                  Name()
+                     .id: 'one_plus_two'
+                     .ctx:
+                        Load()
+               .op:
+                  Add()
+               .right:
+                  Constant()
+                     .value: 10
+"""
+
+CODE_MULTI_LINE = """
+a = 0
+print(a)
+
+a = a+2
+print(a)
+
+b = [1,2,3,4,5]
+print(len(b))
+"""
+
+CODE_MULTI_LINE_AST = """
+Module()
+   .type_ignores: []
+   .body:
+      Assign()
+         .type_comment: None
+         .targets:
+            Name()
+               .id: 'a'
+               .ctx:
+                  Store()
+         .value:
+            Constant()
+               .kind: None
+               .value: 0
+      Expr()
+         .value:
+            Call()
+               .keywords: []
+               .args:
+                  Name()
+                     .id: 'a'
+                     .ctx:
+                        Load()
+               .func:
+                  Name()
+                     .id: 'print'
+                     .ctx:
+                        Load()
+      Assign()
+         .type_comment: None
+         .targets:
+            Name()
+               .id: 'a'
+               .ctx:
+                  Store()
+         .value:
+            BinOp()
+               .left:
+                  Name()
+                     .id: 'a'
+                     .ctx:
+                        Load()
+               .op:
+                  Add()
+               .right:
+                  Constant()
+                     .kind: None
+                     .value: 2
+      Expr()
+         .value:
+            Call()
+               .keywords: []
+               .args:
+                  Name()
+                     .id: 'a'
+                     .ctx:
+                        Load()
+               .func:
+                  Name()
+                     .id: 'print'
+                     .ctx:
+                        Load()
+      Assign()
+         .type_comment: None
+         .targets:
+            Name()
+               .id: 'b'
+               .ctx:
+                  Store()
+         .value:
+            List()
+               .ctx:
+                  Load()
+               .elts:
+                  Constant()
+                     .kind: None
+                     .value: 1
+                  Constant()
+                     .kind: None
+                     .value: 2
+                  Constant()
+                     .kind: None
+                     .value: 3
+                  Constant()
+                     .kind: None
+                     .value: 4
+                  Constant()
+                     .kind: None
+                     .value: 5
+      Expr()
+         .value:
+            Call()
+               .keywords: []
+               .args:
+                  Call()
+                     .keywords: []
+                     .args:
+                        Name()
+                           .id: 'b'
+                           .ctx:
+                              Load()
+                     .func:
+                        Name()
+                           .id: 'len'
+                           .ctx:
+                              Load()
+               .func:
+                  Name()
+                     .id: 'print'
+                     .ctx:
+                        Load()
+"""
+
+CODE_MULTI_LINE_AST_NO_EMPTY = """
+Module()
+   .body:
+      Assign()
+         .targets:
+            Name()
+               .id: 'a'
+               .ctx:
+                  Store()
+         .value:
+            Constant()
+               .value: 0
+      Expr()
+         .value:
+            Call()
+               .args:
+                  Name()
+                     .id: 'a'
+                     .ctx:
+                        Load()
+               .func:
+                  Name()
+                     .id: 'print'
+                     .ctx:
+                        Load()
+      Assign()
+         .targets:
+            Name()
+               .id: 'a'
+               .ctx:
+                  Store()
+         .value:
+            BinOp()
+               .left:
+                  Name()
+                     .id: 'a'
+                     .ctx:
+                        Load()
+               .op:
+                  Add()
+               .right:
+                  Constant()
+                     .value: 2
+      Expr()
+         .value:
+            Call()
+               .args:
+                  Name()
+                     .id: 'a'
+                     .ctx:
+                        Load()
+               .func:
+                  Name()
+                     .id: 'print'
+                     .ctx:
+                        Load()
+      Assign()
+         .targets:
+            Name()
+               .id: 'b'
+               .ctx:
+                  Store()
+         .value:
+            List()
+               .ctx:
+                  Load()
+               .elts:
+                  Constant()
+                     .value: 1
+                  Constant()
+                     .value: 2
+                  Constant()
+                     .value: 3
+                  Constant()
+                     .value: 4
+                  Constant()
+                     .value: 5
+      Expr()
+         .value:
+            Call()
+               .args:
+                  Call()
+                     .args:
+                        Name()
+                           .id: 'b'
+                           .ctx:
+                              Load()
+                     .func:
+                        Name()
+                           .id: 'len'
+                           .ctx:
+                              Load()
+               .func:
+                  Name()
+                     .id: 'print'
+                     .ctx:
+                        Load()
+"""
+
+CODE_COMPLEX = """
+import pandas as pd
+import numpy as np
+from argparse import ArgumentParser
+
+print("this is a test")
+
+parser = ArgumentParser()
+len("12345")
+
+df_tmp = pd.DataFrame(range(10), column=['x'])
+df_tmp.loc[:, 'y'] = df_tmp[x] + 1
+
+np.random.random()
+"""
+
+CODE_COMPLEX_AST = """
+Module()
+   .type_ignores: []
+   .body:
+      Import()
+         .names:
+            alias()
+               .asname: 'pd'
+               .name: 'pandas'
+      Import()
+         .names:
+            alias()
+               .asname: 'np'
+               .name: 'numpy'
+      ImportFrom()
+         .level: 0
+         .module: 'argparse'
+         .names:
+            alias()
+               .asname: None
+               .name: 'ArgumentParser'
+      Expr()
+         .value:
+            Call()
+               .keywords: []
+               .args:
+                  Constant()
+                     .kind: None
+                     .value: 'this is a test'
+               .func:
+                  Name()
+                     .id: 'print'
+                     .ctx:
+                        Load()
+      Assign()
+         .type_comment: None
+         .targets:
+            Name()
+               .id: 'parser'
+               .ctx:
+                  Store()
+         .value:
+            Call()
+               .args: []
+               .keywords: []
+               .func:
+                  Name()
+                     .id: 'ArgumentParser'
+                     .ctx:
+                        Load()
+      Expr()
+         .value:
+            Call()
+               .keywords: []
+               .args:
+                  Constant()
+                     .kind: None
+                     .value: '12345'
+               .func:
+                  Name()
+                     .id: 'len'
+                     .ctx:
+                        Load()
+      Assign()
+         .type_comment: None
+         .targets:
+            Name()
+               .id: 'df_tmp'
+               .ctx:
+                  Store()
+         .value:
+            Call()
+               .args:
+                  Call()
+                     .keywords: []
+                     .args:
+                        Constant()
+                           .kind: None
+                           .value: 10
+                     .func:
+                        Name()
+                           .id: 'range'
+                           .ctx:
+                              Load()
+               .func:
+                  Attribute()
+                     .attr: 'DataFrame'
+                     .ctx:
+                        Load()
+                     .value:
+                        Name()
+                           .id: 'pd'
+                           .ctx:
+                              Load()
+               .keywords:
+                  keyword()
+                     .arg: 'column'
+                     .value:
+                        List()
+                           .ctx:
+                              Load()
+                           .elts:
+                              Constant()
+                                 .kind: None
+                                 .value: 'x'
+      Assign()
+         .type_comment: None
+         .targets:
+            Subscript()
+               .ctx:
+                  Store()
+               .slice:
+                  Tuple()
+                     .ctx:
+                        Load()
+                     .elts:
+                        Slice()
+                           .lower: None
+                           .step: None
+                           .upper: None
+                        Constant()
+                           .kind: None
+                           .value: 'y'
+               .value:
+                  Attribute()
+                     .attr: 'loc'
+                     .ctx:
+                        Load()
+                     .value:
+                        Name()
+                           .id: 'df_tmp'
+                           .ctx:
+                              Load()
+         .value:
+            BinOp()
+               .left:
+                  Subscript()
+                     .ctx:
+                        Load()
+                     .slice:
+                        Name()
+                           .id: 'x'
+                           .ctx:
+                              Load()
+                     .value:
+                        Name()
+                           .id: 'df_tmp'
+                           .ctx:
+                              Load()
+               .op:
+                  Add()
+               .right:
+                  Constant()
+                     .kind: None
+                     .value: 1
+      Expr()
+         .value:
+            Call()
+               .args: []
+               .keywords: []
+               .func:
+                  Attribute()
+                     .attr: 'random'
+                     .ctx:
+                        Load()
+                     .value:
+                        Attribute()
+                           .attr: 'random'
+                           .ctx:
+                              Load()
+                           .value:
+                              Name()
+                                 .id: 'np'
+                                 .ctx:
+                                    Load()
+"""
+
+CODE_COMPLEX_AST_NO_EMPTY = """
+Module()
+   .body:
+      Import()
+         .names:
+            alias()
+               .asname: 'pd'
+               .name: 'pandas'
+      Import()
+         .names:
+            alias()
+               .asname: 'np'
+               .name: 'numpy'
+      ImportFrom()
+         .level: 0
+         .module: 'argparse'
+         .names:
+            alias()
+               .name: 'ArgumentParser'
+      Expr()
+         .value:
+            Call()
+               .args:
+                  Constant()
+                     .value: 'this is a test'
+               .func:
+                  Name()
+                     .id: 'print'
+                     .ctx:
+                        Load()
+      Assign()
+         .targets:
+            Name()
+               .id: 'parser'
+               .ctx:
+                  Store()
+         .value:
+            Call()
+               .func:
+                  Name()
+                     .id: 'ArgumentParser'
+                     .ctx:
+                        Load()
+      Expr()
+         .value:
+            Call()
+               .args:
+                  Constant()
+                     .value: '12345'
+               .func:
+                  Name()
+                     .id: 'len'
+                     .ctx:
+                        Load()
+      Assign()
+         .targets:
+            Name()
+               .id: 'df_tmp'
+               .ctx:
+                  Store()
+         .value:
+            Call()
+               .args:
+                  Call()
+                     .args:
+                        Constant()
+                           .value: 10
+                     .func:
+                        Name()
+                           .id: 'range'
+                           .ctx:
+                              Load()
+               .func:
+                  Attribute()
+                     .attr: 'DataFrame'
+                     .ctx:
+                        Load()
+                     .value:
+                        Name()
+                           .id: 'pd'
+                           .ctx:
+                              Load()
+               .keywords:
+                  keyword()
+                     .arg: 'column'
+                     .value:
+                        List()
+                           .ctx:
+                              Load()
+                           .elts:
+                              Constant()
+                                 .value: 'x'
+      Assign()
+         .targets:
+            Subscript()
+               .ctx:
+                  Store()
+               .slice:
+                  Tuple()
+                     .ctx:
+                        Load()
+                     .elts:
+                        Slice()
+                        Constant()
+                           .value: 'y'
+               .value:
+                  Attribute()
+                     .attr: 'loc'
+                     .ctx:
+                        Load()
+                     .value:
+                        Name()
+                           .id: 'df_tmp'
+                           .ctx:
+                              Load()
+         .value:
+            BinOp()
+               .left:
+                  Subscript()
+                     .ctx:
+                        Load()
+                     .slice:
+                        Name()
+                           .id: 'x'
+                           .ctx:
+                              Load()
+                     .value:
+                        Name()
+                           .id: 'df_tmp'
+                           .ctx:
+                              Load()
+               .op:
+                  Add()
+               .right:
+                  Constant()
+                     .value: 1
+      Expr()
+         .value:
+            Call()
+               .func:
+                  Attribute()
+                     .attr: 'random'
+                     .ctx:
+                        Load()
+                     .value:
+                        Attribute()
+                           .attr: 'random'
+                           .ctx:
+                              Load()
+                           .value:
+                              Name()
+                                 .id: 'np'
+                                 .ctx:
+                                    Load()
+"""
 
 
-@pytest.mark.parametrize("arg, expected", [
-   ([MovieRented('Mad Max Fury Road', 4, date(2020, 12, 1))],
-    {"2020-12": "rent"}),
-   ([MovieRented('Mad Max Fury Road', 4, date(2020, 12, 17)),
-     MovieRented('Die Hard', 4, date(2020, 12, 3)),
-     MovieRented('Wonder Woman', 4, date(2020, 12, 28))],
-    {"2020-12": "rent"}),
-   ([MovieRented('Tenet', 20, date(2020, 12, 1))],
-    {"2020-12": "stream"}),
-   ([MovieRented('Breach', 7, date(2020, 11, 17)),
-     MovieRented('Die Hard', 4, date(2020, 11, 3)),
-     MovieRented('Tenet', 20, date(2020, 12, 28))],
-    {"2020-11": "rent", "2020-12": 'stream'}),
-   ([MovieRented('Spider-Man', 12, date(2020, 12, 28)),
-     MovieRented('Sonic', 10, date(2020, 11, 4)),
-     MovieRented('Die Hard', 3, date(2020, 11, 3))],
-    {"2020-11": "stream", "2020-12": 'rent'}),
-])
-def test_rent_or_stream(arg, expected):
-    assert rent_or_stream(arg) == expected
+@pytest.mark.parametrize(
+    "input_code, expected_ast",
+    [
+        (CODE_ONE_LINE, CODE_ONE_LINE_AST),
+        (CODE_TWO_LINES, CODE_TWO_LINES_AST),
+        (CODE_MULTI_LINE, CODE_MULTI_LINE_AST),
+        (CODE_COMPLEX, CODE_COMPLEX_AST),
+    ],
+)
+def test_astprinter(capsys, input_code, expected_ast):
+    tree = ast.parse(input_code)
+    vst = AstPrinter(show_empty=True)
+    vst.visit(tree)
+    captured = capsys.readouterr()
+
+    # applying .strip() on both captured and expected output
+    # to remove empty lines at the beginning and end
+    assert captured.out.strip() == expected_ast.strip()
+
+
+@pytest.mark.parametrize(
+    "input_code, expected_ast",
+    [
+        (CODE_ONE_LINE, CODE_ONE_LINE_AST_NO_EMPTY),
+        (CODE_TWO_LINES, CODE_TWO_LINES_AST_NO_EMPTY),
+        (CODE_MULTI_LINE, CODE_MULTI_LINE_AST_NO_EMPTY),
+        (CODE_COMPLEX, CODE_COMPLEX_AST_NO_EMPTY),
+    ],
+)
+def test_astprinter_no_empty(capsys, input_code, expected_ast):
+    tree = ast.parse(input_code)
+    vst = AstPrinter(show_empty=False)
+    vst.visit(tree)
+    captured = capsys.readouterr()
+
+    # applying .strip() on both captured and expected output
+    # to remove empty lines at the beginning and end
+    assert captured.out.strip() == expected_ast.strip()

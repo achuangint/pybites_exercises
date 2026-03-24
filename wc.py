@@ -9591,39 +9591,399 @@ enumerate through the text by letter
 #
 #     logger.info(f"Input: {numbers} -> output: {total}")
 #     return total
-from datetime import date
-from typing import Dict, Sequence, NamedTuple
-from collections import defaultdict
+# from datetime import date
+# from typing import Dict, Sequence, NamedTuple
+# from collections import defaultdict
+#
+# class MovieRented(NamedTuple):
+#     title: str
+#     price: int
+#     date: date
+#
+#
+# RentingHistory = Sequence[MovieRented]
+# STREAMING_COST_PER_MONTH = 12
+# STREAM, RENT = 'stream', 'rent'
+#
+#
+# def rent_or_stream(
+#     renting_history: RentingHistory,
+#     streaming_cost_per_month: int = STREAMING_COST_PER_MONTH
+# ) -> Dict[str, str]:
+#     """Function that calculates if renting movies one by one is
+#        cheaper than streaming movies by months.
+#
+#        Determine this PER MONTH for the movies in renting_history.
+#
+#        Return a dict of:
+#        keys = months (YYYY-MM)
+#        values = 'rent' or 'stream' based on what is cheaper
+#
+#        Check out the tests for examples.
+#     """
+#
+#     monthly_cost=defaultdict(int)
+#     for movie in renting_history:
+#         year_month=f"{movie.date.year}-{movie.date.month}"
+#         monthly_cost[year_month]+=movie.price
+#     return {key: ( STREAM if val > 12 else RENT ) for key,val in monthly_cost.items()}
+# from dataclasses import dataclass
+# import enum
+# from typing import List  # TODO: can remove >= 3.9
+#
+#
+# # 1. make a BiteLevel enum class
+# # keys = INTRO BEGINNER INTERMEDIATE ADVANCED
+# # values = 1 2 3 4
+# # make sure they can be sorted by int value
+#
+# from enum import IntEnum, auto
+# from dataclasses import dataclass
+#
+#
+# class BiteLevel (IntEnum):
+#     INTRO = auto()
+#     BEGINNER = auto()
+#     INTERMEDIATE = auto()
+#     ADVANCED = auto()
+#
+# # 2. make a dataclass that can be ordered
+# # attributes: number (int), title (str), level (BiteLevel)
+#
+# @dataclass(order=True)
+# class Bite:
+#     number:int
+#     title:str
+#     level:BiteLevel
+#
+#
+#
+# # 3. complete the function below
+#
+# def create_bites(numbers: List[int], titles: List[str],
+#                  levels: List[BiteLevel]):
+#     """Generate a generator of Bite dataclass objects"""
+#     return (Bite(number,title,level) for number, title, level in zip(numbers, titles, levels))
 
-class MovieRented(NamedTuple):
-    title: str
-    price: int
-    date: date
+#
+# from typing import Generator
+# import json
+# from itertools import pairwise
+# import decimal
+#
+# VALUES = "[0.1, 0.2, 0.3, 0.005, 0.005, 2.67]"
+#
+# decimal.getcontext().prec = 6
+# decimal.getcontext().rounding=decimal.ROUND_HALF_UP
+# # convert values from string to a list
+#
+#
+# def calc_sums(values: str = VALUES) -> Generator[str, None, None]:
+#     """
+#     Process the above JSON-encoded string of values and calculate the sum of each adjacent pair.
+#
+#     The output should be a generator that produces a string that recites the calculation for each pair, for example:
+#
+#         'The sum of 0.1 and 0.2, rounded to two decimal places, is 0.3.'
+#     """
+#     values_json = json.loads(values)
+#     for n1, n2 in pairwise(values_json):
+#         sum_ = decimal.Decimal(n1) + decimal.Decimal(n2)
+#         yield f"The sum of {n1:} and {n2}, rounded to two decimal places, is {sum_:.2f}."
+#
+# import ast
+#
+# code = """
+# x = 10 + 5
+# def greet(name):
+#     return f"Hello, {name}!"
+# """
+# tree = ast.parse(code)
+#
+# for node in ast.walk(tree):
+#     print(type(node).__name__)
 
 
-RentingHistory = Sequence[MovieRented]
-STREAMING_COST_PER_MONTH = 12
-STREAM, RENT = 'stream', 'rent'
 
 
-def rent_or_stream(
-    renting_history: RentingHistory,
-    streaming_cost_per_month: int = STREAMING_COST_PER_MONTH
-) -> Dict[str, str]:
-    """Function that calculates if renting movies one by one is
-       cheaper than streaming movies by months.
+import ast
 
-       Determine this PER MONTH for the movies in renting_history.
+from typing import Any, Dict
 
-       Return a dict of:
-       keys = months (YYYY-MM)
-       values = 'rent' or 'stream' based on what is cheaper
 
-       Check out the tests for examples.
-    """
+class AstPrinter(ast.NodeVisitor):
+    def __init__(self, show_empty: bool = True) -> None:
+        """Initialize the object
 
-    monthly_cost=defaultdict(int)
-    for movie in renting_history:
-        year_month=f"{movie.date.year}-{movie.date.month}"
-        monthly_cost[year_month]+=movie.price
-    return {key: ( STREAM if val > 12 else RENT ) for key,val in monthly_cost.items()}
+        Arguments:
+        - show_empty: when is True do not show nodes that are None,
+             are empty lists, are empty string
+        """
+
+        super().__init__()
+        self.SHOW_EMTPY = show_empty
+        self.spacing = 3
+        self.current_level = 0
+
+    def _is_node(self, obj: Any) -> bool:
+        """return True if obj is an ast.AST object"""
+        return isinstance(obj, ast.AST)
+
+    def _is_list_of_nodes(self, obj: Any) -> bool:
+        """return True if obj is a list ast.AST objects"""
+        return isinstance(obj, list) and len(obj) > 0 and self._is_node(obj[0])
+
+    def _get_name(self, obj: Any) -> str:
+        """return obj class name"""
+        return obj.__class__.__name__
+
+    def _is_empty(self, obj: Any) -> bool:
+        """return True if obj is an empty list, empty string, or None"""
+        return (isinstance(obj, list) and len(obj) == 0) or obj == "" or obj is None
+
+    def _get_attrs(self, node: ast.AST) -> Dict[str, Any]:
+        """look simple attributes, and returns them as a dictionary where
+        key is the attribute name, and value the attribute value
+        """
+        d = {}
+        for attr_name, attr_value in ast.iter_fields(node):
+            if (
+                not self._is_node(attr_value)
+                and not self._is_list_of_nodes(attr_value)
+                and (self.SHOW_EMTPY or not self._is_empty(attr_value))
+            ):
+                d[attr_name] = attr_value
+
+        return d
+
+    def _get_children(self, node: ast.AST) -> Dict[str, Any]:
+        """look for attributes being either nodes, or list of nodes,
+        and returns them as a dictionary where key is the attribute name,
+        and value the attribute value
+        """
+        d = {}
+        for attr_name, attr_value in ast.iter_fields(node):
+            if self._is_node(attr_value) or self._is_list_of_nodes(attr_value):
+                d[attr_name] = attr_value
+        return d
+
+    def _current_indent(self):
+        return ' ' * self.spacing * self.current_level
+
+    def generic_visit(self, node):
+        children_nodes = dict(sorted(self._get_children(node).items()))
+        for key, child in children_nodes.items():
+            print(f"{self._current_indent()}.{key}:")
+            self.current_level += 1
+            if self._is_node(child):
+                self.visit(child)
+            else:
+                for c in child:
+                    self.visit(c)
+            self.current_level -= 1
+
+
+    def visit(self, node):
+        """trigger visit"""
+
+        # define your logic to print the content of the tree
+        #
+        # you can use self._get_attrs() and self._get_children() to
+        # separate the attributes in the two required types
+        print(f"{self._current_indent()}{self._get_name(node)}()")
+
+        attribute_nodes = dict(sorted(self._get_attrs(node).items()))
+        children_nodes = dict(sorted(self._get_children(node).items()))
+
+        self.current_level += 1
+        if attribute_nodes:
+            for key, val in attribute_nodes.items():
+                print(f"{self._current_indent()}.{key}: {repr(val)}")
+
+        if children_nodes:
+            self.generic_visit(node)
+        self.current_level -= 1
+
+
+if __name__ == "__main__":
+    code = """
+one_plus_two = 1+2
+one_plus_two+10
+"""
+    tree = ast.parse(code)
+    vst = AstPrinter(show_empty=False)
+    vst.visit(tree)
+
+### Solution:
+# import ast
+#
+# from typing import Any, Dict
+#
+#
+# class AstPrinter(ast.NodeVisitor):
+#     def __init__(self, show_empty: bool = True) -> None:
+#         """Initialize the object
+#
+#         Arguments:
+#         - show_empty: when is True do not show nodes that are None,
+#              are empty lists, are empty string
+#         """
+#
+#         super().__init__()
+#         self.SHOW_EMTPY = show_empty
+#
+#     def _is_node(self, obj: Any) -> bool:
+#         """return True if obj is an ast.AST object"""
+#         return isinstance(obj, ast.AST)
+#
+#     def _is_list_of_nodes(self, obj: Any) -> bool:
+#         """return True if obj is a list ast.AST objects"""
+#         return isinstance(obj, list) and len(obj) > 0 and self._is_node(obj[0])
+#
+#     def _get_name(self, obj: Any) -> str:
+#         """return obj class name"""
+#         return obj.__class__.__name__
+#
+#     def _is_empty(self, obj: Any) -> bool:
+#         """return True if obj is an empty list, empty string, or None"""
+#         return (isinstance(obj, list) and len(obj) == 0) or obj == "" or obj is None
+#
+#     def _get_attrs(self, node: ast.AST) -> Dict[str, Any]:
+#         """look simple attributes, and returns them as a dictionary where
+#         key is the attribute name, and value the attribute value
+#         """
+#         d = {}
+#         for attr_name, attr_value in ast.iter_fields(node):
+#             if (
+#                 not self._is_node(attr_value)
+#                 and not self._is_list_of_nodes(attr_value)
+#                 and (self.SHOW_EMTPY or not self._is_empty(attr_value))
+#             ):
+#                 d[attr_name] = attr_value
+#
+#         return d
+#
+#     def _get_children(self, node: ast.AST) -> Dict[str, Any]:
+#         """look for attributes being either nodes, or list of nodes,
+#         and returns them as a dictionary where key is the attribute name,
+#         and value the attribute value
+#         """
+#         d = {}
+#         for attr_name, attr_value in ast.iter_fields(node):
+#             if self._is_node(attr_value) or self._is_list_of_nodes(attr_value):
+#                 d[attr_name] = attr_value
+#         return d
+#
+#     # showing this alternate version just for the fun of it
+#     # and for comparison with the recursive version
+#     def _visit_no_recursion(self, node):
+#
+#         # a list to be used as a stack
+#         stack = [node]
+#
+#         prefix = ""
+#         while stack:
+#             obj = stack.pop(0)
+#
+#             if self._is_node(obj):
+#                 # the object on top of the stack is a node
+#                 name = self._get_name(obj)
+#                 d_attrs = self._get_attrs(obj)
+#                 d_children = self._get_children(obj)
+#
+#                 print(f"{prefix}{name}()")
+#
+#                 # signal that we indented
+#                 stack.insert(0, "INDENT")
+#                 prefix += " " * 3
+#
+#                 for attr_name, attr_value in sorted(d_attrs.items()):
+#                     print(f"{prefix}.{attr_name}: {repr(attr_value)}")
+#
+#                 # pushing into the stack the remaining attributes
+#                 stack.insert(0, d_children)
+#
+#             elif isinstance(obj, dict):
+#                 # the object on top of the stack is a dict of attributes
+#                 d = obj
+#                 if d:
+#                     l = sorted(d.items())
+#                     attr_name, obj_attr = l.pop(0)
+#                     print(f"{prefix}.{attr_name}:")
+#                     prefix += " " * 3
+#
+#                     stack.insert(0, dict(l))
+#
+#                     # signal that we indented
+#                     stack.insert(0, "INDENT")
+#
+#                     if self._is_node(obj_attr):
+#                         stack.insert(0, obj_attr)
+#                     else:
+#                         # when the attribute is a list of nodes
+#                         # we need to push into the stack in reverse order
+#                         for el in obj_attr[::-1]:
+#                             stack.insert(0, el)
+#
+#             elif obj == "INDENT":
+#                 # drop indentation
+#                 prefix = prefix[:-3]
+#
+#     def _visit(self, node, prefix=""):
+#         """handle recursive visit"""
+#         d_attrs = self._get_attrs(node)
+#         d_children = self._get_children(node)
+#
+#         name = self._get_name(node)
+#
+#         print(f"{prefix}{name}()")
+#
+#         prefix += " " * 3
+#
+#         for attr_name, attr_value in sorted(d_attrs.items()):
+#             print(f"{prefix}.{attr_name}: {repr(attr_value)}")
+#
+#         for child_name, child_value in sorted(d_children.items()):
+#             s = f"{prefix}.{child_name}:"
+#             print(s)
+#             if self._is_node(child_value):
+#                 self._visit(child_value, prefix + " " * 3)
+#
+#             else:
+#                 for child in child_value:
+#                     self._visit(child, prefix + " " * 3)
+#
+#     def visit(self, node):
+#         """trigger visit"""
+#         self._visit(node)
+#
+#
+# if __name__ == "__main__":
+#     code = """
+# one_plus_two = 1+2
+# one_plus_two+10
+# """
+#     tree = ast.parse(code)
+#     vst = AstPrinter(show_empty=False)
+#     vst.visit(tree)
+#
+#
+#     def visit(self, node, level=0):
+#         """trigger visit"""
+#
+#         def indent_print(s, level):
+#             INDENT = "   "
+#             print(f'{INDENT * level}{s}')
+#
+#         indent_print(self._get_name(node) + '()', level)
+#
+#         for name, val in sorted(self._get_attrs(node).items()):
+#             indent_print(f".{name}: {repr(val)}", level + 1)
+#
+#         for name, val in sorted(self._get_children(node).items()):
+#             indent_print(f".{name}:", level + 1)
+#             if self._is_node(val):
+#                 self.visit(val, level + 2)
+#             elif self._is_list_of_nodes(val):
+#                 for node in val:
+#                     self.visit(node, level + 2)
