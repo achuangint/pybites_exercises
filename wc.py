@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import sys
 from sys import exc_info
 
 from sqlalchemy import true
@@ -9985,48 +9986,92 @@ enumerate through the text by letter
 # #             elif self._is_list_of_nodes(val):
 # #                 for node in val:
 # #                     self.visit(node, level + 2)
-from typing import List
+# from typing import List
+#
+# EAST = "E"
+# WEST = "W"
+#
+#
+# def search_apartment(buildings: List[int], direction: str) -> List[int]:
+#     """
+#     Find and return the indices of those building with
+#     the desired view: EAST (E) or WEST (W).
+#
+#     See sample inputs / outputs below and in the tests.
+#     """
+#     view_list = []
+#     if direction=='W':
+#         starting_position=0
+#     else:
+#         starting_position=len(buildings)-1
+#     current_max = buildings[starting_position]
+#     view_list.append(0)
+#
+#     if direction=='E':
+#         buildings=buildings[::-1]
+#
+#     for index, building in enumerate(buildings):
+#         if building > current_max:
+#             view_list.append(index)
+#             current_max=building
+#
+#     if direction == 'W':
+#         return view_list
+#     else:
+#         return [len(buildings)-1-i for i in view_list][::-1]
+#
+#
+# if __name__ == "__main__":
+#     A = [3, 5, 4, 4, 7, 1, 3, 2]  # central tallest
+#     B = [1, 1, 1, 1, 1, 2]  # almost flat
+#     #
+#     #  W <-                    ->  E(ast)
+#     #
+#     # print(search_apartment(A, "W"))  # [0, 1, 4]
+#     print(search_apartment(A, "E"))  # [4, 6, 7]
+#     # print(search_apartment(B, "W"))  # [0, 5]
+#     # print(search_apartment(B, "E"))  # [5]
+#
+# import socket
+#
+# HOST = "127.0.0.1"  # Standard loopback interface address (localhost)
+# PORT = 65432  # Port to listen on (non-privileged ports are > 1023)
+#
+# with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+#     s.bind((HOST, PORT))
+#     s.listen()
+#     conn, addr = s.accept()
+#     with conn:
+#         print(f"Connected by {addr}")
+#         while True:
+#             data = conn.recv(1024)
+#             if not data:
+#                 break
+#             conn.sendall(data)
 
-EAST = "E"
-WEST = "W"
 
 
-def search_apartment(buildings: List[int], direction: str) -> List[int]:
-    """
-    Find and return the indices of those building with
-    the desired view: EAST (E) or WEST (W).
-
-    See sample inputs / outputs below and in the tests.
-    """
-    view_list = []
-    if direction=='W':
-        starting_position=0
-    else:
-        starting_position=len(buildings)-1
-    current_max = buildings[starting_position]
-    view_list.append(0)
-
-    if direction=='E':
-        buildings=buildings[::-1]
-
-    for index, building in enumerate(buildings):
-        if building > current_max:
-            view_list.append(index)
-            current_max=building
-
-    if direction == 'W':
-        return view_list
-    else:
-        return [len(buildings)-1-i for i in view_list][::-1]
+import sys
+import socket
+from contextlib import suppress
+from hashlib import sha256
+from socket import socket, AF_INET, SOCK_STREAM
+from typing import Tuple
 
 
-if __name__ == "__main__":
-    A = [3, 5, 4, 4, 7, 1, 3, 2]  # central tallest
-    B = [1, 1, 1, 1, 1, 2]  # almost flat
-    #
-    #  W <-                    ->  E(ast)
-    #
-    # print(search_apartment(A, "W"))  # [0, 1, 4]
-    print(search_apartment(A, "E"))  # [4, 6, 7]
-    # print(search_apartment(B, "W"))  # [0, 5]
-    # print(search_apartment(B, "E"))  # [5]
+def socket_client(address: Tuple[str, int], server_message_length: int):
+    with socket(AF_INET, SOCK_STREAM) as s:
+        s.connect(address)
+        try:
+            while True:
+                data = s.recv(server_message_length)
+                s.sendall(sha256(data).digest())
+                if not data:
+                    break
+        except (socket.timeout, TimeoutError):
+            pass
+        except (ConnectionResetError, ConnectionAbortedError):
+            pass
+        finally:
+            s.close()
+            sys.exit(0)
