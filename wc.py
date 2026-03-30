@@ -9479,6 +9479,8 @@ enumerate through the text by letter
 #     print(d.word_count())
 #     print(d.words)
 #
+
+#
 # from typing import Dict, List
 # import keyword
 # import sys
@@ -9509,9 +9511,11 @@ enumerate through the text by letter
 #
 # get_score('None', scores)
 #
-#
-# my_list = ['hashlib', 'base64', 'nonlocal']
+# my_list = ['object']
 # print(score_objects(my_list))
+
+
+
 
 #
 # import re
@@ -10050,28 +10054,60 @@ enumerate through the text by letter
 #             conn.sendall(data)
 
 
+#
+# import sys
+# import socket
+# from contextlib import suppress
+# from hashlib import sha256
+# from socket import socket, AF_INET, SOCK_STREAM
+# from typing import Tuple
+#
+#
+# def socket_client(address: Tuple[str, int], server_message_length: int):
+#     with socket(AF_INET, SOCK_STREAM) as s:
+#         s.connect(address)
+#         try:
+#             while True:
+#                 data = s.recv(server_message_length)
+#                 s.sendall(sha256(data).digest())
+#                 if not data:
+#                     break
+#         except (socket.timeout, TimeoutError):
+#             pass
+#         except (ConnectionResetError, ConnectionAbortedError):
+#             pass
+#         finally:
+#             s.close()
+#             sys.exit(0)
 
-import sys
-import socket
-from contextlib import suppress
-from hashlib import sha256
-from socket import socket, AF_INET, SOCK_STREAM
-from typing import Tuple
+import asyncio
+from typing import Iterable, NamedTuple
+import aiohttp
 
 
-def socket_client(address: Tuple[str, int], server_message_length: int):
-    with socket(AF_INET, SOCK_STREAM) as s:
-        s.connect(address)
-        try:
-            while True:
-                data = s.recv(server_message_length)
-                s.sendall(sha256(data).digest())
-                if not data:
-                    break
-        except (socket.timeout, TimeoutError):
-            pass
-        except (ConnectionResetError, ConnectionAbortedError):
-            pass
-        finally:
-            s.close()
-            sys.exit(0)
+class Result(NamedTuple):
+    status_code: int
+    content: int
+
+async def fetch(url):
+    async with aiohttp.ClientSession() as session:
+        async with session.get(url) as resp:
+            if resp.status == 200:
+                new_result = Result(status_code=resp.status, content=int(await resp.text()))
+            else:
+                new_result = Result(status_code=resp.status, content=0)
+        return new_result
+
+async def get_results_from_urls(address: str, port: int, slugs: list) -> Iterable[Result]:
+    """Get results from http responses.
+
+     Get responses by making requests to urls.
+     Construct url like this: {address}:{port}/{slug}, where address and port are constant, but slug changes.
+     Result.status_code is status code of response.
+     Result.content is content of response if status_code is 200, otherwise it is 0.
+     Results must be ordered according to the order of slugs in list and their respective responses.
+     Requests must be sent in a asynchronous way. (Can not be sequential and blocking.)
+     """
+    complete_urls=[ f"{address}:{port}/{slug}" for slug in slugs]
+    tasks = [asyncio.create_task(fetch(url)) for url in complete_urls]
+    return await asyncio.gather(*tasks)

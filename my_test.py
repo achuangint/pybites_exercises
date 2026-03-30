@@ -9792,7 +9792,7 @@ Inputs are modified to check how the function deals with unknown characters
 # ])
 # def test_score_objects(arg, expected):
 #     assert score_objects(arg) == expected
-#
+
 #
 # import pytest
 #
@@ -10786,122 +10786,227 @@ Inputs are modified to check how the function deals with unknown characters
 # )
 # def test_search_apartment(buildings, direction, expected):
 #     assert search_apartment(buildings, direction) == expected
-
-import time
+#
+# import time
+# from multiprocessing import Process
+# from hashlib import sha256
+# from secrets import token_bytes
+# from socket import socket, AF_INET, SOCK_STREAM, SHUT_RDWR
+#
+# import pytest
+#
+# from wc import socket_client
+#
+# SERVER_MESSAGE_LENGTH = 500
+# SERVER_SOCKET_TIMEOUT = 1
+# PROCESS_SLEEP_TIME = 0.1
+#
+#
+# def do_server_operation(socket_for_incoming_connection):
+#     data = token_bytes(SERVER_MESSAGE_LENGTH)
+#     socket_for_incoming_connection.sendall(data)
+#     expected_response = sha256(data).digest()
+#
+#     response = socket_for_incoming_connection.recv(32)
+#
+#     assert expected_response == response, "Incorrect response."
+#
+#
+# def start_client(address):
+#     # To give server time to start before client.
+#     time.sleep(PROCESS_SLEEP_TIME)
+#     socket_client(address, SERVER_MESSAGE_LENGTH)
+#
+#
+# @pytest.fixture
+# def server_socket():
+#     with socket(AF_INET, SOCK_STREAM) as server_socket:
+#
+#         for port in range(49_152, 65_535):
+#             server_address = ("localhost", port)
+#             try:
+#                 server_socket.bind(server_address)
+#                 break
+#             except OSError:
+#                 # Port is already in use.
+#                 continue
+#         else:
+#             raise Exception("Unable to assign port to the server. Test setup problem.")
+#
+#         server_socket.settimeout(SERVER_SOCKET_TIMEOUT)
+#         server_socket.listen()
+#
+#         yield server_socket
+#
+#
+# @pytest.fixture
+# def connected_client(server_socket):
+#     client_process = Process(target=start_client, args=(server_socket.getsockname(),))
+#     client_process.start()
+#
+#     socket_for_incoming_connection, client_address = server_socket.accept()
+#     socket_for_incoming_connection.settimeout(SERVER_SOCKET_TIMEOUT)
+#
+#     yield socket_for_incoming_connection, client_process
+#
+#     client_process.kill()
+#
+#
+# def test_client_waiting_for_server(connected_client):
+#     """Client does not close right away if server has short delay."""
+#     socket_for_incoming_connection, client_process = connected_client
+#     time.sleep(PROCESS_SLEEP_TIME)
+#     assert client_process.exitcode is None, "Client does not wait for server and exited already."
+#
+#
+# def test_server_closed_connection_client_exited(connected_client):
+#     """Closing server before sending payload."""
+#     socket_for_incoming_connection, client_process = connected_client
+#
+#     socket_for_incoming_connection.shutdown(SHUT_RDWR)
+#     socket_for_incoming_connection.close()
+#     time.sleep(PROCESS_SLEEP_TIME)
+#
+#     assert client_process.exitcode is not None, "Client is still running even after server sent b"" closing message."
+#
+#
+# def test_server_closed_connection_client_exited_correctly(connected_client):
+#     """Closing server after sending payload, but not waiting for response."""
+#     socket_for_incoming_connection, client_process = connected_client
+#     data = token_bytes(SERVER_MESSAGE_LENGTH)
+#     socket_for_incoming_connection.sendall(data)
+#
+#     socket_for_incoming_connection.shutdown(SHUT_RDWR)
+#     socket_for_incoming_connection.close()
+#     time.sleep(PROCESS_SLEEP_TIME)
+#
+#     assert client_process.exitcode == 0, "Client exitcode indicates error."
+#
+#
+# def test_client_at_least_responded(connected_client, server_socket):
+#     """Client is at least capable of responding."""
+#     socket_for_incoming_connection, client_process = connected_client
+#
+#     socket_for_incoming_connection.sendall(token_bytes(SERVER_MESSAGE_LENGTH))
+#     response = socket_for_incoming_connection.recv(32)
+#
+#     assert response, "No response from client."
+#
+#
+# def test_client_responded_with_correct_hash(connected_client, server_socket):
+#     """Client correctly responds."""
+#     socket_for_incoming_connection, client_process = connected_client
+#     do_server_operation(socket_for_incoming_connection)
+#
+#
+# def test_client_server_conversation(connected_client, server_socket):
+#     """Client can operate for several iterations."""
+#     socket_for_incoming_connection, client_process = connected_client
+#
+#     for _ in range(5):
+#         do_server_operation(socket_for_incoming_connection)
+import asyncio
+from inspect import iscoroutinefunction
 from multiprocessing import Process
-from hashlib import sha256
-from secrets import token_bytes
-from socket import socket, AF_INET, SOCK_STREAM, SHUT_RDWR
+from asyncio import sleep
+from time import sleep as blocking_sleep, time
+from random import sample
 
+from aiohttp import web
 import pytest
 
-from wc import socket_client
+from wc import get_results_from_urls
 
-SERVER_MESSAGE_LENGTH = 500
-SERVER_SOCKET_TIMEOUT = 1
-PROCESS_SLEEP_TIME = 0.1
-
-
-def do_server_operation(socket_for_incoming_connection):
-    data = token_bytes(SERVER_MESSAGE_LENGTH)
-    socket_for_incoming_connection.sendall(data)
-    expected_response = sha256(data).digest()
-
-    response = socket_for_incoming_connection.recv(32)
-
-    assert expected_response == response, "Incorrect response."
+MAX_SLUG = 99
+RESPONSE_DELAY_S = 0.1
+ADDRESS = "http://localhost"
 
 
-def start_client(address):
-    # To give server time to start before client.
-    time.sleep(PROCESS_SLEEP_TIME)
-    socket_client(address, SERVER_MESSAGE_LENGTH)
+@pytest.fixture(scope="module")
+def response_map():
+    return {key: random_value for key, random_value in enumerate(sample(range(1000), MAX_SLUG + 1))}
 
 
-@pytest.fixture
-def server_socket():
-    with socket(AF_INET, SOCK_STREAM) as server_socket:
+def async_http_test_server(port, response_map):
+    async def handle(request):
+        try:
+            slug = int(request.match_info.get('slug'))
+        except ValueError:
+            return web.HTTPNotFound()
 
-        for port in range(49_152, 65_535):
-            server_address = ("localhost", port)
-            try:
-                server_socket.bind(server_address)
-                break
-            except OSError:
-                # Port is already in use.
-                continue
+        if 0 <= slug <= MAX_SLUG:
+            await sleep(RESPONSE_DELAY_S)
+            return web.Response(text=str(response_map[slug]))
+
+        return web.HTTPNotFound()
+
+    app = web.Application()
+    app.add_routes([web.get('/{slug}', handle), ])
+    web.run_app(app, host="localhost", port=port)
+
+
+@pytest.fixture(scope="module")
+def servers_port(response_map):
+    for port in range(49_152, 65_535):
+        server_process = Process(target=async_http_test_server, args=(port, response_map))
+        server_process.start()
+        blocking_sleep(1)  # See if server starts up on requested port.
+        if server_process.exitcode is None:
+            break
+    else:
+        raise Exception("Test setup error. Could not start test server.")
+
+    yield port
+
+    server_process.kill()
+
+
+def test_if_async_function():
+    assert iscoroutinefunction(get_results_from_urls), "In this exercise http_client has to be coroutine function!"
+
+
+def test_simple_responses_unordered(response_map, servers_port):
+    """At least correct responses. Order not relevant."""
+    slug_list = [0, 10, 99]
+    responses = asyncio.run(get_results_from_urls(ADDRESS, servers_port, slug_list))
+    for slug, response in zip(slug_list, responses):
+        if slug in response_map:
+            assert (200, response_map[slug]) in responses
         else:
-            raise Exception("Unable to assign port to the server. Test setup problem.")
-
-        server_socket.settimeout(SERVER_SOCKET_TIMEOUT)
-        server_socket.listen()
-
-        yield server_socket
+            assert (404, 0) in responses
 
 
-@pytest.fixture
-def connected_client(server_socket):
-    client_process = Process(target=start_client, args=(server_socket.getsockname(),))
-    client_process.start()
-
-    socket_for_incoming_connection, client_address = server_socket.accept()
-    socket_for_incoming_connection.settimeout(SERVER_SOCKET_TIMEOUT)
-
-    yield socket_for_incoming_connection, client_process
-
-    client_process.kill()
+def test_simple_responses_ordered(response_map, servers_port):
+    """Correct responses in correct order."""
+    slug_list = [0, 10, 99]
+    responses = asyncio.run(get_results_from_urls(ADDRESS, servers_port, slug_list))
+    compare_responses(responses, slug_list, response_map)
 
 
-def test_client_waiting_for_server(connected_client):
-    """Client does not close right away if server has short delay."""
-    socket_for_incoming_connection, client_process = connected_client
-    time.sleep(PROCESS_SLEEP_TIME)
-    assert client_process.exitcode is None, "Client does not wait for server and exited already."
+def test_out_of_range_responses(response_map, servers_port):
+    """Properly handles 404 responses."""
+    slug_list = [-1, 100]
+    responses = asyncio.run(get_results_from_urls(ADDRESS, servers_port, slug_list))
+    compare_responses(responses, slug_list, response_map)
 
 
-def test_server_closed_connection_client_exited(connected_client):
-    """Closing server before sending payload."""
-    socket_for_incoming_connection, client_process = connected_client
-
-    socket_for_incoming_connection.shutdown(SHUT_RDWR)
-    socket_for_incoming_connection.close()
-    time.sleep(PROCESS_SLEEP_TIME)
-
-    assert client_process.exitcode is not None, "Client is still running even after server sent b"" closing message."
-
-
-def test_server_closed_connection_client_exited_correctly(connected_client):
-    """Closing server after sending payload, but not waiting for response."""
-    socket_for_incoming_connection, client_process = connected_client
-    data = token_bytes(SERVER_MESSAGE_LENGTH)
-    socket_for_incoming_connection.sendall(data)
-
-    socket_for_incoming_connection.shutdown(SHUT_RDWR)
-    socket_for_incoming_connection.close()
-    time.sleep(PROCESS_SLEEP_TIME)
-
-    assert client_process.exitcode == 0, "Client exitcode indicates error."
+def test_time_for_all_responses(response_map, servers_port):
+    """Demonstrates full potential of asynchronous requests."""
+    slug_list = list(range(MAX_SLUG + 1))
+    start_time = time()
+    responses = asyncio.run(get_results_from_urls(ADDRESS, servers_port, slug_list))
+    duration = time() - start_time
+    compare_responses(responses, slug_list, response_map)
+    assert duration < 5 * RESPONSE_DELAY_S
 
 
-def test_client_at_least_responded(connected_client, server_socket):
-    """Client is at least capable of responding."""
-    socket_for_incoming_connection, client_process = connected_client
+def compare_responses(responses, slug_list, response_map):
+    assert len(responses) == len(slug_list)
 
-    socket_for_incoming_connection.sendall(token_bytes(SERVER_MESSAGE_LENGTH))
-    response = socket_for_incoming_connection.recv(32)
-
-    assert response, "No response from client."
-
-
-def test_client_responded_with_correct_hash(connected_client, server_socket):
-    """Client correctly responds."""
-    socket_for_incoming_connection, client_process = connected_client
-    do_server_operation(socket_for_incoming_connection)
-
-
-def test_client_server_conversation(connected_client, server_socket):
-    """Client can operate for several iterations."""
-    socket_for_incoming_connection, client_process = connected_client
-
-    for _ in range(5):
-        do_server_operation(socket_for_incoming_connection)
+    for slug, response in zip(slug_list, responses):
+        if slug in response_map:
+            assert response.status_code == 200
+            assert response.content == response_map[slug]
+        else:
+            assert response.status_code == 404
+            assert response.content == 0
