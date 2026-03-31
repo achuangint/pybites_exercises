@@ -10905,108 +10905,430 @@ Inputs are modified to check how the function deals with unknown characters
 #
 #     for _ in range(5):
 #         do_server_operation(socket_for_incoming_connection)
-import asyncio
-from inspect import iscoroutinefunction
-from multiprocessing import Process
-from asyncio import sleep
-from time import sleep as blocking_sleep, time
-from random import sample
+# import asyncio
+# from inspect import iscoroutinefunction
+# from multiprocessing import Process
+# from asyncio import sleep
+# from time import sleep as blocking_sleep, time
+# from random import sample
+#
+# from aiohttp import web
+# import pytest
+#
+# from wc import get_results_from_urls
+#
+# MAX_SLUG = 99
+# RESPONSE_DELAY_S = 0.1
+# ADDRESS = "http://localhost"
+#
+#
+# @pytest.fixture(scope="module")
+# def response_map():
+#     return {key: random_value for key, random_value in enumerate(sample(range(1000), MAX_SLUG + 1))}
+#
+#
+# def async_http_test_server(port, response_map):
+#     async def handle(request):
+#         try:
+#             slug = int(request.match_info.get('slug'))
+#         except ValueError:
+#             return web.HTTPNotFound()
+#
+#         if 0 <= slug <= MAX_SLUG:
+#             await sleep(RESPONSE_DELAY_S)
+#             return web.Response(text=str(response_map[slug]))
+#
+#         return web.HTTPNotFound()
+#
+#     app = web.Application()
+#     app.add_routes([web.get('/{slug}', handle), ])
+#     web.run_app(app, host="localhost", port=port)
+#
+#
+# @pytest.fixture(scope="module")
+# def servers_port(response_map):
+#     for port in range(49_152, 65_535):
+#         server_process = Process(target=async_http_test_server, args=(port, response_map))
+#         server_process.start()
+#         blocking_sleep(1)  # See if server starts up on requested port.
+#         if server_process.exitcode is None:
+#             break
+#     else:
+#         raise Exception("Test setup error. Could not start test server.")
+#
+#     yield port
+#
+#     server_process.kill()
+#
+#
+# def test_if_async_function():
+#     assert iscoroutinefunction(get_results_from_urls), "In this exercise http_client has to be coroutine function!"
+#
+#
+# def test_simple_responses_unordered(response_map, servers_port):
+#     """At least correct responses. Order not relevant."""
+#     slug_list = [0, 10, 99]
+#     responses = asyncio.run(get_results_from_urls(ADDRESS, servers_port, slug_list))
+#     for slug, response in zip(slug_list, responses):
+#         if slug in response_map:
+#             assert (200, response_map[slug]) in responses
+#         else:
+#             assert (404, 0) in responses
+#
+#
+# def test_simple_responses_ordered(response_map, servers_port):
+#     """Correct responses in correct order."""
+#     slug_list = [0, 10, 99]
+#     responses = asyncio.run(get_results_from_urls(ADDRESS, servers_port, slug_list))
+#     compare_responses(responses, slug_list, response_map)
+#
+#
+# def test_out_of_range_responses(response_map, servers_port):
+#     """Properly handles 404 responses."""
+#     slug_list = [-1, 100]
+#     responses = asyncio.run(get_results_from_urls(ADDRESS, servers_port, slug_list))
+#     compare_responses(responses, slug_list, response_map)
+#
+#
+# def test_time_for_all_responses(response_map, servers_port):
+#     """Demonstrates full potential of asynchronous requests."""
+#     slug_list = list(range(MAX_SLUG + 1))
+#     start_time = time()
+#     responses = asyncio.run(get_results_from_urls(ADDRESS, servers_port, slug_list))
+#     duration = time() - start_time
+#     compare_responses(responses, slug_list, response_map)
+#     assert duration < 5 * RESPONSE_DELAY_S
+#
+#
+# def compare_responses(responses, slug_list, response_map):
+#     assert len(responses) == len(slug_list)
+#
+#     for slug, response in zip(slug_list, responses):
+#         if slug in response_map:
+#             assert response.status_code == 200
+#             assert response.content == response_map[slug]
+#         else:
+#             assert response.status_code == 404
+#             assert response.content == 0
+#
+# import pytest
+# from fastapi.testclient import TestClient
+#
+# from wc import Food, app, foods
+#
+#
+# @pytest.fixture
+# def client():
+#     client = TestClient(app)
+#     return client
+#
+#
+# @pytest.fixture
+# def food():
+#     food = Food(
+#         id=1,
+#         name="egg",
+#         serving_size="piece",
+#         kcal_per_serving=78,
+#         protein_grams=6.3,
+#         fibre_grams=1,
+#     )
+#     return food
+#
+#
+# @pytest.fixture
+# def food_payload():
+#     return dict(
+#         id=1,
+#         name="egg",
+#         serving_size="piece",
+#         kcal_per_serving=78,
+#         protein_grams=6.3,
+#         fibre_grams=1,
+#     )
+#
+#
+# @pytest.fixture
+# def second_food_payload():
+#     return dict(
+#         id=2,
+#         name="oatmeal",
+#         serving_size="100 grams",
+#         kcal_per_serving=336,
+#         protein_grams=13.2,
+#         fibre_grams=10.1,
+#     )
+#
+#
+# def test_get_is_not_allowed(client):
+#     resp = client.get("/")
+#     assert resp.status_code == 405
+#
+#
+# def test_create_food(client, food_payload, food):
+#     resp = client.post("/", json=food_payload)
+#     assert resp.status_code == 201
+#     assert resp.json() == dict(food)
+#     assert foods == {1: food}
+#
+#
+# def test_create_two_foods(client, food_payload, second_food_payload):
+#     for pl in (food_payload, second_food_payload):
+#         resp = client.post("/", json=pl)
+#         assert resp.status_code == 201
+#     assert len(foods) == 2
+#     names = [food.name for food in foods.values()]
+#     assert names == ["egg", "oatmeal"]
+#     total_calories = sum(food.kcal_per_serving for food in foods.values())
+#     assert total_calories == 414
+#
+#
+# def test_create_food_default_fibre(client, food_payload):
+#     del food_payload["fibre_grams"]
+#     resp = client.post("/", json=food_payload)
+#     assert resp.status_code == 201
+#     assert foods[1].fibre_grams == 0
+#
+#
+# def test_create_food_wrong_food_payload(client, food_payload):
+#     del food_payload["kcal_per_serving"]
+#     resp = client.post("/", json=food_payload)
+#     assert resp.status_code == 422
+#     details = resp.json()["detail"][0]
+#     assert details["msg"] == 'Field required'
+#     assert details["type"] == 'missing'
+# import pytest
+# from fastapi.testclient import TestClient
+#
+# from wc import app
+#
+# EXPECTED_FOOD1 = {
+#     "id": 1,
+#     "name": "egg",
+#     "serving_size": "piece",
+#     "kcal_per_serving": 78,
+#     "protein_grams": 6.2,
+#     "fibre_grams": 0,
+# }
+# EXPECTED_FOOD2 = {
+#     "id": 2,
+#     "name": "oatmeal",
+#     "serving_size": "100 grams",
+#     "kcal_per_serving": 336,
+#     "protein_grams": 13.2,
+#     "fibre_grams": 10.1,
+# }
+#
+#
+# @pytest.fixture
+# def client():
+#     client = TestClient(app)
+#     return client
+#
+#
+# @pytest.fixture(autouse=True)
+# def create_foods(client):
+#     """
+#     Payload for two food objects, "autouse" runs this
+#     automatically before the tests.
+#     """
+#     food1_payload = dict(
+#         id=1,
+#         name="egg",
+#         serving_size="piece",
+#         kcal_per_serving=78,
+#         protein_grams=6.2,
+#         fibre_grams=0,
+#     )
+#     food2_payload = dict(
+#         id=2,
+#         name="oatmeal",
+#         serving_size="100 grams",
+#         kcal_per_serving=336,
+#         protein_grams=13.2,
+#         fibre_grams=10.1,
+#     )
+#     for payload in (food1_payload, food2_payload):
+#         client.post("/", json=payload)
+#
+#
+# def test_get_all_foods(client):
+#     resp = client.get("/")
+#     assert resp.status_code == 200
+#     expected = [EXPECTED_FOOD1, EXPECTED_FOOD2]
+#     assert resp.json() == expected
+#
+#
+# def test_get_first_food(client):
+#     resp = client.get("/1")
+#     assert resp.status_code == 200
+#     assert resp.json() == EXPECTED_FOOD1
+#
+#
+# def test_get_second_food(client):
+#     resp = client.get("/2")
+#     assert resp.status_code == 200
+#     assert resp.json() == EXPECTED_FOOD2
+#
+#
+# def test_get_single_non_existing_food(client):
+#     # oops! We'll add exception handling in a later Bite
+#     with pytest.raises(KeyError):
+#         client.get("/3")
+#
+# import difflib
+#
+# import pytest
+# from fastapi import HTTPException
+# from fastapi.testclient import TestClient
+#
+# from wc import app
+#
+#
+# @pytest.fixture
+# def client():
+#     client = TestClient(app)
+#     return client
+#
+#
+# @pytest.fixture(autouse=True)
+# def create_foods(client):
+#     """
+#     Payload for two food objects, "autouse" runs this
+#     automatically before the tests.
+#     """
+#     food1_payload = dict(
+#         id=1,
+#         name="egg",
+#         serving_size="piece",
+#         kcal_per_serving=78,
+#         protein_grams=6.2,
+#         fibre_grams=0,
+#     )
+#     food2_payload = dict(
+#         id=2,
+#         name="oatmeal",
+#         serving_size="100 grams",
+#         kcal_per_serving=336,
+#         protein_grams=13.2,
+#         fibre_grams=10.1,
+#     )
+#     for payload in (food1_payload, food2_payload):
+#         client.post("/", json=payload)
+#
+#
+# def test_update_food(client):
+#     orig_egg = client.get("/1").json()
+#     resp = client.get("/2")
+#     orig_food = resp.json()
+#     food = orig_food.copy()
+#     food["kcal_per_serving"] = 350
+#     client.put("/2", json=food)
+#     resp = client.get("/2")
+#     updated_food = resp.json()
+#     diff = set(updated_food.values()) - set(orig_food.values())
+#     assert diff == {350}
+#     # the other item is not updated
+#     egg = client.get("/1").json()
+#     assert orig_egg == egg
+#
+#
+# def test_update_nonexisting_food_returns_404(client):
+#     resp = client.get("/2")
+#     payload = resp.json()
+#     resp = client.put("/3", json=payload)
+#     assert resp.status_code == 404
+#     assert resp.json() == {"detail": "Food not found"}
+#
+#
+# def test_delete_food(client):
+#     resp = client.get("/")
+#     assert len(resp.json()) == 2
+#     resp = client.delete("/2")
+#     assert resp.json() == {"ok": True}
+#     # oatmeal deleted
+#     with pytest.raises(KeyError):
+#         client.get("/2")
+#     resp = client.get("/")
+#     data = resp.json()
+#     assert len(data) == 1
+#     # only egg remains
+#     assert data[0]["id"] == 1
+#     assert data[0]["name"] == "egg"
+#
+#
+# def test_delete_nonexisting_food_returns_404(client):
+#     resp = client.delete("/3")
+#     assert resp.status_code == 404
+#     assert resp.json() == {"detail": "Food not found"}
 
-from aiohttp import web
+from datetime import datetime, timedelta
+
 import pytest
+from pydantic import ValidationError
 
-from wc import get_results_from_urls
+from wc import Food, FoodEntry, User, pwd_context
 
-MAX_SLUG = 99
-RESPONSE_DELAY_S = 0.1
-ADDRESS = "http://localhost"
-
-
-@pytest.fixture(scope="module")
-def response_map():
-    return {key: random_value for key, random_value in enumerate(sample(range(1000), MAX_SLUG + 1))}
+LAME_PASSWORD = "1234"  # noqa S105
 
 
-def async_http_test_server(port, response_map):
-    async def handle(request):
-        try:
-            slug = int(request.match_info.get('slug'))
-        except ValueError:
-            return web.HTTPNotFound()
-
-        if 0 <= slug <= MAX_SLUG:
-            await sleep(RESPONSE_DELAY_S)
-            return web.Response(text=str(response_map[slug]))
-
-        return web.HTTPNotFound()
-
-    app = web.Application()
-    app.add_routes([web.get('/{slug}', handle), ])
-    web.run_app(app, host="localhost", port=port)
+# also from https://fastapi.tiangolo.com/tutorial/security/oauth2-jwt/
+def _verify_password(plain_password, hashed_password):
+    return pwd_context.verify(plain_password, hashed_password)
 
 
-@pytest.fixture(scope="module")
-def servers_port(response_map):
-    for port in range(49_152, 65_535):
-        server_process = Process(target=async_http_test_server, args=(port, response_map))
-        server_process.start()
-        blocking_sleep(1)  # See if server starts up on requested port.
-        if server_process.exitcode is None:
-            break
-    else:
-        raise Exception("Test setup error. Could not start test server.")
-
-    yield port
-
-    server_process.kill()
+@pytest.fixture
+def user():
+    user = User(id=1, username="user1", password=LAME_PASSWORD)
+    return user
 
 
-def test_if_async_function():
-    assert iscoroutinefunction(get_results_from_urls), "In this exercise http_client has to be coroutine function!"
+@pytest.fixture
+def food():
+    food = Food(
+        id=1,
+        name="egg",
+        serving_size="piece",
+        kcal_per_serving=78,
+        protein_grams=6.3,
+        fibre_grams=0,
+    )
+    return food
 
 
-def test_simple_responses_unordered(response_map, servers_port):
-    """At least correct responses. Order not relevant."""
-    slug_list = [0, 10, 99]
-    responses = asyncio.run(get_results_from_urls(ADDRESS, servers_port, slug_list))
-    for slug, response in zip(slug_list, responses):
-        if slug in response_map:
-            assert (200, response_map[slug]) in responses
-        else:
-            assert (404, 0) in responses
+def test_create_user_object(user):
+    assert type(user) == User
+    assert user.id == 1
+    assert user.username == "user1"
+    assert _verify_password(LAME_PASSWORD, user.password) is True
 
 
-def test_simple_responses_ordered(response_map, servers_port):
-    """Correct responses in correct order."""
-    slug_list = [0, 10, 99]
-    responses = asyncio.run(get_results_from_urls(ADDRESS, servers_port, slug_list))
-    compare_responses(responses, slug_list, response_map)
+def test_create_incomplete_user_object():
+    error = "username\n  Field required"
+    with pytest.raises(ValidationError, match=error):
+        User(id=1, password="abc")
 
 
-def test_out_of_range_responses(response_map, servers_port):
-    """Properly handles 404 responses."""
-    slug_list = [-1, 100]
-    responses = asyncio.run(get_results_from_urls(ADDRESS, servers_port, slug_list))
-    compare_responses(responses, slug_list, response_map)
+def test_create_user_object_wrong_type():
+    error = "id\n  Input should be a valid integer"
+    with pytest.raises(ValidationError, match=error):
+        User(id="1abc", username="user1", password="abc")
 
 
-def test_time_for_all_responses(response_map, servers_port):
-    """Demonstrates full potential of asynchronous requests."""
-    slug_list = list(range(MAX_SLUG + 1))
-    start_time = time()
-    responses = asyncio.run(get_results_from_urls(ADDRESS, servers_port, slug_list))
-    duration = time() - start_time
-    compare_responses(responses, slug_list, response_map)
-    assert duration < 5 * RESPONSE_DELAY_S
+def test_create_food_log_object(user, food):
+    food_entry = FoodEntry(id=1, user=user, food=food, number_servings=1.5)
+    now = datetime.now()
+    assert abs(food_entry.date_added - now) < timedelta(seconds=10)
+    assert food_entry.user == user
+    assert food_entry.food == food
+    assert food_entry.number_servings == 1.5
+    assert food_entry.total_calories == 1.5 * 78
 
 
-def compare_responses(responses, slug_list, response_map):
-    assert len(responses) == len(slug_list)
+def test_create_food_missing_data(user, food):
+    error = "user\n  Field required"
+    with pytest.raises(ValidationError, match=error):
+        FoodEntry(id=1, food=food, number_servings=1.5)
 
-    for slug, response in zip(slug_list, responses):
-        if slug in response_map:
-            assert response.status_code == 200
-            assert response.content == response_map[slug]
-        else:
-            assert response.status_code == 404
-            assert response.content == 0
+
+

@@ -10079,35 +10079,178 @@ enumerate through the text by letter
 #         finally:
 #             s.close()
 #             sys.exit(0)
+#
+# import asyncio
+# from typing import Iterable, NamedTuple
+# import aiohttp
+#
+#
+# class Result(NamedTuple):
+#     status_code: int
+#     content: int
+#
+# async def fetch(url):
+#     async with aiohttp.ClientSession() as session:
+#         async with session.get(url) as resp:
+#             if resp.status == 200:
+#                 new_result = Result(status_code=resp.status, content=int(await resp.text()))
+#             else:
+#                 new_result = Result(status_code=resp.status, content=0)
+#         return new_result
+#
+# async def get_results_from_urls(address: str, port: int, slugs: list) -> Iterable[Result]:
+#     """Get results from http responses.
+#
+#      Get responses by making requests to urls.
+#      Construct url like this: {address}:{port}/{slug}, where address and port are constant, but slug changes.
+#      Result.status_code is status code of response.
+#      Result.content is content of response if status_code is 200, otherwise it is 0.
+#      Results must be ordered according to the order of slugs in list and their respective responses.
+#      Requests must be sent in a asynchronous way. (Can not be sequential and blocking.)
+#      """
+#     complete_urls=[ f"{address}:{port}/{slug}" for slug in slugs]
+#     tasks = [asyncio.create_task(fetch(url)) for url in complete_urls]
+#     return await asyncio.gather(*tasks)
+#
+# from typing import Dict
+#
+# from fastapi import FastAPI
+# from pydantic import BaseModel
+#
+#
+# class Food(BaseModel):
+#     """Model from Bite 02"""
+#
+#     id: int
+#     name: str
+#     serving_size: str
+#     kcal_per_serving: int
+#     protein_grams: float
+#     fibre_grams: float = 0
+#
+#
+# app = FastAPI()
+# foods: Dict[int, Food] = {}
+#
+#
+# # write the Create endpoint
+#
+# @app.post("/", status_code=201)
+# async def create_food(food:Food) :
+#     foods[food.id]=food
+#     return food
+#
+# @app.get("/{food_id}")
+# async def read_food(food_id: int) :
+#     return foods[food_id]
+#
+# @app.get("/")
+# async def read_food() :
+#     return list(foods.values())
+#
+# from typing import Dict, List
+#
+# from fastapi import FastAPI, HTTPException
+# from pydantic import BaseModel
+#
+#
+# class Food(BaseModel):
+#     """Model from Bite 02"""
+#
+#     id: int
+#     name: str
+#     serving_size: str
+#     kcal_per_serving: int
+#     protein_grams: float
+#     fibre_grams: float = 0
+#
+#
+# app = FastAPI()
+# foods: Dict[int, Food] = {}
+#
+#
+# @app.post("/", status_code=201)
+# async def create_food(food: Food):
+#     """Endpoint from Bite 03"""
+#     foods[food.id] = food
+#     return food
+#
+#
+# @app.get("/", response_model=List[Food])
+# async def read_foods():
+#     """Endpoints from Bite 04"""
+#     return list(foods.values())
+#
+#
+# @app.get("/{food_id}", response_model=Food)
+# async def read_food(food_id: int):
+#     """Endpoints from Bite 04"""
+#     return foods[food_id]
+#
+#
+# # Create the update and delete endpoints here ...
+# @app.put("/{food_id}")
+# async def update_food(food_id :int ,food:Food):
+#     if food_id not in foods:
+#         raise HTTPException(status_code=404, detail="Food not found")
+#     foods[food_id] = food
+#     return food
+#
+# @app.delete("/{food_id}")
+# async def delete_food(food_id: int):
+#     if food_id not in foods:
+#         raise HTTPException(status_code=404, detail="Food not found")
+#     del foods[food_id]
+#     return {"ok": True}
 
-import asyncio
-from typing import Iterable, NamedTuple
-import aiohttp
+from datetime import datetime
+from typing import Any
+
+from passlib.context import CryptContext
+from pydantic import BaseModel
+
+# https://fastapi.tiangolo.com/tutorial/security/oauth2-jwt/
+# which we'll further explore in a later Bite
+pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 
-class Result(NamedTuple):
-    status_code: int
-    content: int
+def get_password_hash(password):
+    return pwd_context.hash(password)
 
-async def fetch(url):
-    async with aiohttp.ClientSession() as session:
-        async with session.get(url) as resp:
-            if resp.status == 200:
-                new_result = Result(status_code=resp.status, content=int(await resp.text()))
-            else:
-                new_result = Result(status_code=resp.status, content=0)
-        return new_result
 
-async def get_results_from_urls(address: str, port: int, slugs: list) -> Iterable[Result]:
-    """Get results from http responses.
 
-     Get responses by making requests to urls.
-     Construct url like this: {address}:{port}/{slug}, where address and port are constant, but slug changes.
-     Result.status_code is status code of response.
-     Result.content is content of response if status_code is 200, otherwise it is 0.
-     Results must be ordered according to the order of slugs in list and their respective responses.
-     Requests must be sent in a asynchronous way. (Can not be sequential and blocking.)
-     """
-    complete_urls=[ f"{address}:{port}/{slug}" for slug in slugs]
-    tasks = [asyncio.create_task(fetch(url)) for url in complete_urls]
-    return await asyncio.gather(*tasks)
+class Food(BaseModel):
+    """Bite 02"""
+
+    id: int
+    name: str
+    serving_size: str
+    kcal_per_serving: int
+    protein_grams: float
+    fibre_grams: float = 0
+
+
+# Write the User and FoodEntry models here ...
+class User(BaseModel):
+    id: int
+    username: str
+    password: str
+
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self.password = get_password_hash(kwargs['password'])
+
+
+class FoodEntry(BaseModel):
+    id: int
+    user: User
+    food: Food
+    date_added: datetime = datetime.now()
+    number_servings: float
+
+
+    @property
+    def total_calories(self):
+        return self.number_servings *  self.food.kcal_per_serving
+
+
