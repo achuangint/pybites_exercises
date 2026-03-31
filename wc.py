@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import sys
+from http.client import HTTPException
 from sys import exc_info
 
 from sqlalchemy import true
@@ -10202,15 +10203,66 @@ enumerate through the text by letter
 #         raise HTTPException(status_code=404, detail="Food not found")
 #     del foods[food_id]
 #     return {"ok": True}
+#
+# from datetime import datetime
+# from typing import Any
+#
+# from passlib.context import CryptContext
+# from pydantic import BaseModel
+#
+# # https://fastapi.tiangolo.com/tutorial/security/oauth2-jwt/
+# # which we'll further explore in a later Bite
+# pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+#
+#
+# def get_password_hash(password):
+#     return pwd_context.hash(password)
+#
+#
+#
+# class Food(BaseModel):
+#     """Bite 02"""
+#
+#     id: int
+#     name: str
+#     serving_size: str
+#     kcal_per_serving: int
+#     protein_grams: float
+#     fibre_grams: float = 0
+#
+#
+# # Write the User and FoodEntry models here ...
+# class User(BaseModel):
+#     id: int
+#     username: str
+#     password: str
+#
+#     def __init__(self, **kwargs):
+#         super().__init__(**kwargs)
+#         self.password = get_password_hash(kwargs['password'])
+#
+#
+# class FoodEntry(BaseModel):
+#     id: int
+#     user: User
+#     food: Food
+#     date_added: datetime = datetime.now()
+#     number_servings: float
+#
+#
+#     @property
+#     def total_calories(self):
+#         return self.number_servings *  self.food.kcal_per_serving
 
 from datetime import datetime
-from typing import Any
+from typing import Any, Dict, List
 
+from fastapi import FastAPI, HTTPException
 from passlib.context import CryptContext
 from pydantic import BaseModel
 
 # https://fastapi.tiangolo.com/tutorial/security/oauth2-jwt/
-# which we'll further explore in a later Bite
+# We'll export authentication further in a later Bite
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 
@@ -10218,10 +10270,7 @@ def get_password_hash(password):
     return pwd_context.hash(password)
 
 
-
 class Food(BaseModel):
-    """Bite 02"""
-
     id: int
     name: str
     serving_size: str
@@ -10230,15 +10279,14 @@ class Food(BaseModel):
     fibre_grams: float = 0
 
 
-# Write the User and FoodEntry models here ...
 class User(BaseModel):
     id: int
     username: str
     password: str
 
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
-        self.password = get_password_hash(kwargs['password'])
+    def __init__(self, **data: Any):
+        data["password"] = get_password_hash(data["password"])
+        super().__init__(**data)
 
 
 class FoodEntry(BaseModel):
@@ -10248,9 +10296,46 @@ class FoodEntry(BaseModel):
     date_added: datetime = datetime.now()
     number_servings: float
 
-
     @property
     def total_calories(self):
-        return self.number_servings *  self.food.kcal_per_serving
+        return self.food.kcal_per_serving * self.number_servings
+
+
+app = FastAPI()
+food_log: Dict[int, FoodEntry] = {}
+
+# We've hidden the previous Food CRUD to keep it compact and to force you to
+# repeat the API building process (deliberate practice is key!)
+
+# Create CRUD endpoints for FoodEntry below as per instructions in the Bite ...
+
+@app.get("/users/{user_id}")
+async def read_food_entry(user_id: int):
+    return [food_entry for entry_id, food_entry in food_log.items() if food_entry.user.id == user_id]
+
+@app.post("/", status_code=201)
+async def create_food_entry(food_entry: FoodEntry):
+    """Endpoint from Bite 03"""
+    food_log[food_entry.id] = food_entry
+    return food_entry
+
+@app.put("/{entry_id}")
+async def update_food_entry(entry_id: int, food_entry: FoodEntry):
+    ids=[val.id for key, val in  food_log.items()]
+    if entry_id not in ids:
+        raise HTTPException(status_code=404, detail="Food entry not found")
+    food_log[entry_id] = food_entry
+    return food_entry
+
+
+
+@app.delete("/{entry_id}")
+async def delete_food_entry(entry_id: int):
+    ids=[val.id for key, val in  food_log.items()]
+    if entry_id not in ids:
+        raise HTTPException(status_code=404, detail="Food entry not found")
+    del food_log[entry_id]
+    return {"ok": True}
+
 
 
