@@ -10253,89 +10253,247 @@ enumerate through the text by letter
 #     @property
 #     def total_calories(self):
 #         return self.number_servings *  self.food.kcal_per_serving
+#
+# from datetime import datetime
+# from typing import Any, Dict, List
+#
+# from fastapi import FastAPI, HTTPException
+# from passlib.context import CryptContext
+# from pydantic import BaseModel
+#
+# # https://fastapi.tiangolo.com/tutorial/security/oauth2-jwt/
+# # We'll export authentication further in a later Bite
+# pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+#
+#
+# def get_password_hash(password):
+#     return pwd_context.hash(password)
+#
+#
+# class Food(BaseModel):
+#     id: int
+#     name: str
+#     serving_size: str
+#     kcal_per_serving: int
+#     protein_grams: float
+#     fibre_grams: float = 0
+#
+#
+# class User(BaseModel):
+#     id: int
+#     username: str
+#     password: str
+#
+#     def __init__(self, **data: Any):
+#         data["password"] = get_password_hash(data["password"])
+#         super().__init__(**data)
+#
+#
+# class FoodEntry(BaseModel):
+#     id: int
+#     user: User
+#     food: Food
+#     date_added: datetime = datetime.now()
+#     number_servings: float
+#
+#     @property
+#     def total_calories(self):
+#         return self.food.kcal_per_serving * self.number_servings
+#
+#
+# app = FastAPI()
+# food_log: Dict[int, FoodEntry] = {}
+#
+# # We've hidden the previous Food CRUD to keep it compact and to force you to
+# # repeat the API building process (deliberate practice is key!)
+#
+# # Create CRUD endpoints for FoodEntry below as per instructions in the Bite ...
+#
+# @app.get("/users/{user_id}")
+# async def read_food_entry(user_id: int):
+#     return [food_entry for entry_id, food_entry in food_log.items() if food_entry.user.id == user_id]
+#
+# @app.post("/", status_code=201)
+# async def create_food_entry(food_entry: FoodEntry):
+#     """Endpoint from Bite 03"""
+#     food_log[food_entry.id] = food_entry
+#     return food_entry
+#
+# @app.put("/{entry_id}")
+# async def update_food_entry(entry_id: int, food_entry: FoodEntry):
+#     ids=[val.id for key, val in  food_log.items()]
+#     if entry_id not in ids:
+#         raise HTTPException(status_code=404, detail="Food entry not found")
+#     food_log[entry_id] = food_entry
+#     return food_entry
+#
+#
+#
+# @app.delete("/{entry_id}")
+# async def delete_food_entry(entry_id: int):
+#     ids=[val.id for key, val in  food_log.items()]
+#     if entry_id not in ids:
+#         raise HTTPException(status_code=404, detail="Food entry not found")
+#     del food_log[entry_id]
+#     return {"ok": True}
 
-from datetime import datetime
-from typing import Any, Dict, List
 
-from fastapi import FastAPI, HTTPException
-from passlib.context import CryptContext
-from pydantic import BaseModel
-
-# https://fastapi.tiangolo.com/tutorial/security/oauth2-jwt/
-# We'll export authentication further in a later Bite
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
-
-
-def get_password_hash(password):
-    return pwd_context.hash(password)
-
-
-class Food(BaseModel):
-    id: int
-    name: str
-    serving_size: str
-    kcal_per_serving: int
-    protein_grams: float
-    fibre_grams: float = 0
-
-
-class User(BaseModel):
-    id: int
-    username: str
-    password: str
-
-    def __init__(self, **data: Any):
-        data["password"] = get_password_hash(data["password"])
-        super().__init__(**data)
-
-
-class FoodEntry(BaseModel):
-    id: int
-    user: User
-    food: Food
-    date_added: datetime = datetime.now()
-    number_servings: float
-
-    @property
-    def total_calories(self):
-        return self.food.kcal_per_serving * self.number_servings
-
-
-app = FastAPI()
-food_log: Dict[int, FoodEntry] = {}
-
-# We've hidden the previous Food CRUD to keep it compact and to force you to
-# repeat the API building process (deliberate practice is key!)
-
-# Create CRUD endpoints for FoodEntry below as per instructions in the Bite ...
-
-@app.get("/users/{user_id}")
-async def read_food_entry(user_id: int):
-    return [food_entry for entry_id, food_entry in food_log.items() if food_entry.user.id == user_id]
-
-@app.post("/", status_code=201)
-async def create_food_entry(food_entry: FoodEntry):
-    """Endpoint from Bite 03"""
-    food_log[food_entry.id] = food_entry
-    return food_entry
-
-@app.put("/{entry_id}")
-async def update_food_entry(entry_id: int, food_entry: FoodEntry):
-    ids=[val.id for key, val in  food_log.items()]
-    if entry_id not in ids:
-        raise HTTPException(status_code=404, detail="Food entry not found")
-    food_log[entry_id] = food_entry
-    return food_entry
-
-
-
-@app.delete("/{entry_id}")
-async def delete_food_entry(entry_id: int):
-    ids=[val.id for key, val in  food_log.items()]
-    if entry_id not in ids:
-        raise HTTPException(status_code=404, detail="Food entry not found")
-    del food_log[entry_id]
-    return {"ok": True}
-
-
+#
+# from datetime import datetime
+# from typing import Any, Dict
+#
+# from fastapi import FastAPI
+# from passlib.context import CryptContext
+# from pydantic import BaseModel
+#
+# from fastapi.responses import JSONResponse
+#
+# # https://fastapi.tiangolo.com/tutorial/security/oauth2-jwt/
+# # We'll explore further in a later Bite
+# pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+#
+# AVG_HUMAN_CALORIES_PER_DAY = 2250
+#
+#
+# def get_password_hash(password):
+#     return pwd_context.hash(password)
+#
+#
+# class Food(BaseModel):
+#     id: int
+#     name: str
+#     serving_size: str
+#     kcal_per_serving: int
+#     protein_grams: float
+#     fibre_grams: float = 0
+#
+#
+# class User(BaseModel):
+#     id: int
+#     username: str
+#     password: str
+#     max_daily_calories: int = AVG_HUMAN_CALORIES_PER_DAY
+#
+#     def __init__(self, **data: Any):
+#         data["password"] = get_password_hash(data["password"])
+#         super().__init__(**data)
+#
+#
+# class FoodEntry(BaseModel):
+#     id: int
+#     user: User
+#     food: Food
+#     date_added: datetime = datetime.now()
+#     number_servings: float
+#
+#     @property
+#     def total_calories(self):
+#         return self.food.kcal_per_serving * self.number_servings
+#
+#
+# app = FastAPI()
+# food_log: Dict[int, FoodEntry] = {}
+#
+# # To focus on exception handling we only work on Create
+# # in this Bite hiding read-update-delete endpoints.
+#
+#
+# @app.post("/", status_code=201)
+# async def create_food_entry(entry: FoodEntry):
+#
+#     ids = [val.id for key, val in food_log.items()]
+#     warning_message = {"detail": "Food entry already logged, use an update request"}
+#     if entry.id in ids:
+#         return JSONResponse(status_code=400, content=warning_message)
+#
+#     current_calories = sum([val.total_calories for key, val in food_log.items()])
+#     print(f"current_calories: {current_calories}")
+#     message = f"Cannot add more food than daily caloric allowance = {entry.user.max_daily_calories} kcal / day"
+#     warning_message2 = {"detail": message}
+#     if entry.total_calories + current_calories > entry.user.max_daily_calories:
+#         return JSONResponse(status_code=400, content=warning_message2)
+#
+#     food_log[entry.id] = entry
+#     return entry
+#
+# ### Solution from the bite
+# from datetime import datetime
+# from typing import Any, Dict, List
+#
+# from fastapi import FastAPI, HTTPException
+# from passlib.context import CryptContext
+# from pydantic import BaseModel
+#
+# # https://fastapi.tiangolo.com/tutorial/security/oauth2-jwt/
+# # We'll explore further in a later Bite
+# pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+#
+# AVG_HUMAN_CALORIES_PER_DAY = 2250
+# MIN_SECONDS_BETWEEN_SAME_FOOD_INSERTS = 15
+#
+#
+# def get_password_hash(password):
+#     return pwd_context.hash(password)
+#
+#
+# class Food(BaseModel):
+#     id: int
+#     name: str
+#     serving_size: str
+#     kcal_per_serving: int
+#     protein_grams: float
+#     fibre_grams: float = 0
+#
+#
+# class User(BaseModel):
+#     id: int
+#     username: str
+#     password: str
+#     max_daily_calories: int = AVG_HUMAN_CALORIES_PER_DAY
+#
+#     def __init__(self, **data: Any):
+#         data["password"] = get_password_hash(data["password"])
+#         super().__init__(**data)
+#
+#
+# class FoodEntry(BaseModel):
+#     id: int
+#     user: User
+#     food: Food
+#     date_added: datetime = datetime.now()
+#     number_servings: float
+#
+#     @property
+#     def total_calories(self):
+#         return self.food.kcal_per_serving * self.number_servings
+#
+#
+# app = FastAPI()
+# food_log: Dict[int, FoodEntry] = {}
+#
+# # To focus on exception handling we only work on Create
+# # in this Bite hiding read-update-delete endpoints.
+#
+#
+# @app.post("/", status_code=201)
+# async def create_food_entry(entry: FoodEntry):
+#     if entry.id in food_log:
+#         error = "Food entry already logged, use an update request"
+#         raise HTTPException(status_code=400, detail=error)
+#
+#     consumed_so_far = sum(
+#         fl.total_calories for fl in food_log.values()
+#         if entry.user.id == fl.user.id
+#     )
+#     new_total_calories = consumed_so_far + entry.total_calories
+#
+#     if new_total_calories > entry.user.max_daily_calories:
+#         error = (
+#             "Cannot add more food than daily caloric allowance"
+#             f" = {entry.user.max_daily_calories} kcal / day"
+#         )
+#         raise HTTPException(status_code=400, detail=error)
+#
+#     food_log[entry.id] = entry
+#     return entry
 
