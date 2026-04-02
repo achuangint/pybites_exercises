@@ -11657,3 +11657,122 @@ Inputs are modified to check how the function deals with unknown characters
 #         "2.0 x 100 grams",
 #         "672.0",
 #     ]
+#
+# import pytest
+#
+# from wc import i10_index, h_index, TYPE_ERROR_MSG, VALUE_ERROR_MSG
+#
+# TYPE_ERRORS = [
+#     0,
+#     "0,1,2",
+#     "xyz",
+# ]
+#
+# VALUE_ERRORS = [
+#     [],
+#     (),
+#     None,
+#     list("abc"),
+#     (-1, 2, 3),
+# ]
+#
+#
+# @pytest.mark.parametrize(
+#     "citations,expected",
+#     [
+#         ([0, 0, 1, 1, 10, 5, 11, 13], 3),
+#         ([0, 0, 1, 1, 10, 5, 1, 3], 1),
+#         (list(range(0, 10)), 0),
+#         ((0, 0, 1, 1), 0),
+#         ((1000, 10, 9, 1, 10, 5, 1, 3), 3),
+#         ([0] * 5, 0),
+#     ],
+# )
+# def test_i10_index(citations, expected):
+#     assert i10_index(citations) == expected
+#
+#
+# @pytest.mark.parametrize("citations", TYPE_ERRORS)
+# def test_i10_index_type_errors(citations):
+#     with pytest.raises(TypeError) as exc_info:
+#         i10_index(citations)
+#     assert str(exc_info.value) == TYPE_ERROR_MSG
+#
+#
+# @pytest.mark.parametrize("citations", VALUE_ERRORS)
+# def test_i10_index_value_errors(citations):
+#     with pytest.raises(ValueError) as exc_info:
+#         i10_index(citations)
+#     assert str(exc_info.value) == VALUE_ERROR_MSG
+#
+#
+# @pytest.mark.parametrize(
+#     "citations,expected",
+#     [
+#         ([0, 0, 1, 1, 10, 5, 11, 13], 4),
+#         ([0, 0, 1, 1, 10, 5, 1, 3], 3),
+#         (list(range(0, 10)), 5),
+#         ((0, 0, 1, 1), 1),
+#         ((1000, 10, 9, 1, 10, 5, 1, 3), 5),
+#         ([0] * 5, 0),
+#     ],
+# )
+# def test_h_index(citations, expected):
+#     assert h_index(citations) == expected
+#
+#
+# @pytest.mark.parametrize("citations", TYPE_ERRORS)
+# def test_h_index_type_errors(citations):
+#     with pytest.raises(TypeError) as exc_info:
+#         h_index(citations)
+#     assert str(exc_info.value) == TYPE_ERROR_MSG
+#
+#
+# @pytest.mark.parametrize("citations", VALUE_ERRORS)
+# def test_h_index_value_errors(citations):
+#     with pytest.raises(ValueError) as exc_info:
+#         h_index(citations)
+#     assert str(exc_info.value) == VALUE_ERROR_MSG
+
+import pytest
+
+from wc import get_accentuated_sentence
+
+PHRASES = [
+    (
+        "Cuando era pequeno me gustaba jugar en la via",
+        "Cuando era pequeño me gustaba jugar en la vía",
+    ),
+    ("un dos tres ... accion", "un dos tres ... acción"),
+    ("anadir otra aficion", "añadir otra afición"),
+    (
+        "bajo el arbol descansando vi un avion",
+        "bajo el árbol descansando vi un avión",
+    ),
+    (
+        "no tomes mucho azucar o hay que evitar la bascula",
+        "no tomes mucho azúcar o hay que evitar la báscula",
+    ),
+    (
+        "vehiculo volando, utopia o realidad pronto ...?",
+        "vehículo volando, utopía o realidad pronto ...?",
+    ),
+    (
+        "telefono publico ... apenas ya no se ve en esta epoca",
+        "teléfono público ... apenas ya no se ve en esta época",
+    ),
+    ("me falta jamon y jabon", "me falta jamón y jabón"),
+    (
+        "leyendo un libro en el jardin ... tarde de exito",
+        "leyendo un libro en el jardín ... tarde de éxito",
+    ),
+    (
+        "sesion de escribir, primera pagina de mi poesia hecha",
+        "sesión de escribir, primera página de mi poesía hecha",
+    ),
+]
+
+
+@pytest.mark.parametrize("text, accentuated_text", PHRASES)
+def test_get_accentuated_sentence(text, accentuated_text):
+    assert get_accentuated_sentence(text) == accentuated_text

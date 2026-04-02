@@ -10735,3 +10735,82 @@ enumerate through the text by letter
 #     html_content = HTML_TEMPLATE.format(username=username, table_rows=table_rows)
 #
 #     return HTMLResponse(content=html_content, status_code=200)
+#
+# from typing import Sequence
+#
+# TYPE_ERROR_MSG = "Unsupported input type: use either a list or a tuple"
+# VALUE_ERROR_MSG = "Unsupported input value: citations cannot be neither empty nor None"
+#
+# def detect_error(citations):
+#     if (citations in [[], ()]) or (citations is None):
+#         raise ValueError(VALUE_ERROR_MSG)
+#     if not (type(citations) == list or type(citations) == tuple):
+#         raise TypeError(TYPE_ERROR_MSG)
+#     for i in citations:
+#         if type(i)!= int or i <0:
+#             raise ValueError(VALUE_ERROR_MSG)
+#
+#
+# def larger_than_counts(num_list, cut_off):
+#     return len([i for i in num_list if i>=cut_off])
+#
+#
+# def h_index(citations: Sequence[int]) -> int:
+#     """Return the highest number of papers h having at least h citations"""
+#     detect_error(citations)
+#     for i in range(max(citations)):
+#         current_counts=larger_than_counts(citations, i)
+#         if i > current_counts:
+#             return i-1
+#     return max(citations)
+#
+# def i10_index(citations: Sequence[int]) -> int:
+#     """Return the number of papers having at least 10 citations"""
+#     detect_error(citations)
+#     return len([i for i in citations if int(i) >= 10])
+
+
+import os
+from pathlib import Path
+from typing import List
+import unicodedata
+from urllib.request import urlretrieve
+
+
+def _get_spanish_dictionary_words() -> List[str]:
+    filename = "spanish.txt"
+    # source of file
+    # https://raw.githubusercontent.com/bitcoin/bips
+    # /master/bip-0039/spanish.txt
+    url = f"https://bites-data.s3.us-east-2.amazonaws.com/{filename}"
+    tmp_folder = os.getenv("TMP", "/tmp")
+    local_filepath = Path(tmp_folder) / filename
+    if not Path(local_filepath).exists():
+        urlretrieve(url, local_filepath)
+    with open(local_filepath, 'r', encoding='utf-8') as f:
+        content = f.read()
+    return content.splitlines()
+
+SPANISH_WORDS = _get_spanish_dictionary_words()
+
+# strategy:
+# build a dictionary that maps all entries to "clean version"
+# key = cleaned_word => val spanish word
+
+# write a function that converts accentuated word -> non-accentuated
+def accent_to_non_accent(accented_word:str) -> str:
+    decomposed = unicodedata.normalize('NFD', accented_word)
+    return ''.join([c for c in decomposed if not unicodedata.combining(c)])
+
+
+def get_accentuated_sentence(
+    text: str, words: List[str] = SPANISH_WORDS
+) -> str:
+    non_accent_to_accent_dict = {accent_to_non_accent(word): word for word in words}
+    return ' '.join([non_accent_to_accent_dict[word] if word in non_accent_to_accent_dict else word for word in text.split()])
+
+
+
+# make a dictionary that maps from non-accentuated word -> accentuated (for every word in the dict)
+#words =  SPANISH_WORDS
+
