@@ -10769,48 +10769,72 @@ enumerate through the text by letter
 #     detect_error(citations)
 #     return len([i for i in citations if int(i) >= 10])
 
+#
+# import os
+# from pathlib import Path
+# from typing import List
+# import unicodedata
+# from urllib.request import urlretrieve
+#
+#
+# def _get_spanish_dictionary_words() -> List[str]:
+#     filename = "spanish.txt"
+#     # source of file
+#     # https://raw.githubusercontent.com/bitcoin/bips
+#     # /master/bip-0039/spanish.txt
+#     url = f"https://bites-data.s3.us-east-2.amazonaws.com/{filename}"
+#     tmp_folder = os.getenv("TMP", "/tmp")
+#     local_filepath = Path(tmp_folder) / filename
+#     if not Path(local_filepath).exists():
+#         urlretrieve(url, local_filepath)
+#     with open(local_filepath, 'r', encoding='utf-8') as f:
+#         content = f.read()
+#     return content.splitlines()
+#
+# SPANISH_WORDS = _get_spanish_dictionary_words()
+#
+# # strategy:
+# # build a dictionary that maps all entries to "clean version"
+# # key = cleaned_word => val spanish word
+#
+# # write a function that converts accentuated word -> non-accentuated
+# def accent_to_non_accent(accented_word:str) -> str:
+#     decomposed = unicodedata.normalize('NFD', accented_word)
+#     return ''.join([c for c in decomposed if not unicodedata.combining(c)])
+#
+#
+# def get_accentuated_sentence(
+#     text: str, words: List[str] = SPANISH_WORDS
+# ) -> str:
+#     non_accent_to_accent_dict = {accent_to_non_accent(word): word for word in words}
+#     return ' '.join([non_accent_to_accent_dict[word] if word in non_accent_to_accent_dict else word for word in text.split()])
+#
+#
+#
+# # make a dictionary that maps from non-accentuated word -> accentuated (for every word in the dict)
+# #words =  SPANISH_WORDS
 
-import os
-from pathlib import Path
-from typing import List
-import unicodedata
-from urllib.request import urlretrieve
+
+from typing import List, NamedTuple
+
+from textblob import Word
+
+MIN_CONFIDENCE = 0.5
+
+class SuggestedWord(NamedTuple):
+    word: str
+    confidence: float
+
+# define SuggestedWord NamedTuple with attributes
+# word (str) and confidence (float)
 
 
-def _get_spanish_dictionary_words() -> List[str]:
-    filename = "spanish.txt"
-    # source of file
-    # https://raw.githubusercontent.com/bitcoin/bips
-    # /master/bip-0039/spanish.txt
-    url = f"https://bites-data.s3.us-east-2.amazonaws.com/{filename}"
-    tmp_folder = os.getenv("TMP", "/tmp")
-    local_filepath = Path(tmp_folder) / filename
-    if not Path(local_filepath).exists():
-        urlretrieve(url, local_filepath)
-    with open(local_filepath, 'r', encoding='utf-8') as f:
-        content = f.read()
-    return content.splitlines()
-
-SPANISH_WORDS = _get_spanish_dictionary_words()
-
-# strategy:
-# build a dictionary that maps all entries to "clean version"
-# key = cleaned_word => val spanish word
-
-# write a function that converts accentuated word -> non-accentuated
-def accent_to_non_accent(accented_word:str) -> str:
-    decomposed = unicodedata.normalize('NFD', accented_word)
-    return ''.join([c for c in decomposed if not unicodedata.combining(c)])
-
-
-def get_accentuated_sentence(
-    text: str, words: List[str] = SPANISH_WORDS
-) -> str:
-    non_accent_to_accent_dict = {accent_to_non_accent(word): word for word in words}
-    return ' '.join([non_accent_to_accent_dict[word] if word in non_accent_to_accent_dict else word for word in text.split()])
-
-
-
-# make a dictionary that maps from non-accentuated word -> accentuated (for every word in the dict)
-#words =  SPANISH_WORDS
-
+def get_spelling_suggestions(
+    word: str, min_confidence: float = MIN_CONFIDENCE
+) -> List[SuggestedWord]:
+    """
+    Find spelling suggestions with at least minimum confidence score
+    Use textblob.Word (check out the docs)
+    """
+    w=Word(word)
+    return [ SuggestedWord(word=w, confidence=s) for w,s in w.spellcheck() if s >= min_confidence]

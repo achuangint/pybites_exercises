@@ -11733,46 +11733,104 @@ Inputs are modified to check how the function deals with unknown characters
 #     with pytest.raises(ValueError) as exc_info:
 #         h_index(citations)
 #     assert str(exc_info.value) == VALUE_ERROR_MSG
+#
+# import pytest
+#
+# from wc import get_accentuated_sentence
+#
+# PHRASES = [
+#     (
+#         "Cuando era pequeno me gustaba jugar en la via",
+#         "Cuando era pequeño me gustaba jugar en la vía",
+#     ),
+#     ("un dos tres ... accion", "un dos tres ... acción"),
+#     ("anadir otra aficion", "añadir otra afición"),
+#     (
+#         "bajo el arbol descansando vi un avion",
+#         "bajo el árbol descansando vi un avión",
+#     ),
+#     (
+#         "no tomes mucho azucar o hay que evitar la bascula",
+#         "no tomes mucho azúcar o hay que evitar la báscula",
+#     ),
+#     (
+#         "vehiculo volando, utopia o realidad pronto ...?",
+#         "vehículo volando, utopía o realidad pronto ...?",
+#     ),
+#     (
+#         "telefono publico ... apenas ya no se ve en esta epoca",
+#         "teléfono público ... apenas ya no se ve en esta época",
+#     ),
+#     ("me falta jamon y jabon", "me falta jamón y jabón"),
+#     (
+#         "leyendo un libro en el jardin ... tarde de exito",
+#         "leyendo un libro en el jardín ... tarde de éxito",
+#     ),
+#     (
+#         "sesion de escribir, primera pagina de mi poesia hecha",
+#         "sesión de escribir, primera página de mi poesía hecha",
+#     ),
+# ]
+#
+#
+# @pytest.mark.parametrize("text, accentuated_text", PHRASES)
+# def test_get_accentuated_sentence(text, accentuated_text):
+#     assert get_accentuated_sentence(text) == accentuated_text
 
 import pytest
 
-from wc import get_accentuated_sentence
-
-PHRASES = [
-    (
-        "Cuando era pequeno me gustaba jugar en la via",
-        "Cuando era pequeño me gustaba jugar en la vía",
-    ),
-    ("un dos tres ... accion", "un dos tres ... acción"),
-    ("anadir otra aficion", "añadir otra afición"),
-    (
-        "bajo el arbol descansando vi un avion",
-        "bajo el árbol descansando vi un avión",
-    ),
-    (
-        "no tomes mucho azucar o hay que evitar la bascula",
-        "no tomes mucho azúcar o hay que evitar la báscula",
-    ),
-    (
-        "vehiculo volando, utopia o realidad pronto ...?",
-        "vehículo volando, utopía o realidad pronto ...?",
-    ),
-    (
-        "telefono publico ... apenas ya no se ve en esta epoca",
-        "teléfono público ... apenas ya no se ve en esta época",
-    ),
-    ("me falta jamon y jabon", "me falta jamón y jabón"),
-    (
-        "leyendo un libro en el jardin ... tarde de exito",
-        "leyendo un libro en el jardín ... tarde de éxito",
-    ),
-    (
-        "sesion de escribir, primera pagina de mi poesia hecha",
-        "sesión de escribir, primera página de mi poesía hecha",
-    ),
-]
+from wc import get_spelling_suggestions, SuggestedWord
 
 
-@pytest.mark.parametrize("text, accentuated_text", PHRASES)
-def test_get_accentuated_sentence(text, accentuated_text):
-    assert get_accentuated_sentence(text) == accentuated_text
+@pytest.mark.parametrize(
+    "word, expected",
+    [
+        ("tht", [SuggestedWord(word="the", confidence=0.8636206673285276)]),
+        ("drem", [SuggestedWord(word="drew", confidence=0.6348547717842323)]),
+        ("responsable", [SuggestedWord(word="responsible", confidence=1.0)]),
+        ("tachnical", [SuggestedWord(word="technical", confidence=1.0)]),
+        ("acheive", [SuggestedWord(word="achieve", confidence=1.0)]),
+        ("jkdadk", []),
+        ("nigt", [SuggestedWord(word="night", confidence=0.9871794871794872)]),
+    ],
+)
+def test_get_spelling_suggestions(word, expected):
+    actual = get_spelling_suggestions(word)
+    assert actual == expected
+
+
+@pytest.mark.parametrize(
+    "word, min_confidence, expected",
+    [
+        (
+            "kinda",
+            0.1,
+            [
+                SuggestedWord(word="kind", confidence=0.8744588744588745),
+                SuggestedWord(word="kinds", confidence=0.12554112554112554),
+            ],
+        ),
+        ("kinda", 0.2, [SuggestedWord(word="kind", confidence=0.8744588744588745)]),
+        (
+            "bol",
+            0.1,
+            [
+                SuggestedWord(word="boy", confidence=0.3797752808988764),
+                SuggestedWord(word="vol", confidence=0.18202247191011237),
+                SuggestedWord(word="box", confidence=0.16853932584269662),
+            ],
+        ),
+        ("bol", 0.2, [SuggestedWord(word="boy", confidence=0.3797752808988764)]),
+    ],
+)
+def test_get_spelling_suggestions_different_min_confidence(
+    word, min_confidence, expected
+):
+    actual = get_spelling_suggestions(word, min_confidence=min_confidence)
+    assert actual == expected
+
+
+def test_type_of_return():
+    suggestions = get_spelling_suggestions("tht")
+    assert isinstance(suggestions, list)
+    assert isinstance(suggestions[0], tuple)
