@@ -6,6 +6,7 @@ from http.client import HTTPException
 from sys import exc_info
 
 from sqlalchemy import true
+from sqlalchemy.sql.annotation import Annotated
 
 # from pathlib import Path
 #
@@ -10814,27 +10815,145 @@ enumerate through the text by letter
 # # make a dictionary that maps from non-accentuated word -> accentuated (for every word in the dict)
 # #words =  SPANISH_WORDS
 
+#
+# from typing import List, NamedTuple
+#
+# from textblob import Word
+#
+# MIN_CONFIDENCE = 0.5
+#
+# class SuggestedWord(NamedTuple):
+#     word: str
+#     confidence: float
+#
+# # define SuggestedWord NamedTuple with attributes
+# # word (str) and confidence (float)
+#
+#
+# def get_spelling_suggestions(
+#     word: str, min_confidence: float = MIN_CONFIDENCE
+# ) -> List[SuggestedWord]:
+#     """
+#     Find spelling suggestions with at least minimum confidence score
+#     Use textblob.Word (check out the docs)
+#     """
+#     w=Word(word)
+#     return [ SuggestedWord(word=w, confidence=s) for w,s in w.spellcheck() if s >= min_confidence]
+#
+# import hashlib
+#
+# def hash_query(query: str, length: int = 32) -> str:
+#     """Return a hash value for a given query.
+#
+#     Args:
+#         query (str): An SQL query.
+#         length (int, optional): Length of the hash value. Defaults to 32.
+#
+#     Raises:
+#         ValueError: Parameter length has to be greater equal 1.
+#         TypeError: Parameter length has to be of type integer.
+#
+#     Returns:
+#         str: String representation of the hashed value.
+#     """
+#     if type(length)!=int:
+#         raise TypeError
+#     if length <1:
+#         raise ValueError
+#
+#     # Remove semi colon
+#     query = query.lower()
+#     query = query.replace(';','').replace('"','')
+#     query = ' '.join(sorted(query.split()))
+#     return hashlib.shake_256(bytes(query, 'utf-8')).hexdigest(50)[0:length]
+#
+#
+# import typer
+#
+# def sum_numbers(a: int, b: int):
+#     return a + b
+#
+# def main(
+#     a: int = typer.Argument(..., help="The value of the first summand"),
+#     b: int = typer.Argument(..., help="The value of the second summand"),
+#     c: int|None = None
+# ):
+#     """CLI that allows you to add two numbers"""
+#     if c:
+#         result = '' if c<a+b else 'not '
+#         print(f"The sum is {sum_numbers(a, b)} and c is {result}smaller")
+#     else:
+#         print(f"The sum is {sum_numbers(a, b)} and c is None")
+#
+#
+#
+# if __name__ == "__main__":
+#     typer.run(main)
+#
+# ## Solution
+# import typer
+#
+#
+# def sum_numbers(a: int, b: int):
+#     return a + b
+#
+#
+# def main(
+#     a: int = typer.Argument(..., help="The value of the first summand"),
+#     b: int = typer.Argument(..., help="The value of the second summand"),
+#     c: int = typer.Option(
+#         None, help="An optional third value to compare the sum with."
+#     ),
+# ):
+#     """CLI that allows you to add two numbers (and optionally compare whether the sum is bigger than an optional number c."""
+#     sum_ab = sum_numbers(a, b)
+#
+#     STRING_TRUE = "smaller"
+#     STRING_FALSE = "not smaller"
+#
+#     if c is not None:
+#         c_evaluation = STRING_TRUE if sum_ab > c else STRING_FALSE
+#     else:
+#         c_evaluation = "None"
+#
+#     print(f"The sum is {sum_ab} and c is {c_evaluation}")
+#
+#
+# if __name__ == "__main__":
+#     typer.run(main)
+#
+# import typer
+# from rich.console import Console
+# from rich.table import Table
+#
+# console = Console()
+# app = typer.Typer()
+#
+#
+# @app.command()
+# def table():
+#     tb =  Table("Name","Favorite Tool/Framework")
+#     tb.add_row("Bob","Vim")
+#     tb.add_row("Julian","Flask")
+#     tb.add_row("Robin","VS Code")
+#     console.print(tb)
+#
+# if __name__ == "__main__":
+#     app()
+#     table()
+from typing import Annotated
+import typer
 
-from typing import List, NamedTuple
-
-from textblob import Word
-
-MIN_CONFIDENCE = 0.5
-
-class SuggestedWord(NamedTuple):
-    word: str
-    confidence: float
-
-# define SuggestedWord NamedTuple with attributes
-# word (str) and confidence (float)
+app = typer.Typer()
 
 
-def get_spelling_suggestions(
-    word: str, min_confidence: float = MIN_CONFIDENCE
-) -> List[SuggestedWord]:
-    """
-    Find spelling suggestions with at least minimum confidence score
-    Use textblob.Word (check out the docs)
-    """
-    w=Word(word)
-    return [ SuggestedWord(word=w, confidence=s) for w,s in w.spellcheck() if s >= min_confidence]
+@app.command()
+def main(
+    user:str,
+    password:Annotated[str, typer.Option(prompt=True)]
+):
+    print(f"Hello {user}. Doing something very secure with password.\n",
+                f"...just kidding, here it is, very insecure: {password}\n",)
+
+if __name__ == "__main__":
+    app()

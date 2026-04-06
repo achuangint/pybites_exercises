@@ -11776,61 +11776,338 @@ Inputs are modified to check how the function deals with unknown characters
 # @pytest.mark.parametrize("text, accentuated_text", PHRASES)
 # def test_get_accentuated_sentence(text, accentuated_text):
 #     assert get_accentuated_sentence(text) == accentuated_text
+#
+# import pytest
+#
+# from wc import get_spelling_suggestions, SuggestedWord
+#
+#
+# @pytest.mark.parametrize(
+#     "word, expected",
+#     [
+#         ("tht", [SuggestedWord(word="the", confidence=0.8636206673285276)]),
+#         ("drem", [SuggestedWord(word="drew", confidence=0.6348547717842323)]),
+#         ("responsable", [SuggestedWord(word="responsible", confidence=1.0)]),
+#         ("tachnical", [SuggestedWord(word="technical", confidence=1.0)]),
+#         ("acheive", [SuggestedWord(word="achieve", confidence=1.0)]),
+#         ("jkdadk", []),
+#         ("nigt", [SuggestedWord(word="night", confidence=0.9871794871794872)]),
+#     ],
+# )
+# def test_get_spelling_suggestions(word, expected):
+#     actual = get_spelling_suggestions(word)
+#     assert actual == expected
+#
+#
+# @pytest.mark.parametrize(
+#     "word, min_confidence, expected",
+#     [
+#         (
+#             "kinda",
+#             0.1,
+#             [
+#                 SuggestedWord(word="kind", confidence=0.8744588744588745),
+#                 SuggestedWord(word="kinds", confidence=0.12554112554112554),
+#             ],
+#         ),
+#         ("kinda", 0.2, [SuggestedWord(word="kind", confidence=0.8744588744588745)]),
+#         (
+#             "bol",
+#             0.1,
+#             [
+#                 SuggestedWord(word="boy", confidence=0.3797752808988764),
+#                 SuggestedWord(word="vol", confidence=0.18202247191011237),
+#                 SuggestedWord(word="box", confidence=0.16853932584269662),
+#             ],
+#         ),
+#         ("bol", 0.2, [SuggestedWord(word="boy", confidence=0.3797752808988764)]),
+#     ],
+# )
+# def test_get_spelling_suggestions_different_min_confidence(
+#     word, min_confidence, expected
+# ):
+#     actual = get_spelling_suggestions(word, min_confidence=min_confidence)
+#     assert actual == expected
+#
+#
+# def test_type_of_return():
+#     suggestions = get_spelling_suggestions("tht")
+#     assert isinstance(suggestions, list)
+#     assert isinstance(suggestions[0], tuple)
+# from random import shuffle
+#
+# import pytest
+#
+# from wc import hash_query
+#
+#
+# @pytest.fixture
+# def complex_query():
+#     return """select Candidate, Election_year, sum(Total_$), count(*)
+#               from combined_party_data
+#               where Election_year = 2016
+#               group by Candidate, Election_year
+#               having count(*) > 80
+#               order by count(*) DESC; \
+#            """
+#
+#
+# def test_hash_query_ignore_semicolon(complex_query: str):
+#     assert hash_query(complex_query) == hash_query(complex_query[:-1])
+#
+#
+# def test_hash_query_ignore_case_sensitive(complex_query: str):
+#     assert hash_query(complex_query) == hash_query(complex_query.upper())
+#     assert hash_query(complex_query) == hash_query(complex_query.title())
+#     assert hash_query(complex_query) == hash_query(complex_query.lower())
+#     assert hash_query(complex_query) == hash_query(complex_query.casefold())
+#
+#
+# def test_hash_query_ignore_backticks(complex_query: str):
+#     assert hash_query(complex_query) == hash_query(
+#         complex_query.replace("combined_party_data", "\"combined_party_data\"")
+#     )
+#
+#
+# def test_hash_query_ignore_order(complex_query: str):
+#     shuffled_query = complex_query.split()
+#     shuffle(shuffled_query)
+#     shuffled_query = " ".join(shuffled_query)
+#     assert hash_query(complex_query) == hash_query(shuffled_query)
+#
+#
+# @pytest.mark.parametrize("old, new", [
+#     ("=", "<"),
+#     ("=", ">"),
+#     ("=", "!="),
+#     ("=", "=="),
+#     ("Candidate", "Candidates"),
+#     ("80", "100"),
+#     ("group by", "groupby"),
+#     ("order by", "orderby"),
+#     ("DESC", "ASC"),
+#     ("sum(Total_$)", "Total_$"),
+#     ("combined_party_data", "combined_party"),
+#     ("2016", "2022")
+# ])
+# def test_hash_query_detect_changes(complex_query: str, old: str, new: str):
+#     assert hash_query(complex_query) != hash_query(complex_query.replace(old, new))
+#
+#
+# def test_hash_query_stable_cache(complex_query: str):
+#     hash_ = hash_query(complex_query)
+#     assert hash_query(complex_query) == hash_
+#
+#
+# @pytest.mark.parametrize("length", [(1), (2), (5), (10), (11), (27), (50), (100)])
+# def test_hash_query_length_param(complex_query: str, length: int):
+#     assert len(hash_query(complex_query, length=length)) == length
+#
+#
+# def test_hash_query_invalid_length(complex_query: str):
+#     with pytest.raises(ValueError):
+#         hash_query(complex_query, length=-1)
+#
+#     with pytest.raises(TypeError):
+#         hash_query(complex_query, length=1.1)
+#
+# import pytest
+# import typer
+# from typer.testing import CliRunner
+#
+# from wc import main
+#
+# runner = CliRunner()
+# app = typer.Typer()
+# app.command()(main)
+#
+#
+# @pytest.mark.parametrize(
+#     "a, b, expected_result",
+#     [
+#         ("3", "4", "The sum is 7 and c is None"),
+#         ("2", "5", "The sum is 7 and c is None"),
+#     ],
+# )
+# def test_app_sum(a, b, expected_result):
+#     result = runner.invoke(app, [a, b])
+#     assert result.exit_code == 0
+#     assert result.stdout.strip() == expected_result
+#
+#
+# @pytest.mark.parametrize(
+#     "expected_descriptions",
+#     [
+#         (
+#             [
+#                 "CLI that allows you to add two numbers",
+#                 "The value of the first summand",
+#                 "The value of the second summand",
+#             ]
+#         ),
+#     ],
+# )
+# def test_app_help(expected_descriptions):
+#     result = runner.invoke(app, ["--help"])
+#     assert result.exit_code == 0
+#
+#     for description in expected_descriptions:
+#         assert description in result.stdout
+#
+#
+# @pytest.mark.parametrize(
+#     "a, b, c, expected_result",
+#     [
+#         ("3", "4", 6, "The sum is 7 and c is smaller"),
+#         ("2", "5", 7, "The sum is 7 and c is not smaller"),
+#     ],
+# )
+# def test_app_sum_with_c(a, b, c, expected_result):
+#     result = runner.invoke(app, [a, b, "--c", c])
+#     assert result.exit_code == 0
+#     assert result.stdout.strip() == expected_result
+#
+# import pytest
+# from typer.testing import CliRunner
+#
+# from wc import app, state
+#
+# runner = CliRunner()
+#
+# @pytest.fixture(autouse=True)
+# def reset_state():
+#     state["verbose"] = False
+#
+#
+# @pytest.mark.parametrize(
+#     "verbose, a, b, expected_result",
+#     [
+#         (False, "3", "4", "7"),
+#         (False, "2", "5", "7"),
+#         (True, "3", "4", "Will write verbose output\nThe sum is 7"),
+#         (True, "2", "5", "Will write verbose output\nThe sum is 7"),
+#     ],
+# )
+# def test_app_sum(verbose, a, b, expected_result):
+#     if verbose:
+#         result = runner.invoke(app, ["--verbose", "sum", a, b])
+#     else:
+#         result = runner.invoke(app, ["sum", a, b])
+#
+#     assert result.exit_code == 0
+#     assert result.stdout.strip() == expected_result
+#
+#
+# @pytest.mark.parametrize(
+#     "expected_descriptions",
+#     [
+#         (
+#             [
+#                 "Command that allows you to add two numbers",
+#                 "The value of the first summand",
+#                 "The value of the second summand",
+#             ]
+#         ),
+#     ],
+# )
+# def test_app_sum_help(expected_descriptions):
+#     result = runner.invoke(app, ["sum", "--help"])
+#     assert result.exit_code == 0
+#     for description in expected_descriptions:
+#         assert description in result.stdout
+#
+#
+# @pytest.mark.parametrize(
+#     "verbose, c, d, expected_result",
+#     [
+#         (False, "5", "4", "d > c: False"),
+#         (False, "2", "7", "d > c: True"),
+#         (True, "5", "4", "Will write verbose output\nd=4 is not greater than c=5"),
+#         (True, "2", "7", "Will write verbose output\nd=7 is greater than c=2"),
+#     ],
+# )
+# def test_app_compare(verbose, c, d, expected_result):
+#     if verbose:
+#         result = runner.invoke(app, ["--verbose", "compare", c, d])
+#     else:
+#         result = runner.invoke(app, ["compare", c, d])
+#
+#     assert result.exit_code == 0
+#     assert result.stdout.strip() == expected_result
+#
+#
+# @pytest.mark.parametrize(
+#     "expected_descriptions",
+#     [
+#         (
+#             [
+#                 "Command that checks whether a number d is greater than a number c.",
+#                 "First number to compare against.",
+#                 "Second number that is compared against first number.",
+#             ]
+#         ),
+#     ],
+# )
+# def test_app_compare_help(reset_state, expected_descriptions):
+#     result = runner.invoke(app, ["compare", "--help"])
+#     assert result.exit_code == 0
+#     for description in expected_descriptions:
+#         assert description in result.stdout
+#
+# import pytest
+# from typer.testing import CliRunner
+#
+# from wc import app
+#
+# runner = CliRunner()
+#
+#
+# @pytest.mark.parametrize(
+#     "expected",
+#     [
+#         (
+#             [
+#                 "┏━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━┓",
+#                 "┃ Name   ┃ Favorite Tool/Framework ┃",
+#                 "┡━━━━━━━━╇━━━━━━━━━━━━━━━━━━━━━━━━━┩",
+#                 "│ Bob    │ Vim                     │",
+#                 "│ Julian │ Flask                   │",
+#                 "│ Robin  │ VS Code                 │",
+#                 "└────────┴─────────────────────────┘",
+#             ]
+#         ),
+#     ],
+# )
+# def test_app_sum(expected):
+#     result = runner.invoke(app, [])
+#
+#     for line in expected:
+#         assert line in result.stdout
 
 import pytest
+from typer.testing import CliRunner
 
-from wc import get_spelling_suggestions, SuggestedWord
+from wc import app
 
+runner = CliRunner()
 
-@pytest.mark.parametrize(
-    "word, expected",
-    [
-        ("tht", [SuggestedWord(word="the", confidence=0.8636206673285276)]),
-        ("drem", [SuggestedWord(word="drew", confidence=0.6348547717842323)]),
-        ("responsable", [SuggestedWord(word="responsible", confidence=1.0)]),
-        ("tachnical", [SuggestedWord(word="technical", confidence=1.0)]),
-        ("acheive", [SuggestedWord(word="achieve", confidence=1.0)]),
-        ("jkdadk", []),
-        ("nigt", [SuggestedWord(word="night", confidence=0.9871794871794872)]),
-    ],
-)
-def test_get_spelling_suggestions(word, expected):
-    actual = get_spelling_suggestions(word)
-    assert actual == expected
+USERNAME = "Robin"
+PASSWORD = "very_secure_password"
 
 
 @pytest.mark.parametrize(
-    "word, min_confidence, expected",
+    "expected_result",
     [
         (
-            "kinda",
-            0.1,
             [
-                SuggestedWord(word="kind", confidence=0.8744588744588745),
-                SuggestedWord(word="kinds", confidence=0.12554112554112554),
-            ],
-        ),
-        ("kinda", 0.2, [SuggestedWord(word="kind", confidence=0.8744588744588745)]),
-        (
-            "bol",
-            0.1,
-            [
-                SuggestedWord(word="boy", confidence=0.3797752808988764),
-                SuggestedWord(word="vol", confidence=0.18202247191011237),
-                SuggestedWord(word="box", confidence=0.16853932584269662),
-            ],
-        ),
-        ("bol", 0.2, [SuggestedWord(word="boy", confidence=0.3797752808988764)]),
+                f"Hello {USERNAME}. Doing something very secure with password.\n",
+                "...just kidding, here it is, very insecure: very_secure_password\n",
+            ]
+        )
     ],
 )
-def test_get_spelling_suggestions_different_min_confidence(
-    word, min_confidence, expected
-):
-    actual = get_spelling_suggestions(word, min_confidence=min_confidence)
-    assert actual == expected
+def test_app_sum(expected_result):
+    result = runner.invoke(app, [USERNAME], input=f"{PASSWORD}\n{PASSWORD}\n")
 
-
-def test_type_of_return():
-    suggestions = get_spelling_suggestions("tht")
-    assert isinstance(suggestions, list)
-    assert isinstance(suggestions[0], tuple)
+    for string_fragment in expected_result:
+        assert string_fragment in result.stdout
