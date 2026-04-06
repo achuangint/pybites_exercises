@@ -12083,31 +12083,57 @@ Inputs are modified to check how the function deals with unknown characters
 #
 #     for line in expected:
 #         assert line in result.stdout
-
-import pytest
-from typer.testing import CliRunner
-
-from wc import app
-
-runner = CliRunner()
-
-USERNAME = "Robin"
-PASSWORD = "very_secure_password"
-
-
-@pytest.mark.parametrize(
-    "expected_result",
-    [
-        (
-            [
-                f"Hello {USERNAME}. Doing something very secure with password.\n",
-                "...just kidding, here it is, very insecure: very_secure_password\n",
-            ]
-        )
-    ],
-)
-def test_app_sum(expected_result):
-    result = runner.invoke(app, [USERNAME], input=f"{PASSWORD}\n{PASSWORD}\n")
-
-    for string_fragment in expected_result:
-        assert string_fragment in result.stdout
+#
+# import pytest
+# from typer.testing import CliRunner
+#
+# from wc import app
+#
+# runner = CliRunner()
+#
+# USERNAME = "Robin"
+# PASSWORD = "very_secure_password"
+#
+#
+# @pytest.mark.parametrize(
+#     "expected_result",
+#     [
+#         (
+#             [
+#                 f"Hello {USERNAME}. Doing something very secure with password.\n",
+#                 "...just kidding, here it is, very insecure: very_secure_password\n",
+#             ]
+#         )
+#     ],
+# )
+# def test_app_sum(expected_result):
+#     result = runner.invoke(app, [USERNAME], input=f"{PASSWORD}\n{PASSWORD}\n")
+#
+#     for string_fragment in expected_result:
+#         assert string_fragment in result.stdout
+#
+# import pytest
+# from wc import invoice_refactored
+#
+#
+# def test_invoice_without_discount():
+#     assert invoice_refactored("Pulp Fiction", 1) == 10
+#
+#
+# def test_invoice_with_discount():
+#     assert invoice_refactored("Pulp Fiction", 6) == 50
+#
+#
+# def test_invoice_imax_movie():
+#     assert invoice_refactored("Tomorrow Never Dies", 3) == 36
+#
+#
+# def test_invoice_0_tickets():
+#     with pytest.raises(ValueError):
+#         invoice_refactored("Pulp Fiction", 0)
+#
+#
+# def test_invoice_unknown_movie():
+#     with pytest.raises(LookupError):
+#         invoice_refactored("Unknown Movie", 5)
+#
