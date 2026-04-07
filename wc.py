@@ -3,6 +3,7 @@ from __future__ import annotations
 import sys
 from enum import StrEnum
 from http.client import HTTPException
+from string import punctuation
 from sys import exc_info
 
 from sqlalchemy import true
@@ -11014,3 +11015,86 @@ enumerate through the text by letter
 #
 #     total_amount = (tickets * price) - discount
 #     return total_amount
+from bs4 import BeautifulSoup
+import requests
+import re
+from random import choice, randint
+import string
+
+# FEATURED_ARTICLE = ('https://en.wikipedia.org/wiki/Wikipedia:Today%27s_featured_article/January_1,_2022')
+FEATURED_ARTICLE = ('https://bites-data.s3.us-east-2.amazonaws.com/wiki_features_article_2022-01-01.html')
+CONTENT = requests.get(FEATURED_ARTICLE).text
+
+
+def generate_sentence(eligible_words):
+    sentence_leng = randint(5, 15)
+    return ' '.join([choice(eligible_words).title() if i == 0 else choice(eligible_words) for i in
+                     range(sentence_leng)]) + '.'
+
+
+def wiki_lorem_ipsum(article: str = CONTENT, number_of_sentences: int = 5):
+    """Create a lorem ipsum block of sentences from the words scraped from today's Wikipedia featured article
+
+    :param number_of_sentences
+    :type number_of_sentences: int
+    :return: lorem ipsum text (Lorem ipsum is nonsense text used to test layouts for documents or websites)
+    rtype: str
+    """
+
+    """
+    Steps:
+    parse html strings to get the text
+    get the text, remove puntuations, break into words
+    Generate sentences of length 4 to 16 words with capital and period.
+    Return string
+
+    """
+    # steps:
+    if number_of_sentences<1:
+        raise ValueError
+
+    soup = BeautifulSoup(article, 'html.parser')
+
+    all_text = soup.select_one(".mw-parser-output p").text
+
+    # use translator
+    punctuations = string.punctuation
+    numbers = string.digits
+    targets= punctuations + numbers
+    trans_table = str.maketrans(targets,' '*len(targets))
+    words=list(set(all_text.translate(trans_table).lower().split()))
+
+    full_list = [generate_sentence(words) for i in range(number_of_sentences)]
+    full_str = ' '.join(full_list)
+
+    return full_str
+
+#
+#
+# def wiki_lorem_ipsum(article: str = CONTENT, number_of_sentences: int = 5):
+#     """Create a lorem ipsum block of sentences from the words scraped from today's Wikipedia featured article
+#
+#     :param number_of_sentences
+#     :type number_of_sentences: int
+#     :return: lorem ipsum text (Lorem ipsum is nonsense text used to test layouts for documents or websites)
+#     rtype: str
+#     """
+#     if number_of_sentences < 1:
+#         raise ValueError
+#     soup = BeautifulSoup(article, 'html.parser')
+#     featured_article_text = soup.select_one(".mw-parser-output p").text
+#
+#     # Extract all words from text. Remove any non-alpha characters. Make all words lower case
+#     words = [
+#         re.sub('[^\w]*', '', word).lower()
+#         for word in re.split('[ -]', featured_article_text)
+#         if word and word.strip()
+#     ]
+#
+#     # Make words unique. Need to cast back to a list from a set because sets don't allow choice
+#     words = list(set(words))
+#     ipsum = ''
+#     for _ in range(number_of_sentences):
+#         sentence = ' '.join([choice(words) for _ in range(randint(5, 15))]) + '. '
+#         ipsum += sentence[0].upper() + sentence[1:]
+#     return ipsum.rstrip()
