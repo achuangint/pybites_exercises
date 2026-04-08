@@ -11149,38 +11149,256 @@ enumerate through the text by letter
 #     two dice and chooses the larger value.
 #     """
 #     return round(1 / (n*n) * sum([ i * (2*i-1) for i in range(1, n+1)] ),3)
+#
+# import calendar
+# from datetime import date
+# from typing import Tuple
+#
+#
+# def goal_tracker(desc: str, annual_target: int, current_score: int, score_date: Tuple[int, int, int]):
+#     """Return a string determining whether a goal is on track
+#      by calculating the current target and comparing it with the current achievement.
+#      The function assumes the goal is to be achieved in a calendar year. Think New Year's Resolution :)
+#     """
+#     year, month, day = score_date
+#
+#     # Figure out if it is leap year
+#     is_leap_year = calendar.isleap(year)
+#
+#     # Steps:
+#     # calculate expected_score for this date
+#     # current_score - expected_score
+#
+#     num_days_in_a_year = 366 if is_leap_year else 365
+#     target_date = date(*score_date)
+#     start_date = date(year, month=1,day=1 )
+#     delta = target_date - start_date
+#     year_to_date_days = delta.days + 1
+#     expected_score = int(annual_target * (year_to_date_days / num_days_in_a_year))
+#     progress =  int(current_score - expected_score)
+#     p_formatted = f"{abs(progress):,}"
+#
+#     if progress >= 0 :
+#         result = f"Congratulations! You are on track with your {desc} goal. The target for {target_date:%Y-%m-%d} is {expected_score:,} {desc} and you are {p_formatted} ahead."
+#     else:
+#         result = f"You have some catching up to do! The target for {target_date:%Y-%m-%d} is {expected_score:,} {desc} and you are {p_formatted} behind."
+#     return result
+#
 
 import calendar
-from datetime import date
-from typing import Tuple
+from typing import List, Tuple
+from typing import NamedTuple
+from collections import defaultdict
+
+class Event(NamedTuple):
+    day_of_month: int
+    day_of_week: int
+    description: str
+    def __str__(self):
+        return f"{calendar.day_name[self.day_of_week]}: {self.description}"
+
+PI_DAY_DESC = 'π Day'
+PI_DAY_MONTH = 3
+PI_DAY_DAY = 14
+PI_DAY_DEFAULT_DATE_LIST = [(PI_DAY_MONTH, PI_DAY_DAY, PI_DAY_DESC)]
+
+tc = calendar.TextCalendar(firstweekday=6)
+
+def make_event(year:int, month:int, day:int, desc:str):
+    return Event(day, calendar.weekday(year, month, day), desc)
+
+def get_events_for_the_month(d:dict, m:int):
+    e_list = [item  for ((day_of_month, day_of_week), val) in d.items() if day_of_month ==m for item in val]
+    return sorted(e_list, key=lambda x: (x.day_of_week, x.day_of_month))
+
+def make_events_dict(year, dates):
+    d = defaultdict(list)
+    dates.append(PI_DAY_DEFAULT_DATE_LIST[0])
+    for month, day, des  in dates:
+        e = make_event(year, month, day, des)
+        d[(month, e.day_of_week)].append(e)
+    return d
+
+class InvalidYear(Exception):
+    pass
 
 
-def goal_tracker(desc: str, annual_target: int, current_score: int, score_date: Tuple[int, int, int]):
-    """Return a string determining whether a goal is on track
-     by calculating the current target and comparing it with the current achievement.
-     The function assumes the goal is to be achieved in a calendar year. Think New Year's Resolution :)
+def create_calendar(year: int, dates: List[Tuple[int, int, str]]) -> None:
+    """Accept a list of tuples with a month, a day and a description. They will not necessarily come in date order.
+    Print out a calendar of each month with one of the dates, followed by a line for each of the events in that month
+    showing day of the week, day of the month then the event description, sorted by day of the week and then
+    day of the month.
+    Add Pie Day (3/14) as a date whether it is entered or not.
+    If the year passed into the function is  not valid (an integer between 1 and 9999) raise an InvalidYear exception
+
+    An example will make this much easier!
+    create_calendar(2000, [(1, 25, "My birthday"),
+                       (1, 27, "e-Day"),
+                       (1, 8, "Earth Rotation Day"),
+                       (4, 12, "Grilled Cheese Day"),
+                       (1, 20, "Penguin Awareness Day"),
+                       ])
+
+
+    should print-
+
+        January 2000
+    Su Mo Tu We Th Fr Sa
+                       1
+     2  3  4  5  6  7  8
+     9 10 11 12 13 14 15
+    16 17 18 19 20 21 22
+    23 24 25 26 27 28 29
+    30 31
+    Tuesday 25: My birthday
+    Thursday 20: Penguin Awareness Day
+    Thursday 27: e-Day
+    Saturday 8: Earth Rotation Day
+
+         March 2000
+    Su Mo Tu We Th Fr Sa
+              1  2  3  4
+     5  6  7  8  9 10 11
+    12 13 14 15 16 17 18
+    19 20 21 22 23 24 25
+    26 27 28 29 30 31
+    Tuesday 14: π Day
+
+             April 2000
+    Su Mo Tu We Th Fr Sa
+                       1
+     2  3  4  5  6  7  8
+     9 10 11 12 13 14 15
+    16 17 18 19 20 21 22
+    23 24 25 26 27 28 29
+    30
+    Wednesday: Grilled Cheese Day
+
+    :param year:
+    :type year: int
+    :param dates:
+    :type dates: list of tuples, each of which has a month(int), day(int) and description (str)
+    :return: None
     """
-    year, month, day = score_date
 
-    # Figure out if it is leap year
-    is_leap_year = calendar.isleap(year)
+    # Strategy:
 
-    # Steps:
-    # calculate expected_score for this date
-    # current_score - expected_score
+    # make a class for events,
+    # Add __str__ method to it.
 
-    num_days_in_a_year = 366 if is_leap_year else 365
-    target_date = date(*score_date)
-    start_date = date(year, month=1,day=1 )
-    delta = target_date - start_date
-    year_to_date_days = delta.days + 1
-    expected_score = int(annual_target * (year_to_date_days / num_days_in_a_year))
-    progress =  int(current_score - expected_score)
-    p_formatted = f"{abs(progress):,}"
+    # 1) Print out a month with Suday being first using the calendar module
 
-    if progress >= 0 :
-        result = f"Congratulations! You are on track with your {desc} goal. The target for {target_date:%Y-%m-%d} is {expected_score:,} {desc} and you are {p_formatted} ahead."
-    else:
-        result = f"You have some catching up to do! The target for {target_date:%Y-%m-%d} is {expected_score:,} {desc} and you are {p_formatted} behind."
-    return result
+    # 2) Data structure for storing the events
+    # A dictionary of events by month, day of the week
 
+    # 3) A print function that would
+
+    if type(year) != int or year < 1 or year > 9999:
+        raise InvalidYear
+
+    # process into a data structure to work with
+    events_dict = make_events_dict(year, dates)
+
+    # get all the months.
+    valid_months = set([key[0] for key in events_dict.keys()])
+
+    # loop through and print them out
+    for m in valid_months:
+        # print monthly calendar
+        tc.prmonth(year, m)
+        # print events of the month
+        event_list = get_events_for_the_month(events_dict, m)
+        for e in event_list:
+            print(e)
+        print()
+
+
+# ### other solutions
+# import calendar
+# from typing import List, Tuple
+#
+# PI_DAY_DESC = 'π Day'
+# PI_DAY_MONTH = 3
+# PI_DAY_DAY = 14
+# PI_DAY_DEFAULT_DATE_LIST = [(PI_DAY_MONTH, PI_DAY_DAY, PI_DAY_DESC)]
+#
+#
+# class InvalidYear(Exception):
+#     pass
+#
+#
+# def create_calendar(year: int, dates: List[Tuple[int, int, str]]) -> None:
+#     """Accept a list of tuples with a month, a day and a description. They will not necessarily come in date order.
+#     Print out a calendar of each month with one of the dates, followed by a line for each of the events in that month
+#     showing day of the week, day of the month then the event description, sorted by day of the week and then
+#     day of the month.
+#     Add Pie Day (3/14) as a date whether it is entered or not.
+#     If the year passed into the function is  not valid (an integer between 1 and 9999) raise an InvalidYear exception
+#
+#     An example will make this much easier!
+#     create_calendar(2000, [(1, 25, "My birthday"),
+#                        (1, 27, "e-Day"),
+#                        (1, 8, "Earth Rotation Day"),
+#                        (4, 12, "Grilled Cheese Day"),
+#                        (1, 20, "Penguin Awareness Day"),
+#                        ])
+#
+#
+#     should print-
+#
+#         January 2000
+#     Su Mo Tu We Th Fr Sa
+#                        1
+#      2  3  4  5  6  7  8
+#      9 10 11 12 13 14 15
+#     16 17 18 19 20 21 22
+#     23 24 25 26 27 28 29
+#     30 31
+#     Tuesday 25: My birthday
+#     Thursday 20: Penguin Awareness Day
+#     Thursday 27: e-Day
+#     Saturday 8: Earth Rotation Day
+#
+#          March 2000
+#     Su Mo Tu We Th Fr Sa
+#               1  2  3  4
+#      5  6  7  8  9 10 11
+#     12 13 14 15 16 17 18
+#     19 20 21 22 23 24 25
+#     26 27 28 29 30 31
+#     Tuesday 14: π Day
+#
+#              April 2000
+#     Su Mo Tu We Th Fr Sa
+#                        1
+#      2  3  4  5  6  7  8
+#      9 10 11 12 13 14 15
+#     16 17 18 19 20 21 22
+#     23 24 25 26 27 28 29
+#     30
+#     Wednesday: Grilled Cheese Day
+#
+#     :param year:
+#     :type year: int
+#     :param dates:
+#     :type dates: list of tuples, each of which has a month(int), day(int) and description (str)
+#     :return: None
+#     """
+#     if not isinstance(year, int) or not (1 < year < 9999):
+#         raise InvalidYear
+#
+#     cal = calendar.TextCalendar(firstweekday=calendar.SUNDAY)
+#     s_dates = sorted(
+#         [(mn, calendar.weekday(year, mn, dt), dt, desc) for mn, dt, desc in dates + PI_DAY_DEFAULT_DATE_LIST])
+#
+#     mm = 0
+#     this_month = []
+#     for mn, dow, dt, desc in s_dates:
+#         if mn != mm:
+#             if mm > 0:
+#                 print('')
+#             cal.prmonth(year, mn)
+#             mm = mn
+#         print(f'{calendar.day_name[dow]}: {desc}')
+#
+#     print('')

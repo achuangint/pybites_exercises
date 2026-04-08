@@ -12222,76 +12222,177 @@ Inputs are modified to check how the function deals with unknown characters
 # def test_new_expected_value(n, expected) -> None:
 #     actual = new_expected_value(n)
 #     assert actual == expected
+#
+# import pytest
+#
+# from wc import goal_tracker
+#
+#
+# @pytest.mark.parametrize(
+#     "desc, annual_target, current_score, score_date, expected",
+#     [
+#         (
+#             "steps",
+#             5000000,
+#             164394,
+#             (2023, 1, 12),
+#             "Congratulations! You are on track with your steps goal. The target for 2023-01-12 is 164,383 steps "
+#             "and you are 11 ahead.",
+#         ),
+#         (
+#             "healthy snacks",
+#             722,
+#             119,
+#             (2000, 2, 29),
+#             "Congratulations! You are on track with your healthy snacks goal. The target for 2000-02-29 is 118 healthy "
+#             "snacks and you are 1 ahead.",
+#         ),
+#         (
+#             "days of code",
+#             365,
+#             77,
+#             (2021, 3, 18),
+#             "Congratulations! You are on track with your days of code goal. The target for 2021-03-18 is 77 days of code "
+#             "and you are 0 ahead.",
+#         ),
+#         (
+#             "pages read",
+#             36500,
+#             27298,
+#             (2023, 9, 30),
+#             "You have some catching up to do! The target for 2023-09-30 is 27,300 pages read and you are 2 behind.",
+#         ),
+#         (
+#             "minutes walked",
+#             (30 * 365),
+#             2500,
+#             (2021, 3, 30),
+#             "You have some catching up to do! The target for 2021-03-30 is 2,670 minutes walked and you are 170 behind.",
+#         ),
+#         (
+#             "pybites completed",
+#             5000,
+#             0,
+#             (2021, 1, 3),
+#             "You have some catching up to do! The target for 2021-01-03 is 41 pybites completed and you are 41 behind.",
+#         ),
+#         (
+#             "leaps",
+#             365,
+#             31,
+#             (2000, 2, 1),
+#             "Congratulations! You are on track with your leaps goal. The target for 2000-02-01 is 31 leaps and you are "
+#             "0 ahead.",
+#         ),
+#         (
+#             "jumps",
+#             365,
+#             31,
+#             (2023, 2, 1),
+#             "You have some catching up to do! The target for 2023-02-01 is 32 jumps and you are 1 behind.",
+#         ),
+#     ],
+# )
+# def test_bite_goal_tracker(desc, annual_target, current_score, score_date, expected):
+#     assert goal_tracker(desc, annual_target, current_score, score_date) == expected
 
 import pytest
 
-from wc import goal_tracker
+from wc import InvalidYear
+
+from wc import create_calendar
 
 
-@pytest.mark.parametrize(
-    "desc, annual_target, current_score, score_date, expected",
-    [
-        (
-            "steps",
-            5000000,
-            164394,
-            (2023, 1, 12),
-            "Congratulations! You are on track with your steps goal. The target for 2023-01-12 is 164,383 steps "
-            "and you are 11 ahead.",
-        ),
-        (
-            "healthy snacks",
-            722,
-            119,
-            (2000, 2, 29),
-            "Congratulations! You are on track with your healthy snacks goal. The target for 2000-02-29 is 118 healthy "
-            "snacks and you are 1 ahead.",
-        ),
-        (
-            "days of code",
-            365,
-            77,
-            (2021, 3, 18),
-            "Congratulations! You are on track with your days of code goal. The target for 2021-03-18 is 77 days of code "
-            "and you are 0 ahead.",
-        ),
-        (
-            "pages read",
-            36500,
-            27298,
-            (2023, 9, 30),
-            "You have some catching up to do! The target for 2023-09-30 is 27,300 pages read and you are 2 behind.",
-        ),
-        (
-            "minutes walked",
-            (30 * 365),
-            2500,
-            (2021, 3, 30),
-            "You have some catching up to do! The target for 2021-03-30 is 2,670 minutes walked and you are 170 behind.",
-        ),
-        (
-            "pybites completed",
-            5000,
-            0,
-            (2021, 1, 3),
-            "You have some catching up to do! The target for 2021-01-03 is 41 pybites completed and you are 41 behind.",
-        ),
-        (
-            "leaps",
-            365,
-            31,
-            (2000, 2, 1),
-            "Congratulations! You are on track with your leaps goal. The target for 2000-02-01 is 31 leaps and you are "
-            "0 ahead.",
-        ),
-        (
-            "jumps",
-            365,
-            31,
-            (2023, 2, 1),
-            "You have some catching up to do! The target for 2023-02-01 is 32 jumps and you are 1 behind.",
-        ),
-    ],
-)
-def test_bite_goal_tracker(desc, annual_target, current_score, score_date, expected):
-    assert goal_tracker(desc, annual_target, current_score, score_date) == expected
+@pytest.mark.parametrize("year, dates, expected", [
+    (2000, [],
+     """     March 2000
+Su Mo Tu We Th Fr Sa
+          1  2  3  4
+ 5  6  7  8  9 10 11
+12 13 14 15 16 17 18
+19 20 21 22 23 24 25
+26 27 28 29 30 31
+Tuesday: π Day
+
+"""),
+    (2015, [(1, 25, "My birthday"),
+            (1, 27, "e-Day"),
+            (1, 8, "Earth Rotation Day"),
+            (4, 12, "Grilled Cheese Day"),
+            (1, 20, "Penguin Awareness Day"),
+            ],
+     """    January 2015
+Su Mo Tu We Th Fr Sa
+             1  2  3
+ 4  5  6  7  8  9 10
+11 12 13 14 15 16 17
+18 19 20 21 22 23 24
+25 26 27 28 29 30 31
+Tuesday: Penguin Awareness Day
+Tuesday: e-Day
+Thursday: Earth Rotation Day
+Sunday: My birthday
+
+     March 2015
+Su Mo Tu We Th Fr Sa
+ 1  2  3  4  5  6  7
+ 8  9 10 11 12 13 14
+15 16 17 18 19 20 21
+22 23 24 25 26 27 28
+29 30 31
+Saturday: π Day
+
+     April 2015
+Su Mo Tu We Th Fr Sa
+          1  2  3  4
+ 5  6  7  8  9 10 11
+12 13 14 15 16 17 18
+19 20 21 22 23 24 25
+26 27 28 29 30
+Sunday: Grilled Cheese Day
+
+"""),
+    (2000, [(2, 27, 'No Brainer Day')],
+     """   February 2000
+Su Mo Tu We Th Fr Sa
+       1  2  3  4  5
+ 6  7  8  9 10 11 12
+13 14 15 16 17 18 19
+20 21 22 23 24 25 26
+27 28 29
+Sunday: No Brainer Day
+
+     March 2000
+Su Mo Tu We Th Fr Sa
+          1  2  3  4
+ 5  6  7  8  9 10 11
+12 13 14 15 16 17 18
+19 20 21 22 23 24 25
+26 27 28 29 30 31
+Tuesday: π Day
+
+"""),
+    (2023, [(3, 23, 'Puppy Day'), (3, 20, 'World Storytelling Day')],
+     """     March 2023
+Su Mo Tu We Th Fr Sa
+          1  2  3  4
+ 5  6  7  8  9 10 11
+12 13 14 15 16 17 18
+19 20 21 22 23 24 25
+26 27 28 29 30 31
+Monday: World Storytelling Day
+Tuesday: π Day
+Thursday: Puppy Day
+
+""")
+])
+def test_calendar(capsys, year, dates, expected):
+    create_calendar(year, dates)
+    captured = capsys.readouterr()
+    assert captured.out == expected
+
+
+@pytest.mark.parametrize("year", [-1, 0, 10000, None, 1.2, "3", False])
+def test_invalid_year(year):
+    with pytest.raises(InvalidYear):
+        create_calendar(year, [])
