@@ -11138,14 +11138,49 @@ enumerate through the text by letter
 #         sentence = ' '.join([choice(words) for _ in range(randint(5, 15))]) + '. '
 #         ipsum += sentence[0].upper() + sentence[1:]
 #     return ipsum.rstrip()
+#
+# def original_expected_value(n: int) -> float:
+#     """Calculate the expected value of an n-sided die."""
+#     return 1/n * sum(range(n+1))
+#
+#
+# def new_expected_value(n: int) -> float:
+#     """Calculate the expected value of an n-sided die when the player simultaneously rolls
+#     two dice and chooses the larger value.
+#     """
+#     return round(1 / (n*n) * sum([ i * (2*i-1) for i in range(1, n+1)] ),3)
 
-def original_expected_value(n: int) -> float:
-    """Calculate the expected value of an n-sided die."""
-    return 1/n * sum(range(n+1))
+import calendar
+from datetime import date
+from typing import Tuple
 
 
-def new_expected_value(n: int) -> float:
-    """Calculate the expected value of an n-sided die when the player simultaneously rolls
-    two dice and chooses the larger value.
+def goal_tracker(desc: str, annual_target: int, current_score: int, score_date: Tuple[int, int, int]):
+    """Return a string determining whether a goal is on track
+     by calculating the current target and comparing it with the current achievement.
+     The function assumes the goal is to be achieved in a calendar year. Think New Year's Resolution :)
     """
-    return round(1 / (n*n) * sum([ i * (2*i-1) for i in range(1, n+1)] ),3)
+    year, month, day = score_date
+
+    # Figure out if it is leap year
+    is_leap_year = calendar.isleap(year)
+
+    # Steps:
+    # calculate expected_score for this date
+    # current_score - expected_score
+
+    num_days_in_a_year = 366 if is_leap_year else 365
+    target_date = date(*score_date)
+    start_date = date(year, month=1,day=1 )
+    delta = target_date - start_date
+    year_to_date_days = delta.days + 1
+    expected_score = int(annual_target * (year_to_date_days / num_days_in_a_year))
+    progress =  int(current_score - expected_score)
+    p_formatted = f"{abs(progress):,}"
+
+    if progress >= 0 :
+        result = f"Congratulations! You are on track with your {desc} goal. The target for {target_date:%Y-%m-%d} is {expected_score:,} {desc} and you are {p_formatted} ahead."
+    else:
+        result = f"You have some catching up to do! The target for {target_date:%Y-%m-%d} is {expected_score:,} {desc} and you are {p_formatted} behind."
+    return result
+
