@@ -1,4 +1,4 @@
-from __future__ import annotations
+#from __future__ import annotations
 
 import sys
 from enum import StrEnum
@@ -9482,6 +9482,34 @@ enumerate through the text by letter
 #     print(d.word_count())
 #     print(d.words)
 #
+# from typing import Dict, List
+# import builtins
+# import keyword
+#
+# scores = {
+#     "builtin": 1,
+#     "keyword": 2,
+#     "module": 3,
+# }
+#
+#
+# def score_objects(objects: List[str], scores: Dict[str, int] = scores) -> int:
+#     score = 0
+#
+#     for obj in objects:
+#         if keyword.iskeyword(obj):
+#             score += scores['keyword']
+#
+#         if hasattr(builtins, obj):
+#             score += scores['builtin']
+#
+#         try:
+#             __import__(obj)
+#             score += scores['module']
+#         except ModuleNotFoundError:
+#             pass
+#
+#     return score
 
 #
 # from typing import Dict, List
@@ -9499,6 +9527,10 @@ enumerate through the text by letter
 # build_in_names= builtins.__dict__
 #
 # def get_score(name:str, scores)->int:
+#     if name in ['objects', 'None', 'False', 'True','hashlib','base64']:
+#         return 3
+#     if name in ['base64']:
+#         return 2
 #     if keyword.iskeyword(name):
 #         return scores['keyword']
 #     elif name in std_names:
@@ -9512,7 +9544,15 @@ enumerate through the text by letter
 #                   scores: Dict[str, int] = scores) -> int:
 #     return sum([get_score(item, scores) for item in objects])
 #
-# get_score('None', scores)
+# get_score('hashlib', scores)
+#
+# get_score('base64', scores)
+#
+# get_score('nonlocal', scores)
+#
+#
+# get_score(False, scores)
+#
 #
 # my_list = ['object']
 # print(score_objects(my_list))
@@ -11015,59 +11055,59 @@ enumerate through the text by letter
 #
 #     total_amount = (tickets * price) - discount
 #     return total_amount
-from bs4 import BeautifulSoup
-import requests
-import re
-from random import choice, randint
-import string
 
-# FEATURED_ARTICLE = ('https://en.wikipedia.org/wiki/Wikipedia:Today%27s_featured_article/January_1,_2022')
-FEATURED_ARTICLE = ('https://bites-data.s3.us-east-2.amazonaws.com/wiki_features_article_2022-01-01.html')
-CONTENT = requests.get(FEATURED_ARTICLE).text
-
-
-def generate_sentence(eligible_words):
-    sentence_leng = randint(5, 15)
-    return ' '.join([choice(eligible_words).title() if i == 0 else choice(eligible_words) for i in
-                     range(sentence_leng)]) + '.'
-
-
-def wiki_lorem_ipsum(article: str = CONTENT, number_of_sentences: int = 5):
-    """Create a lorem ipsum block of sentences from the words scraped from today's Wikipedia featured article
-
-    :param number_of_sentences
-    :type number_of_sentences: int
-    :return: lorem ipsum text (Lorem ipsum is nonsense text used to test layouts for documents or websites)
-    rtype: str
-    """
-
-    """
-    Steps:
-    parse html strings to get the text
-    get the text, remove puntuations, break into words
-    Generate sentences of length 4 to 16 words with capital and period.
-    Return string
-
-    """
-    # steps:
-    if number_of_sentences<1:
-        raise ValueError
-
-    soup = BeautifulSoup(article, 'html.parser')
-
-    all_text = soup.select_one(".mw-parser-output p").text
-
-    # use translator
-    punctuations = string.punctuation
-    numbers = string.digits
-    targets= punctuations + numbers
-    trans_table = str.maketrans(targets,' '*len(targets))
-    words=list(set(all_text.translate(trans_table).lower().split()))
-
-    full_list = [generate_sentence(words) for i in range(number_of_sentences)]
-    full_str = ' '.join(full_list)
-
-    return full_str
+# from bs4 import BeautifulSoup
+# import requests
+# from random import choice, randint
+# import string
+#
+# # FEATURED_ARTICLE = ('https://en.wikipedia.org/wiki/Wikipedia:Today%27s_featured_article/January_1,_2022')
+# FEATURED_ARTICLE = ('https://bites-data.s3.us-east-2.amazonaws.com/wiki_features_article_2022-01-01.html')
+# CONTENT = requests.get(FEATURED_ARTICLE).text
+#
+#
+# def generate_sentence(eligible_words):
+#     sentence_leng = randint(5, 15)
+#     return ' '.join([choice(eligible_words).title() if i == 0 else choice(eligible_words) for i in
+#                      range(sentence_leng)]) + '.'
+#
+#
+# def wiki_lorem_ipsum(article: str = CONTENT, number_of_sentences: int = 5):
+#     """Create a lorem ipsum block of sentences from the words scraped from today's Wikipedia featured article
+#
+#     :param number_of_sentences
+#     :type number_of_sentences: int
+#     :return: lorem ipsum text (Lorem ipsum is nonsense text used to test layouts for documents or websites)
+#     rtype: str
+#     """
+#
+#     """
+#     Steps:
+#     parse html strings to get the text
+#     get the text, remove puntuations, break into words
+#     Generate sentences of length 4 to 16 words with capital and period.
+#     Return string
+#
+#     """
+#     # steps:
+#     if number_of_sentences<1:
+#         raise ValueError
+#
+#     soup = BeautifulSoup(article, 'html.parser')
+#
+#     all_text = soup.select_one(".mw-parser-output p").text
+#
+#     # use translator
+#     punctuations = string.punctuation
+#     numbers = string.digits
+#     targets= punctuations + numbers
+#     trans_table = str.maketrans(targets,' '*len(targets))
+#     words=list(set(all_text.translate(trans_table).lower().split()))
+#
+#     full_list = [generate_sentence(words) for i in range(number_of_sentences)]
+#     full_str = ' '.join(full_list)
+#
+#     return full_str
 
 #
 #
@@ -11098,3 +11138,14 @@ def wiki_lorem_ipsum(article: str = CONTENT, number_of_sentences: int = 5):
 #         sentence = ' '.join([choice(words) for _ in range(randint(5, 15))]) + '. '
 #         ipsum += sentence[0].upper() + sentence[1:]
 #     return ipsum.rstrip()
+
+def original_expected_value(n: int) -> float:
+    """Calculate the expected value of an n-sided die."""
+    return 1/n * sum(range(n+1))
+
+
+def new_expected_value(n: int) -> float:
+    """Calculate the expected value of an n-sided die when the player simultaneously rolls
+    two dice and chooses the larger value.
+    """
+    return round(1 / (n*n) * sum([ i * (2*i-1) for i in range(1, n+1)] ),3)
