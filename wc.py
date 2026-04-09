@@ -6,6 +6,7 @@ from http.client import HTTPException
 from string import punctuation
 from sys import exc_info
 
+import itertools
 from sqlalchemy import true
 from sqlalchemy.sql.annotation import Annotated
 
@@ -11403,42 +11404,116 @@ enumerate through the text by letter
 # #
 # #     print('')
 
+#
+# from collections import defaultdict
+#
+# def sorted_string(word):
+#     return ''.join(sorted(word))
+#
+# def group_anagrams(strings: list[str]) -> list[list[str]]:
+#     """Group anagrams together."""
+#     d = defaultdict(list)
+#     for s in strings:
+#         key = sorted_string(s)
+#         d[key].append(s)
+#     return [val for val in d.values()]
+#
+#
+# # steps:
+# """
+#
+# # a function that can returns a sorted string
+#
+# # get a dictionary (defaultdict, list)
+# # key is the sorted string, value is the current string
+#
+# # go through the list
+# if the sorted string is in the dictionary, add to the value
+# else:
+#     add the new key to the dict with the sorted string, value
+#     as the current string
+#
+# return a list of the values
+# # i
+#
+# """
+#
+#
+#
+#
+# if __name__ == "__main__":
+#     group_anagrams()
+#
+# from itertools import product
+# number_mapping = {"2":["a","b","c"],
+#                       "3":["d","e","f"],
+#                       "4":["g","h","i"],
+#                       "5":["j","k","l"],
+#                       "6": ["m", "n", "o"],
+#                       "7": ["p", "q", "r","s"],
+#                       "8": ["t", "u", "v"],
+#                       "9": ["w", "x", "y", "z"]
+#                       }
+# def num_str_to_letter(l:str) -> list[str]:
+#     return number_mapping[l]
+#
+# def make_cartesian_product(a: list[str], b: list[str]) -> list[str]:
+#     return list(sorted(map(lambda t: t[0]+t[1] , product(a,b))))
+#
+# def generate_letter_combinations(digits: str) -> list[str]:
+#     """
+#     Calculate all possible letter combinations of a very short phone number.
+#     Input: A string of up to four digits.
+#     Output: A list of strings where each string represents a valid combination of letters
+#         that can be formed from the input. The strings in the output list should be sorted
+#         in lexicographical order.
+#     Raises: `ValueError`: If the input `digits` string contains non-digit characters or
+#         has more than four digits.
+#     """
+#
+#     """
+# idea:
+# make a mapping between number and letter
+# a function using itertools.prod to produce all combinations
+# maybe a reduce function to produce
+#
+#     """
+#     result = ['']
+#     for d in digits:
+#         result = make_cartesian_product(result, num_str_to_letter(d))
+#     return result
+#
+#
+# if __name__ == "__main__":
+#     generate_letter_combinations()
+#
 
-from collections import defaultdict
+# Pybites solution
+import itertools
+def generate_letter_combinations(digits: str) -> list[str]:
+    digit_map = {
+        "2": "abc",
+        "3": "def",
+        "4": "ghi",
+        "5": "jkl",
+        "6": "mno",
+        "7": "pqrs",
+        "8": "tuv",
+        "9": "wxyz",
+    }
+    # Step 1: Check if the input contains non-numeric digits or more than 4 digits
+    if not digits.isdigit() or len(digits) > 4:
+        raise ValueError(
+            "Input must contain only numeric digits and have a maximum length of 4."
+        )
 
-def sorted_string(word):
-    return ''.join(sorted(word))
+    # Step 2: Map digits to characters
+    chars = [digit_map[digit] for digit in digits]
 
-def group_anagrams(strings: list[str]) -> list[list[str]]:
-    """Group anagrams together."""
-    d = defaultdict(list)
-    for s in strings:
-        key = sorted_string(s)
-        d[key].append(s)
-    return [val for val in d.values()]
+    # Step 3: Obtain all possible combinations
+    combinations = itertools.product(*chars)
 
+    # Step 4: Concatenate characters
+    result = ["".join(combination) for combination in combinations if combination]
 
-# steps:
-"""
-
-# a function that can returns a sorted string
-
-# get a dictionary (defaultdict, list)
-# key is the sorted string, value is the current string
-
-# go through the list
-if the sorted string is in the dictionary, add to the value
-else:
-    add the new key to the dict with the sorted string, value
-    as the current string
-    
-return a list of the values
-# i
-
-"""
-
-
-
-
-if __name__ == "__main__":
-    group_anagrams()
+    return result

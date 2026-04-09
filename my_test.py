@@ -12397,24 +12397,140 @@ Inputs are modified to check how the function deals with unknown characters
 #     with pytest.raises(InvalidYear):
 #         create_calendar(year, [])
 
+# import pytest
+#
+# from wc import group_anagrams
+#
+#
+# @pytest.mark.parametrize(
+#     "words,expected",
+#     [
+#         (
+#             ["eat", "tea", "tan", "ate", "nat", "bat"],
+#             [["bat"], ["ate", "eat", "tea"], ["nat", "tan"]],
+#         ),
+#     ],
+# )
+# def test_group_anagrams(words: list[str], expected: set[set[str]]) -> None:
+#     result = [sorted(group) for group in group_anagrams(words)]
+#     expected = [sorted(group) for group in expected]
+#     for group in expected:
+#         assert group in result
+#     for group in result:
+#         assert group in expected
+
+from itertools import product
+
 import pytest
 
-from wc import group_anagrams
+from wc import generate_letter_combinations
 
 
 @pytest.mark.parametrize(
-    "words,expected",
+    "digits, expected",
     [
+        ("2", ["a", "b", "c"]),
+        ("23", ["ad", "ae", "af", "bd", "be", "bf", "cd", "ce", "cf"]),
         (
-            ["eat", "tea", "tan", "ate", "nat", "bat"],
-            [["bat"], ["ate", "eat", "tea"], ["nat", "tan"]],
+            "79",
+            [
+                "pw",
+                "px",
+                "py",
+                "pz",
+                "qw",
+                "qx",
+                "qy",
+                "qz",
+                "rw",
+                "rx",
+                "ry",
+                "rz",
+                "sw",
+                "sx",
+                "sy",
+                "sz",
+            ],
+        ),
+        (
+            "234",
+            [
+                "adg",
+                "adh",
+                "adi",
+                "aeg",
+                "aeh",
+                "aei",
+                "afg",
+                "afh",
+                "afi",
+                "bdg",
+                "bdh",
+                "bdi",
+                "beg",
+                "beh",
+                "bei",
+                "bfg",
+                "bfh",
+                "bfi",
+                "cdg",
+                "cdh",
+                "cdi",
+                "ceg",
+                "ceh",
+                "cei",
+                "cfg",
+                "cfh",
+                "cfi",
+            ],
         ),
     ],
 )
-def test_group_anagrams(words: list[str], expected: set[set[str]]) -> None:
-    result = [sorted(group) for group in group_anagrams(words)]
-    expected = [sorted(group) for group in expected]
-    for group in expected:
-        assert group in result
-    for group in result:
-        assert group in expected
+def test_generate_letter_combinations(digits, expected):
+    assert generate_letter_combinations(digits) == expected
+
+
+def test_generate_letter_combinations_repeated_digits():
+    assert generate_letter_combinations("222") == [
+        "aaa",
+        "aab",
+        "aac",
+        "aba",
+        "abb",
+        "abc",
+        "aca",
+        "acb",
+        "acc",
+        "baa",
+        "bab",
+        "bac",
+        "bba",
+        "bbb",
+        "bbc",
+        "bca",
+        "bcb",
+        "bcc",
+        "caa",
+        "cab",
+        "cac",
+        "cba",
+        "cbb",
+        "cbc",
+        "cca",
+        "ccb",
+        "ccc",
+    ]
+
+
+def test_generate_letter_combinations_long_input():
+    assert generate_letter_combinations("23") == [
+        "ad",
+        "ae",
+        "af",
+        "bd",
+        "be",
+        "bf",
+        "cd",
+        "ce",
+        "cf",
+    ]
