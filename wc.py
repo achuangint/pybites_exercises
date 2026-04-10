@@ -11487,33 +11487,165 @@ enumerate through the text by letter
 # if __name__ == "__main__":
 #     generate_letter_combinations()
 #
+#
+# digits = '23'
+#
+# # Pybites solution
+# import itertools
+# def generate_letter_combinations(digits: str) -> list[str]:
+#     digit_map = {
+#         "2": "abc",
+#         "3": "def",
+#         "4": "ghi",
+#         "5": "jkl",
+#         "6": "mno",
+#         "7": "pqrs",
+#         "8": "tuv",
+#         "9": "wxyz",
+#     }
+#     # Step 1: Check if the input contains non-numeric digits or more than 4 digits
+#     if not digits.isdigit() or len(digits) > 4:
+#         raise ValueError(
+#             "Input must contain only numeric digits and have a maximum length of 4."
+#         )
+#
+#     # Step 2: Map digits to characters
+#     chars = [digit_map[digit] for digit in digits]
+#
+#     # Step 3: Obtain all possible combinations
+#     combinations = itertools.product(*chars)
+#
+#     # Step 4: Concatenate characters
+#     result = ["".join(combination) for combination in combinations if combination]
+#
+#     return result
+#
+# list(itertools.product('ab','cd','ef'))
+#
+# import itertools
+#
+# PENNY = '1'  # use this to represent the penny
+# NICKEL = '5'  # use this to represent the nickel
+# DIME = '10'  # use this to represent the dime
+# QUARTER = '25'  # use this to represent the quarter
+#
+# # combine p1 & p2
+# def generate_coin_seq(cycle_list):
+#     seq_length = 1001
+#     cycle = itertools.cycle(cycle_list)
+#     return [next(cycle) for _ in range(seq_length)]
+#
+#
+# def coins_on_the_table():
+#     """Return a sequence of all 1001 coins on the table."""
+#
+#     """
+#     idea: Iterator, maybe cycle?
+#     Python: figure out a type:
+#     iterate cycle through and replace general function.
+#     param: length 1001, steps, type
+#     run that 4 times with penny, nickel, dime, quarter
+#     """
+#     s1 = [PENNY]
+#     s2 = ['', NICKEL]
+#     s3 = ['', '', DIME]
+#     s4 = ['', '', '', QUARTER]
+#     coin_list = [s2, s3, s4]
+#
+#     result = generate_coin_seq(s1)
+#     for c in coin_list:
+#         l1 = generate_coin_seq(c)
+#         result = list(map(lambda x: x[1] if x[1] else x[0], zip(result, l1)))
+#     return result
 
-# Pybites solution
-import itertools
-def generate_letter_combinations(digits: str) -> list[str]:
-    digit_map = {
-        "2": "abc",
-        "3": "def",
-        "4": "ghi",
-        "5": "jkl",
-        "6": "mno",
-        "7": "pqrs",
-        "8": "tuv",
-        "9": "wxyz",
-    }
-    # Step 1: Check if the input contains non-numeric digits or more than 4 digits
-    if not digits.isdigit() or len(digits) > 4:
-        raise ValueError(
-            "Input must contain only numeric digits and have a maximum length of 4."
-        )
+#
+# # pybites solutions (It's beautiful)
+# from itertools import cycle
+#
+# num_coins = 1001
+# QUARTER, DIME, NICKEL, PENNY = "Q", "D", "N", "P"
+#
+# def coins_on_the_table():
+#     """Return a sequence of all 1001 coins on the table."""
+#
+#     Q = cycle(["", "", "", QUARTER])
+#     D = cycle(["", "", DIME])
+#     N = cycle(["", NICKEL])
+#     P = cycle([PENNY])
+#
+#     coins = []
+#     for q, d, n, p, _ in zip(Q, D, N, P, range(num_coins)):
+#         print(q,d,n,p,_)
+#         coins.append(q or d or n or p)
+#     return coins
 
-    # Step 2: Map digits to characters
-    chars = [digit_map[digit] for digit in digits]
 
-    # Step 3: Obtain all possible combinations
-    combinations = itertools.product(*chars)
+from string import ascii_uppercase
+# write a function that maps letter to number
+letter_index_dict = { letter:num  for letter, num in zip (ascii_uppercase , range(0, 26))} | {"AA": 26, "AB":27, "AC":28 }
 
-    # Step 4: Concatenate characters
-    result = ["".join(combination) for combination in combinations if combination]
+def get_letter_index(char: str):
+    return letter_index_dict[char]
 
-    return result
+def convert_str_to_letters(element: str) -> list[str]:
+    index_list = []
+    ele_list = element.split(',')
+    for e in ele_list:
+        if ':' in e:
+            start, end = e.split(':')
+            start_index = get_letter_index(start.strip())
+            end_index = get_letter_index(end.strip())
+            index_list.extend(range(start_index,end_index+1))
+        else:
+            index_list.append(get_letter_index(e.strip()))
+    return index_list
+
+def convert_string_to_index(input_value: str | list[str]) -> list[int]:
+    if not input_value:
+        return []
+
+    output = []
+    if type(input_value) == str:
+        output.extend(convert_str_to_letters(input_value))
+    elif type(input_value) == list:
+        for val in input_value:
+            output.extend(convert_str_to_letters(val))
+    return output
+
+
+# Pybite solutions.
+# Interesting. char_to_index function is interesting.
+# instead of a dictionary.
+# This function calculates the index value.
+
+def convert_string_to_index(input_value: str | list[str]) -> list[int]:
+    def char_to_index(letter: str) -> int:
+        index = 0
+        for position, character in enumerate(reversed(letter.lower())):
+            index += (ord(character) - ord("a") + 1) * (26**position)
+        return index - 1
+
+    indices: list[int] = []
+
+    if not input_value:
+        return indices
+
+    if isinstance(input_value, str):
+        elements = input_value.replace(" ", "").split(",") if isinstance(input_value, str) else input_value
+    else:
+        elements = [item.replace(" ", "") for item in input_value]
+
+    for element in elements:
+        if ":" in element:
+            start_letter, end_letter = element.split(":")
+            start_index = char_to_index(start_letter)
+            end_index = char_to_index(end_letter)
+            indices.extend(range(start_index, end_index + 1))
+        else:
+            indices.append(char_to_index(element))
+
+    return indices
+
+
+
+
