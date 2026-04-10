@@ -11579,73 +11579,99 @@ enumerate through the text by letter
 #         coins.append(q or d or n or p)
 #     return coins
 
+#
+# from string import ascii_uppercase
+# # write a function that maps letter to number
+# letter_index_dict = { letter:num  for letter, num in zip (ascii_uppercase , range(0, 26))} | {"AA": 26, "AB":27, "AC":28 }
+#
+# def get_letter_index(char: str):
+#     return letter_index_dict[char]
+#
+# def convert_str_to_letters(element: str) -> list[str]:
+#     index_list = []
+#     ele_list = element.split(',')
+#     for e in ele_list:
+#         if ':' in e:
+#             start, end = e.split(':')
+#             start_index = get_letter_index(start.strip())
+#             end_index = get_letter_index(end.strip())
+#             index_list.extend(range(start_index,end_index+1))
+#         else:
+#             index_list.append(get_letter_index(e.strip()))
+#     return index_list
+#
+# def convert_string_to_index(input_value: str | list[str]) -> list[int]:
+#     if not input_value:
+#         return []
+#
+#     output = []
+#     if type(input_value) == str:
+#         output.extend(convert_str_to_letters(input_value))
+#     elif type(input_value) == list:
+#         for val in input_value:
+#             output.extend(convert_str_to_letters(val))
+#     return output
+#
+#
+# # Pybite solutions.
+# # Interesting. char_to_index function is interesting.
+# # instead of a dictionary.
+# # This function calculates the index value.
+#
+# def convert_string_to_index(input_value: str | list[str]) -> list[int]:
+#     def char_to_index(letter: str) -> int:
+#         index = 0
+#         for position, character in enumerate(reversed(letter.lower())):
+#             index += (ord(character) - ord("a") + 1) * (26**position)
+#         return index - 1
+#
+#     indices: list[int] = []
+#
+#     if not input_value:
+#         return indices
+#
+#     if isinstance(input_value, str):
+#         elements = input_value.replace(" ", "").split(",") if isinstance(input_value, str) else input_value
+#     else:
+#         elements = [item.replace(" ", "") for item in input_value]
+#
+#     for element in elements:
+#         if ":" in element:
+#             start_letter, end_letter = element.split(":")
+#             start_index = char_to_index(start_letter)
+#             end_index = char_to_index(end_letter)
+#             indices.extend(range(start_index, end_index + 1))
+#         else:
+#             indices.append(char_to_index(element))
+#
+#     return indices
 
-from string import ascii_uppercase
-# write a function that maps letter to number
-letter_index_dict = { letter:num  for letter, num in zip (ascii_uppercase , range(0, 26))} | {"AA": 26, "AB":27, "AC":28 }
-
-def get_letter_index(char: str):
-    return letter_index_dict[char]
-
-def convert_str_to_letters(element: str) -> list[str]:
-    index_list = []
-    ele_list = element.split(',')
-    for e in ele_list:
-        if ':' in e:
-            start, end = e.split(':')
-            start_index = get_letter_index(start.strip())
-            end_index = get_letter_index(end.strip())
-            index_list.extend(range(start_index,end_index+1))
-        else:
-            index_list.append(get_letter_index(e.strip()))
-    return index_list
-
-def convert_string_to_index(input_value: str | list[str]) -> list[int]:
-    if not input_value:
-        return []
-
-    output = []
-    if type(input_value) == str:
-        output.extend(convert_str_to_letters(input_value))
-    elif type(input_value) == list:
-        for val in input_value:
-            output.extend(convert_str_to_letters(val))
-    return output
+from pathlib import Path
 
 
-# Pybite solutions.
-# Interesting. char_to_index function is interesting.
-# instead of a dictionary.
-# This function calculates the index value.
-
-def convert_string_to_index(input_value: str | list[str]) -> list[int]:
-    def char_to_index(letter: str) -> int:
-        index = 0
-        for position, character in enumerate(reversed(letter.lower())):
-            index += (ord(character) - ord("a") + 1) * (26**position)
-        return index - 1
-
-    indices: list[int] = []
-
-    if not input_value:
-        return indices
-
-    if isinstance(input_value, str):
-        elements = input_value.replace(" ", "").split(",") if isinstance(input_value, str) else input_value
-    else:
-        elements = [item.replace(" ", "") for item in input_value]
-
-    for element in elements:
-        if ":" in element:
-            start_letter, end_letter = element.split(":")
-            start_index = char_to_index(start_letter)
-            end_index = char_to_index(end_letter)
-            indices.extend(range(start_index, end_index + 1))
-        else:
-            indices.append(char_to_index(element))
-
-    return indices
-
-
-
+def tail(path: Path, n: int):
+    """
+    Read the last n lines of the filepath passed in.
+    The tests will run this function against a 10 million line file,
+    validating its completion within 0.1 seconds.
+    """
+    chunk_size = 1000
+    current_line_count = 0
+    with open(path, "rb") as f:
+        f.seek(0, 2)
+        current_line = ''
+        while current_line_count<=n:
+            print('file handle at:', f.tell())
+            try:
+                f.seek(-1 * chunk_size, 1)
+                current_chunk = f.read(chunk_size).decode("utf-8")
+                split_line = current_chunk.split('\n')
+                num_newlines=len(split_line) - 1
+                current_line_count += num_newlines
+                current_line = current_chunk + current_line
+                f.seek(-1 * chunk_size, 1)
+            except:
+                break
+    output=current_line.split("\n")
+    return output[-n-1:-1]
 
