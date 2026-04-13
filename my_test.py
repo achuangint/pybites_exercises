@@ -12717,156 +12717,368 @@ Inputs are modified to check how the function deals with unknown characters
 # def test_get_non_existent_book(memory_repo):
 #     assert memory_repo.get_by_title("Non-Existent Book") is None
 #
-
-import pytest
-from wc import (
-    Exercise,
-    Workout,
-    WorkoutExercise,
-    add_exercise_to_workout,
-    create_tables,
-    engine,
-    get_workout_exercises,
-)
-from sqlmodel import Session, select
-
-
-@pytest.fixture(autouse=True)
-def setup_database():
-    """Create tables before each test."""
-    create_tables()
-
-
-@pytest.fixture
-def sample_workout():
-    """Create a test workout."""
-    workout = Workout(name="Upper Body Day")
-    with Session(engine) as session:
-        session.add(workout)
-        session.commit()
-        session.refresh(workout)
-    return workout
-
-
-def test_workout_exercise_link_table_exists():
-    columns = {col.name: col for col in WorkoutExercise.__table__.columns}
-
-    assert "workout_id" in columns
-    assert "exercise_id" in columns
-    assert len(columns["workout_id"].foreign_keys) > 0
-    assert len(columns["exercise_id"].foreign_keys) > 0
-
-
-def test_workout_has_exercises_relationship():
-    workout = Workout(name="Test")
-    assert hasattr(workout, "exercises")
-
-
-def test_exercise_has_workouts_relationship():
-    exercise = Exercise(name="Test")
-    assert hasattr(exercise, "workouts")
-
-
-def test_add_exercise_to_workout_creates_exercise(sample_workout):
-    exercise = add_exercise_to_workout(sample_workout.id, "Bench Press")
-
-    assert exercise.id is not None
-    assert exercise.name == "Bench Press"
-
-
-def test_add_exercise_to_workout_links_exercise(sample_workout):
-    exercise = add_exercise_to_workout(sample_workout.id, "Squats")
-
-    # Check link table
-    with Session(engine) as session:
-        statement = select(WorkoutExercise).where(
-            WorkoutExercise.workout_id == sample_workout.id,
-            WorkoutExercise.exercise_id == exercise.id,
-        )
-        link = session.exec(statement).first()
-        assert link is not None
-
-
-def test_add_exercise_reuses_existing_exercise(sample_workout):
-    # Add same exercise twice
-    exercise1 = add_exercise_to_workout(sample_workout.id, "Deadlift")
-    exercise2 = add_exercise_to_workout(sample_workout.id, "Deadlift")
-
-    # Should be the same exercise
-    assert exercise1.id == exercise2.id
-
-    # Check only one Exercise exists
-    with Session(engine) as session:
-        statement = select(Exercise).where(Exercise.name == "Deadlift")
-        exercises = session.exec(statement).all()
-        assert len(exercises) == 1
-
-
-def test_add_exercise_raises_for_invalid_workout():
-    with pytest.raises(ValueError, match="does not exist"):
-        add_exercise_to_workout(workout_id=999, exercise_name="Bench Press")
-
-
-def test_get_workout_exercises_returns_exercises(sample_workout):
-    add_exercise_to_workout(sample_workout.id, "Bench Press")
-    add_exercise_to_workout(sample_workout.id, "Pull Ups")
-    add_exercise_to_workout(sample_workout.id, "Shoulder Press")
-    exercises = get_workout_exercises(sample_workout.id)
-    assert len(exercises) == 3
-    assert all(isinstance(e, Exercise) for e in exercises)
-
-
-def test_get_workout_exercises_ordered_by_name(sample_workout):
-    add_exercise_to_workout(sample_workout.id, "Squats")
-    add_exercise_to_workout(sample_workout.id, "Bench Press")
-    add_exercise_to_workout(sample_workout.id, "Deadlift")
-
-    exercises = get_workout_exercises(sample_workout.id)
-    names = [e.name for e in exercises]
-
-    assert names == ["Bench Press", "Deadlift", "Squats"]
-
-
-def test_get_workout_exercises_empty_for_no_exercises(sample_workout):
-    exercises = get_workout_exercises(sample_workout.id)
-    assert exercises == []
-
-
-def test_get_workout_exercises_empty_for_invalid_workout():
-    exercises = get_workout_exercises(999)
-    assert exercises == []
-
-
-def test_many_to_many_both_directions(sample_workout):
-    # Create another workout
-    leg_day = Workout(name="Leg Day")
-    with Session(engine) as session:
-        session.add(leg_day)
-        session.commit()
-        session.refresh(leg_day)
-
-    # Add "Squats" to both workouts
-    exercise = add_exercise_to_workout(sample_workout.id, "Squats")
-    add_exercise_to_workout(leg_day.id, "Squats")
-
-    # Check from workout → exercises
-    upper_exercises = get_workout_exercises(sample_workout.id)
-    leg_exercises = get_workout_exercises(leg_day.id)
-
-    assert "Squats" in [e.name for e in upper_exercises]
-    assert "Squats" in [e.name for e in leg_exercises]
-
-    # Check from exercise → workouts
-    with Session(engine) as session:
-        ex = session.get(Exercise, exercise.id)
-        workout_names = [w.name for w in ex.workouts]
-        assert "Upper Body Day" in workout_names
-        assert "Leg Day" in workout_names
-
-
-
-
-
+#
+# import pytest
+# from wc import (
+#     Exercise,
+#     Workout,
+#     WorkoutExercise,
+#     add_exercise_to_workout,
+#     create_tables,
+#     engine,
+#     get_workout_exercises,
+# )
+# from sqlmodel import Session, select
+#
+#
+# @pytest.fixture(autouse=True)
+# def setup_database():
+#     """Create tables before each test."""
+#     create_tables()
+#
+#
+# @pytest.fixture
+# def sample_workout():
+#     """Create a test workout."""
+#     workout = Workout(name="Upper Body Day")
+#     with Session(engine) as session:
+#         session.add(workout)
+#         session.commit()
+#         session.refresh(workout)
+#     return workout
+#
+#
+# def test_workout_exercise_link_table_exists():
+#     columns = {col.name: col for col in WorkoutExercise.__table__.columns}
+#
+#     assert "workout_id" in columns
+#     assert "exercise_id" in columns
+#     assert len(columns["workout_id"].foreign_keys) > 0
+#     assert len(columns["exercise_id"].foreign_keys) > 0
+#
+#
+# def test_workout_has_exercises_relationship():
+#     workout = Workout(name="Test")
+#     assert hasattr(workout, "exercises")
+#
+#
+# def test_exercise_has_workouts_relationship():
+#     exercise = Exercise(name="Test")
+#     assert hasattr(exercise, "workouts")
+#
+#
+# def test_add_exercise_to_workout_creates_exercise(sample_workout):
+#     exercise = add_exercise_to_workout(sample_workout.id, "Bench Press")
+#
+#     assert exercise.id is not None
+#     assert exercise.name == "Bench Press"
+#
+#
+# def test_add_exercise_to_workout_links_exercise(sample_workout):
+#     exercise = add_exercise_to_workout(sample_workout.id, "Squats")
+#
+#     # Check link table
+#     with Session(engine) as session:
+#         statement = select(WorkoutExercise).where(
+#             WorkoutExercise.workout_id == sample_workout.id,
+#             WorkoutExercise.exercise_id == exercise.id,
+#         )
+#         link = session.exec(statement).first()
+#         assert link is not None
+#
+#
+# def test_add_exercise_reuses_existing_exercise(sample_workout):
+#     # Add same exercise twice
+#     exercise1 = add_exercise_to_workout(sample_workout.id, "Deadlift")
+#     exercise2 = add_exercise_to_workout(sample_workout.id, "Deadlift")
+#
+#     # Should be the same exercise
+#     assert exercise1.id == exercise2.id
+#
+#     # Check only one Exercise exists
+#     with Session(engine) as session:
+#         statement = select(Exercise).where(Exercise.name == "Deadlift")
+#         exercises = session.exec(statement).all()
+#         assert len(exercises) == 1
+#
+#
+# def test_add_exercise_raises_for_invalid_workout():
+#     with pytest.raises(ValueError, match="does not exist"):
+#         add_exercise_to_workout(workout_id=999, exercise_name="Bench Press")
+#
+#
+# def test_get_workout_exercises_returns_exercises(sample_workout):
+#     add_exercise_to_workout(sample_workout.id, "Bench Press")
+#     add_exercise_to_workout(sample_workout.id, "Pull Ups")
+#     add_exercise_to_workout(sample_workout.id, "Shoulder Press")
+#     exercises = get_workout_exercises(sample_workout.id)
+#     assert len(exercises) == 3
+#     assert all(isinstance(e, Exercise) for e in exercises)
+#
+#
+# def test_get_workout_exercises_ordered_by_name(sample_workout):
+#     add_exercise_to_workout(sample_workout.id, "Squats")
+#     add_exercise_to_workout(sample_workout.id, "Bench Press")
+#     add_exercise_to_workout(sample_workout.id, "Deadlift")
+#
+#     exercises = get_workout_exercises(sample_workout.id)
+#     names = [e.name for e in exercises]
+#
+#     assert names == ["Bench Press", "Deadlift", "Squats"]
+#
+#
+# def test_get_workout_exercises_empty_for_no_exercises(sample_workout):
+#     exercises = get_workout_exercises(sample_workout.id)
+#     assert exercises == []
+#
+#
+# def test_get_workout_exercises_empty_for_invalid_workout():
+#     exercises = get_workout_exercises(999)
+#     assert exercises == []
+#
+#
+# def test_many_to_many_both_directions(sample_workout):
+#     # Create another workout
+#     leg_day = Workout(name="Leg Day")
+#     with Session(engine) as session:
+#         session.add(leg_day)
+#         session.commit()
+#         session.refresh(leg_day)
+#
+#     # Add "Squats" to both workouts
+#     exercise = add_exercise_to_workout(sample_workout.id, "Squats")
+#     add_exercise_to_workout(leg_day.id, "Squats")
+#
+#     # Check from workout → exercises
+#     upper_exercises = get_workout_exercises(sample_workout.id)
+#     leg_exercises = get_workout_exercises(leg_day.id)
+#
+#     assert "Squats" in [e.name for e in upper_exercises]
+#     assert "Squats" in [e.name for e in leg_exercises]
+#
+#     # Check from exercise → workouts
+#     with Session(engine) as session:
+#         ex = session.get(Exercise, exercise.id)
+#         workout_names = [w.name for w in ex.workouts]
+#         assert "Upper Body Day" in workout_names
+#         assert "Leg Day" in workout_names
+#
+# from datetime import date, timedelta
+#
+# import pytest
+# from wc import (
+#     Exercise,
+#     LogEntry,
+#     Workout,
+#     WorkoutExercise,
+#     add_log_entry,
+#     create_tables,
+#     engine,
+#     get_log_entries,
+# )
+# from sqlmodel import Session, select
+#
+#
+# @pytest.fixture(autouse=True)
+# def setup_database():
+#     """Create tables before each test."""
+#     create_tables()
+#
+#
+# @pytest.fixture
+# def workout_exercise_pair():
+#     """Create a workout-exercise pair."""
+#     with Session(engine) as session:
+#         workout = Workout(name="Upper Body Day")
+#         exercise = Exercise(name="Bench Press")
+#         session.add(workout)
+#         session.add(exercise)
+#         session.commit()
+#         session.refresh(workout)
+#         session.refresh(exercise)
+#
+#         # Create the link
+#         workout.exercises.append(exercise)
+#         session.commit()
+#
+#         # Get the WorkoutExercise using select()
+#         statement = select(WorkoutExercise).where(
+#             WorkoutExercise.workout_id == workout.id,
+#             WorkoutExercise.exercise_id == exercise.id,
+#         )
+#         we = session.exec(statement).first()
+#         if not we:
+#             # Fallback: create manually if relationship didn't work
+#             we = WorkoutExercise(workout_id=workout.id, exercise_id=exercise.id)
+#             session.add(we)
+#             session.commit()
+#             session.refresh(we)
+#
+#     return {"workout_id": workout.id, "exercise_id": exercise.id, "we_id": we.id}
+#
+#
+# def test_log_entry_has_workoutexercise_foreign_key():
+#     columns = {col.name: col for col in LogEntry.__table__.columns}
+#     assert "workoutexercise_id" in columns
+#     assert len(columns["workoutexercise_id"].foreign_keys) > 0
+#
+#
+# def test_log_entry_has_workoutexercise_relationship():
+#     log = LogEntry(set_number=1, weight=100, reps=10)
+#     assert hasattr(log, "workoutexercise")
+#
+#
+# def test_workoutexercise_has_log_entries_relationship():
+#     we = WorkoutExercise()
+#     assert hasattr(we, "log_entries")
+#
+#
+# def test_add_log_entry_creates_entry(workout_exercise_pair):
+#     log_entry = add_log_entry(
+#         workout_id=workout_exercise_pair["workout_id"],
+#         exercise_id=workout_exercise_pair["exercise_id"],
+#         set_number=1,
+#         weight=100,
+#         reps=10,
+#     )
+#
+#     assert log_entry.id is not None
+#     assert log_entry.workoutexercise_id == workout_exercise_pair["we_id"]
+#     assert log_entry.set_number == 1
+#     assert log_entry.weight == 100
+#     assert log_entry.reps == 10
+#
+#
+# def test_add_log_entry_raises_for_nonexistent_pair():
+#     with pytest.raises(ValueError, match="does not exist"):
+#         add_log_entry(
+#             workout_id=999, exercise_id=888, set_number=1, weight=100, reps=10
+#         )
+#
+#
+# def test_add_log_entry_raises_for_valid_workout_invalid_exercise():
+#     with Session(engine) as session:
+#         workout = Workout(name="Test Workout")
+#         session.add(workout)
+#         session.commit()
+#         session.refresh(workout)
+#
+#     with pytest.raises(ValueError):
+#         add_log_entry(
+#             workout_id=workout.id, exercise_id=999, set_number=1, weight=100, reps=10
+#         )
+#
+#
+# def test_get_log_entries_returns_entries(workout_exercise_pair):
+#     add_log_entry(
+#         workout_exercise_pair["workout_id"],
+#         workout_exercise_pair["exercise_id"],
+#         set_number=1,
+#         weight=100,
+#         reps=10,
+#     )
+#     add_log_entry(
+#         workout_exercise_pair["workout_id"],
+#         workout_exercise_pair["exercise_id"],
+#         set_number=2,
+#         weight=110,
+#         reps=8,
+#     )
+#
+#     entries = get_log_entries(
+#         workout_exercise_pair["workout_id"], workout_exercise_pair["exercise_id"]
+#     )
+#
+#     assert len(entries) == 2
+#     assert all(isinstance(e, LogEntry) for e in entries)
+#
+#
+# def test_get_log_entries_ordered_by_date_and_set(workout_exercise_pair):
+#     today = date.today()
+#     yesterday = today - timedelta(days=1)
+#
+#     # Add entries in non-chronological order
+#     with Session(engine) as session:
+#         we_id = workout_exercise_pair["we_id"]
+#
+#         entries = [
+#             LogEntry(
+#                 workoutexercise_id=we_id,
+#                 set_number=2,
+#                 weight=110,
+#                 reps=8,
+#                 date_recorded=today,
+#             ),
+#             LogEntry(
+#                 workoutexercise_id=we_id,
+#                 set_number=1,
+#                 weight=100,
+#                 reps=10,
+#                 date_recorded=yesterday,
+#             ),
+#             LogEntry(
+#                 workoutexercise_id=we_id,
+#                 set_number=1,
+#                 weight=105,
+#                 reps=10,
+#                 date_recorded=today,
+#             ),
+#         ]
+#
+#         for entry in entries:
+#             session.add(entry)
+#         session.commit()
+#
+#     results = get_log_entries(
+#         workout_exercise_pair["workout_id"], workout_exercise_pair["exercise_id"]
+#     )
+#
+#     # Should be ordered: yesterday set 1, today set 1, today set 2
+#     assert len(results) == 3
+#     assert results[0].date_recorded == yesterday
+#     assert results[0].set_number == 1
+#     assert results[1].date_recorded == today
+#     assert results[1].set_number == 1
+#     assert results[2].date_recorded == today
+#     assert results[2].set_number == 2
+#
+#
+# def test_get_log_entries_empty_for_nonexistent_pair():
+#     entries = get_log_entries(workout_id=999, exercise_id=888)
+#     assert entries == []
+#
+#
+# def test_different_pairs_have_separate_logs():
+#     with Session(engine) as session:
+#         # Create two workout-exercise pairs
+#         workout = Workout(name="Upper Body")
+#         bench = Exercise(name="Bench Press")
+#         squats = Exercise(name="Squats")
+#
+#         session.add(workout)
+#         session.add(bench)
+#         session.add(squats)
+#         session.commit()
+#
+#         workout.exercises.append(bench)
+#         workout.exercises.append(squats)
+#         session.commit()
+#         session.refresh(workout)
+#         session.refresh(bench)
+#         session.refresh(squats)
+#
+#     # Add logs to both pairs
+#     add_log_entry(workout.id, bench.id, 1, 100, 10)
+#     add_log_entry(workout.id, squats.id, 1, 200, 5)
+#
+#     # Verify each pair has only its own logs
+#     bench_logs = get_log_entries(workout.id, bench.id)
+#     squats_logs = get_log_entries(workout.id, squats.id)
+#
+#     assert len(bench_logs) == 1
+#     assert len(squats_logs) == 1
+#     assert bench_logs[0].weight == 100
+#     assert squats_logs[0].weight == 200
 
 
 
