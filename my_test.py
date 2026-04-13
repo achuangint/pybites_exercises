@@ -12621,57 +12621,248 @@ Inputs are modified to check how the function deals with unknown characters
 # def test_convert_string_to_index(input_value, expected_output):
 #     assert convert_string_to_index(input_value) == expected_output
 #
+#
+# import pytest
+# import random
+# from time import perf_counter
+#
+# from wc import tail
+#
+# TAIL_LENGTH_SHORT = 10
+# TAIL_LENGTH_LONG = 25
+# NUM_ROWS = 1_000_000
+# MAX_TIME = 0.05
+#
+#
+# @pytest.fixture(scope="session", autouse=True)
+# def setup_bigfile(tmp_path_factory):
+#     path = tmp_path_factory.getbasetemp() / "bigfile.txt"
+#     expected_tail_results = []
+#     if not path.exists():
+#         random.seed(42)
+#         with path.open("w") as f:
+#             for i in range(NUM_ROWS):
+#                 min_, max_ = NUM_ROWS // 10, NUM_ROWS - 1
+#                 line = f"{random.randint(min_, max_)}"
+#                 f.write(f"{line}\n")
+#                 if i >= NUM_ROWS - TAIL_LENGTH_LONG:
+#                     expected_tail_results.append(line)
+#     return path, expected_tail_results
+#
+#
+# def test_tail_last_short(setup_bigfile):
+#     """
+#     Test if tail function is fast enough for bigger file.
+#     """
+#     path, expected = setup_bigfile
+#     start = perf_counter()
+#     result = tail(path, TAIL_LENGTH_SHORT)
+#     duration = perf_counter() - start
+#     assert duration < MAX_TIME, f"Too slow: {duration:.2f}s"
+#     assert result == expected[-TAIL_LENGTH_SHORT:]
+#
+#
+# def test_tail_last_longer(setup_bigfile):
+#     """
+#     Second test so users cannot hardcode the result.
+#     """
+#     path, expected = setup_bigfile
+#     start = perf_counter()
+#     result = tail(path, TAIL_LENGTH_LONG)
+#     duration = perf_counter() - start
+#     assert duration < MAX_TIME, f"Too slow: {duration:.2f}s"
+#     assert result == expected
+#
+# import pytest
+#
+# from sqlmodel import SQLModel, create_engine
+#
+# from wc import Book, SQLBookRepository, CsvBookRepository, MemoryBookRepository
+#
+#
+# @pytest.fixture
+# def test_db():
+#     engine = create_engine("sqlite:///:memory:")
+#     SQLModel.metadata.create_all(engine)
+#     return engine
+#
+#
+# @pytest.fixture
+# def sql_repo(test_db):
+#     return SQLBookRepository(db_string="sqlite:///:memory:")
+#
+#
+# @pytest.fixture
+# def memory_repo():
+#     return MemoryBookRepository()
+#
+#
+# @pytest.fixture
+# def csv_repo(tmp_path):
+#     return CsvBookRepository(file_path=tmp_path / "test_books.csv")
+#
+#
+# @pytest.mark.parametrize("repo_name", ["sql_repo", "memory_repo", "csv_repo"])
+# def test_add_and_get_book(request, repo_name):
+#     repo = request.getfixturevalue(repo_name)
+#     book = Book(title="The Pragmatic Programmer", author="Andrew Hunt")
+#     repo.add(book)
+#
+#     retrieved = repo.get_by_title("The Pragmatic Programmer")
+#     assert retrieved is not None
+#     assert retrieved.title == "The Pragmatic Programmer"
+#     assert retrieved.author == "Andrew Hunt"
+#
+#
+# def test_get_non_existent_book(memory_repo):
+#     assert memory_repo.get_by_title("Non-Existent Book") is None
+#
 
 import pytest
-import random
-from time import perf_counter
-
-from wc import tail
-
-TAIL_LENGTH_SHORT = 10
-TAIL_LENGTH_LONG = 25
-NUM_ROWS = 1_000_000
-MAX_TIME = 0.05
-
-
-@pytest.fixture(scope="session", autouse=True)
-def setup_bigfile(tmp_path_factory):
-    path = tmp_path_factory.getbasetemp() / "bigfile.txt"
-    expected_tail_results = []
-    if not path.exists():
-        random.seed(42)
-        with path.open("w") as f:
-            for i in range(NUM_ROWS):
-                min_, max_ = NUM_ROWS // 10, NUM_ROWS - 1
-                line = f"{random.randint(min_, max_)}"
-                f.write(f"{line}\n")
-                if i >= NUM_ROWS - TAIL_LENGTH_LONG:
-                    expected_tail_results.append(line)
-    return path, expected_tail_results
+from wc import (
+    Exercise,
+    Workout,
+    WorkoutExercise,
+    add_exercise_to_workout,
+    create_tables,
+    engine,
+    get_workout_exercises,
+)
+from sqlmodel import Session, select
 
 
-def test_tail_last_short(setup_bigfile):
-    """
-    Test if tail function is fast enough for bigger file.
-    """
-    path, expected = setup_bigfile
-    start = perf_counter()
-    result = tail(path, TAIL_LENGTH_SHORT)
-    duration = perf_counter() - start
-    assert duration < MAX_TIME, f"Too slow: {duration:.2f}s"
-    assert result == expected[-TAIL_LENGTH_SHORT:]
+@pytest.fixture(autouse=True)
+def setup_database():
+    """Create tables before each test."""
+    create_tables()
 
 
-def test_tail_last_longer(setup_bigfile):
-    """
-    Second test so users cannot hardcode the result.
-    """
-    path, expected = setup_bigfile
-    start = perf_counter()
-    result = tail(path, TAIL_LENGTH_LONG)
-    duration = perf_counter() - start
-    assert duration < MAX_TIME, f"Too slow: {duration:.2f}s"
-    assert result == expected
+@pytest.fixture
+def sample_workout():
+    """Create a test workout."""
+    workout = Workout(name="Upper Body Day")
+    with Session(engine) as session:
+        session.add(workout)
+        session.commit()
+        session.refresh(workout)
+    return workout
+
+
+def test_workout_exercise_link_table_exists():
+    columns = {col.name: col for col in WorkoutExercise.__table__.columns}
+
+    assert "workout_id" in columns
+    assert "exercise_id" in columns
+    assert len(columns["workout_id"].foreign_keys) > 0
+    assert len(columns["exercise_id"].foreign_keys) > 0
+
+
+def test_workout_has_exercises_relationship():
+    workout = Workout(name="Test")
+    assert hasattr(workout, "exercises")
+
+
+def test_exercise_has_workouts_relationship():
+    exercise = Exercise(name="Test")
+    assert hasattr(exercise, "workouts")
+
+
+def test_add_exercise_to_workout_creates_exercise(sample_workout):
+    exercise = add_exercise_to_workout(sample_workout.id, "Bench Press")
+
+    assert exercise.id is not None
+    assert exercise.name == "Bench Press"
+
+
+def test_add_exercise_to_workout_links_exercise(sample_workout):
+    exercise = add_exercise_to_workout(sample_workout.id, "Squats")
+
+    # Check link table
+    with Session(engine) as session:
+        statement = select(WorkoutExercise).where(
+            WorkoutExercise.workout_id == sample_workout.id,
+            WorkoutExercise.exercise_id == exercise.id,
+        )
+        link = session.exec(statement).first()
+        assert link is not None
+
+
+def test_add_exercise_reuses_existing_exercise(sample_workout):
+    # Add same exercise twice
+    exercise1 = add_exercise_to_workout(sample_workout.id, "Deadlift")
+    exercise2 = add_exercise_to_workout(sample_workout.id, "Deadlift")
+
+    # Should be the same exercise
+    assert exercise1.id == exercise2.id
+
+    # Check only one Exercise exists
+    with Session(engine) as session:
+        statement = select(Exercise).where(Exercise.name == "Deadlift")
+        exercises = session.exec(statement).all()
+        assert len(exercises) == 1
+
+
+def test_add_exercise_raises_for_invalid_workout():
+    with pytest.raises(ValueError, match="does not exist"):
+        add_exercise_to_workout(workout_id=999, exercise_name="Bench Press")
+
+
+def test_get_workout_exercises_returns_exercises(sample_workout):
+    add_exercise_to_workout(sample_workout.id, "Bench Press")
+    add_exercise_to_workout(sample_workout.id, "Pull Ups")
+    add_exercise_to_workout(sample_workout.id, "Shoulder Press")
+    exercises = get_workout_exercises(sample_workout.id)
+    assert len(exercises) == 3
+    assert all(isinstance(e, Exercise) for e in exercises)
+
+
+def test_get_workout_exercises_ordered_by_name(sample_workout):
+    add_exercise_to_workout(sample_workout.id, "Squats")
+    add_exercise_to_workout(sample_workout.id, "Bench Press")
+    add_exercise_to_workout(sample_workout.id, "Deadlift")
+
+    exercises = get_workout_exercises(sample_workout.id)
+    names = [e.name for e in exercises]
+
+    assert names == ["Bench Press", "Deadlift", "Squats"]
+
+
+def test_get_workout_exercises_empty_for_no_exercises(sample_workout):
+    exercises = get_workout_exercises(sample_workout.id)
+    assert exercises == []
+
+
+def test_get_workout_exercises_empty_for_invalid_workout():
+    exercises = get_workout_exercises(999)
+    assert exercises == []
+
+
+def test_many_to_many_both_directions(sample_workout):
+    # Create another workout
+    leg_day = Workout(name="Leg Day")
+    with Session(engine) as session:
+        session.add(leg_day)
+        session.commit()
+        session.refresh(leg_day)
+
+    # Add "Squats" to both workouts
+    exercise = add_exercise_to_workout(sample_workout.id, "Squats")
+    add_exercise_to_workout(leg_day.id, "Squats")
+
+    # Check from workout → exercises
+    upper_exercises = get_workout_exercises(sample_workout.id)
+    leg_exercises = get_workout_exercises(leg_day.id)
+
+    assert "Squats" in [e.name for e in upper_exercises]
+    assert "Squats" in [e.name for e in leg_exercises]
+
+    # Check from exercise → workouts
+    with Session(engine) as session:
+        ex = session.get(Exercise, exercise.id)
+        workout_names = [w.name for w in ex.workouts]
+        assert "Upper Body Day" in workout_names
+        assert "Leg Day" in workout_names
+
 
 
 

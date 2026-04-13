@@ -11645,33 +11645,188 @@ enumerate through the text by letter
 #             indices.append(char_to_index(element))
 #
 #     return indices
+#
 
-from pathlib import Path
+
+# from pathlib import Path
+# def tail(path: Path, n: int):
+#     """
+#     Read the last n lines of the filepath passed in.
+#     The tests will run this function against a 10 million line file,
+#     validating its completion within 0.1 seconds.
+#     """
+#     chunk_size = 1000
+#     current_line_count = 0
+#     with open(path, "rb") as f:
+#         f.seek(0, 2)
+#         current_line = ''
+#         while current_line_count<=n:
+#             print('file handle at:', f.tell())
+#             try:
+#                 f.seek(-1 * chunk_size, 1)
+#                 current_chunk = f.read(chunk_size).decode("utf-8")
+#                 split_line = current_chunk.split('\n')
+#                 num_newlines=len(split_line) - 1
+#                 current_line_count += num_newlines
+#                 current_line = current_chunk + current_line
+#                 f.seek(-1 * chunk_size, 1)
+#             except:
+#                 break
+#     output=current_line.split("\n")
+#     return output[-n-1:-1]
+#
+# from abc import ABC, abstractmethod
+# from sqlmodel import SQLModel, Field, create_engine, Session, select
+# import csv
+#
+# class Book(SQLModel, table=True):
+#     id: int = Field(default=None, primary_key=True)
+#     title: str
+#     author: str
+#
+# book = Book(title="The Pragmatic Programmer", author="Andrew Hunt")
+# book.author
+# book.title
+#
+# class IBookRepository(ABC):
+#     @abstractmethod
+#     def add(self, book: Book):
+#         """Add a book to the repository"""
+#
+#
+#     @abstractmethod
+#     def get_by_title(self, title: str) -> Book | None:
+#         """Retrieve a book by title"""
+#
+#
+# class SQLBookRepository(IBookRepository):
+#     def __init__(self, db_string="sqlite:///books.db"):
+#         """Initialize database connection"""
+#         self.engine = create_engine(db_string, echo=True)
+#         SQLModel.metadata.create_all(self.engine)
+#
+#     def add(self, book: Book):
+#         """Implement adding a book to the database"""
+#         with Session(self.engine) as session:
+#             session.add(book)  # Stage the object
+#             session.commit()
+#
+#     def get_by_title(self, title: str) -> Book | None:
+#         """Implement retrieving a book by title from the database"""
+#         with Session(self.engine) as session:
+#             # Build the query
+#             statement = select(Book).where(Book.title == title)
+#
+#             # Execute and get the first result
+#             book = session.exec(statement).first()
+#             if book:
+#                 return Book(id=None, title=title, author=book.author)
+#             return None
+#
+#
+# class CsvBookRepository(IBookRepository):
+#     def __init__(self, file_path="books.csv"):
+#         """Initialize the CSV file path"""
+#         self.file_path=file_path
+#
+#     def add(self, book: Book):
+#         """Implement adding a book to the CSV file"""
+#         data = {'title': book.title, 'author': book.author}
+#         field_names = ['title' , 'author']
+#         with open(self.file_path, 'a+') as f:
+#             writer =  csv.DictWriter(f, fieldnames=field_names)
+#             writer.writerow(data)
+#
+#     def get_by_title(self, title: str) -> Book | None:
+#         """Implement retrieving a book by title from the CSV file"""
+#         with open(self.file_path, 'r') as csvfile:
+#             field_names = ['title', 'author']
+#             reader = csv.DictReader(csvfile, fieldnames=field_names)
+#             for row in reader:
+#                  if row['title'] == title:
+#                      return Book(id=None, title=title, author=row['author'])
+#             return None
+#
+# class MemoryBookRepository(IBookRepository):
+#     def __init__(self):
+#         """Initialize in-memory storage"""
+#         self.collection = {}
+#
+#     def add(self, book: Book):
+#         """Implement adding a book to memory"""
+#         self.collection[book.title]=book
+#
+#     def get_by_title(self, title: str) -> Book | None:
+#         """Implement retrieving a book by title from memory"""
+#         return self.collection.get(title,None)
 
 
-def tail(path: Path, n: int):
+from sqlmodel import Field, SQLModel, create_engine, Relationship, Session, select
+
+class WorkoutExercise(SQLModel, table=True):
+    """Link table with id, workout_id, and exercise_id fields."""
+    workout_id: int | None = Field(default =  None, foreign_key="workout.id", primary_key=True)
+    exercise_id: int | None = Field(default =  None, foreign_key="exercise.id", primary_key=True)
+
+class Workout(SQLModel, table=True):
+    id: int | None = Field(default=None, primary_key=True)
+    name: str
+    # Add exercises relationship using link_model
+    exercises: list["Exercise"]= Relationship(back_populates="workouts", link_model=WorkoutExercise)
+
+class Exercise(SQLModel, table=True):
+    """Define id, name, and workouts relationship using link_model."""
+    id: int | None = Field(default=None, primary_key=True)
+    name: str
+    workouts:list["Workout"]=Relationship(back_populates="exercises", link_model=WorkoutExercise)
+
+sqlite_url = "sqlite:///:memory:"
+engine = create_engine(sqlite_url, echo=False)
+
+
+def create_tables() -> None:
+    SQLModel.metadata.create_all(engine)
+
+
+def add_exercise_to_workout(workout_id: int, exercise_name: str) -> Exercise:
     """
-    Read the last n lines of the filepath passed in.
-    The tests will run this function against a 10 million line file,
-    validating its completion within 0.1 seconds.
+    Add an exercise to a workout. Create the exercise if it doesn't exist.
+    Raise ValueError if workout not found.
     """
-    chunk_size = 1000
-    current_line_count = 0
-    with open(path, "rb") as f:
-        f.seek(0, 2)
-        current_line = ''
-        while current_line_count<=n:
-            print('file handle at:', f.tell())
-            try:
-                f.seek(-1 * chunk_size, 1)
-                current_chunk = f.read(chunk_size).decode("utf-8")
-                split_line = current_chunk.split('\n')
-                num_newlines=len(split_line) - 1
-                current_line_count += num_newlines
-                current_line = current_chunk + current_line
-                f.seek(-1 * chunk_size, 1)
-            except:
-                break
-    output=current_line.split("\n")
-    return output[-n-1:-1]
+    with Session(engine) as session:
+        workout = session.exec(
+            select(Workout).where(Workout.id == workout_id)).first()
+        if not workout:
+            raise ValueError("does not exist")
+
+        exercise = session.exec(
+            select(Exercise).where(Exercise.name == exercise_name)
+        ).first()
+
+        if not exercise:
+            exercise =  Exercise(name = exercise_name, workouts=[workout])
+            session.add(exercise)
+
+        if exercise_name not in [e.name for e in workout.exercises]:
+            workout.exercises.append(exercise)
+
+        session.commit()
+        session.refresh(workout)
+        session.refresh(exercise)
+        return exercise
+
+
+def get_workout_exercises(workout_id: int) -> list[Exercise]:
+    """Get all exercises for a workout, sorted by name. Return empty list if not found."""
+
+    with Session(engine) as session:
+        workout = session.exec(
+            select(Workout).where(Workout.id == workout_id)).first()
+        if not workout:
+            return []
+        exercise_list = workout.exercises
+
+        return sorted(exercise_list, key=lambda x: x.name)
+
+
 
