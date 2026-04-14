@@ -12037,3 +12037,251 @@ enumerate through the text by letter
 #         )
 #         results = session.exec(log_statement)
 #         return list(results.all())
+
+
+# from sqlmodel import Field, Relationship, SQLModel
+# from datetime import date
+#
+# class WorkoutBase(SQLModel):
+#     """Base model with name field. No table=True!"""
+#     name:str
+#
+# class LogEntryBase(SQLModel):
+#     """Base model with set_number, weight, reps, date_recorded. No table=True!"""
+#     set_number:int
+#     weight:int
+#     reps:int
+#     date_recorded:date = Field(default_factory=date.today)
+#
+#
+# # Link table
+# class WorkoutExercise(SQLModel, table=True):
+#     id: int | None = Field(default=None, primary_key=True)
+#     workout_id: int | None = Field(default=None, foreign_key="workout.id")
+#     exercise_id: int | None = Field(default=None, foreign_key="exercise.id")
+#     log_entries: list["LogEntry"] = Relationship(back_populates="workoutexercise")
+#
+#
+# class Workout(WorkoutBase, table=True):
+#     """Inherit from WorkoutBase. Add id and exercises relationship."""
+#     id: int | None = Field(default=None, primary_key=True)
+#     exercises: list["Exercise"] = Relationship(
+#             back_populates="workouts", link_model=WorkoutExercise
+#         )
+#
+# class Exercise(SQLModel, table=True):
+#     id: int | None = Field(default=None, primary_key=True)
+#     name: str
+#     workouts: list[Workout] = Relationship(
+#         back_populates="exercises", link_model=WorkoutExercise
+#     )
+#
+# class LogEntry(LogEntryBase, table=True):
+#     """Inherit from LogEntryBase. Add id, workoutexercise_id, and relationship."""
+#     id: int | None = Field(default=None, primary_key=True)
+#     workoutexercise_id: int | None = Field(
+#                 default=None, foreign_key="workoutexercise.id"
+#             )
+#     workoutexercise: WorkoutExercise | None = Relationship(back_populates="log_entries")
+#
+# # API Schemas (no table=True!)
+#
+# class WorkoutCreate(WorkoutBase):
+#     """For creating workouts - inherit from WorkoutBase."""
+#     pass
+#
+# class WorkoutRead(WorkoutBase):
+#     """For reading workouts - inherit from WorkoutBase, add id."""
+#     id: int
+#
+#
+# class LogEntryCreate(LogEntryBase):
+#     """For creating log entries - inherit from LogEntryBase, add workout_id and exercise_id."""
+#     workout_id:int
+#     exercise_id: int
+#
+#
+# class LogEntryRead(LogEntryBase):
+#     """For reading log entries - inherit from LogEntryBase, add id."""
+#     id: int
+#
+# class WorkoutWithExercises(WorkoutBase):
+#     """Workout with its exercises - inherit from WorkoutBase, add id and exercises list."""
+#     id: int
+#     exercises: list
+#
+# #pybite solution
+# from datetime import date
+# from sqlmodel import Field, Relationship, SQLModel
+#
+#
+# # Base classes (no table=True)
+# class WorkoutBase(SQLModel):
+#     name: str
+#
+#
+# class LogEntryBase(SQLModel):
+#     set_number: int
+#     weight: int
+#     reps: int
+#     date_recorded: date = Field(default_factory=date.today)
+#
+#
+# # Link table
+# class WorkoutExercise(SQLModel, table=True):
+#     id: int | None = Field(default=None, primary_key=True)
+#     workout_id: int | None = Field(default=None, foreign_key="workout.id")
+#     exercise_id: int | None = Field(default=None, foreign_key="exercise.id")
+#     log_entries: list["LogEntry"] = Relationship(back_populates="workoutexercise")
+#
+#
+# # Database tables
+# class Workout(WorkoutBase, table=True):
+#     id: int | None = Field(default=None, primary_key=True)
+#     exercises: list["Exercise"] = Relationship(
+#         back_populates="workouts", link_model=WorkoutExercise
+#     )
+#
+#
+# class Exercise(SQLModel, table=True):
+#     id: int | None = Field(default=None, primary_key=True)
+#     name: str
+#     workouts: list[Workout] = Relationship(
+#         back_populates="exercises", link_model=WorkoutExercise
+#     )
+#
+#
+# class LogEntry(LogEntryBase, table=True):
+#     id: int | None = Field(default=None, primary_key=True)
+#     workoutexercise_id: int | None = Field(
+#         default=None, foreign_key="workoutexercise.id"
+#     )
+#     workoutexercise: WorkoutExercise | None = Relationship(back_populates="log_entries")
+#
+#
+# # API Schemas (no table=True)
+# class WorkoutCreate(WorkoutBase):
+#     pass
+#
+#
+# class WorkoutRead(WorkoutBase):
+#     id: int
+#
+#
+# class LogEntryCreate(LogEntryBase):
+#     workout_id: int
+#     exercise_id: int
+#
+#
+# class LogEntryRead(LogEntryBase):
+#     id: int
+#     date_recorded: date  # Non-optional for reads
+#
+#
+# class WorkoutWithExercises(WorkoutBase):
+#     id: int
+#     exercises: list[Exercise] = []
+#
+# import re
+#
+# COURSE = ('Introduction 1 Lecture 01:47'
+#           'The Basics 4 Lectures 32:03'
+#           'Getting Technical!  4 Lectures 41:51'
+#           'Challenge 2 Lectures 27:48'
+#           'Afterword 1 Lecture 05:02')
+# TWEET = ('New PyBites article: Module of the Week - Requests-cache '
+#          'for Repeated API Calls - http://pybit.es/requests-cache.html '
+#          '#python #APIs')
+# HTML = ('<p>pybites != greedy</p>'
+#         '<p>not the same can be said REgarding ...</p>')
+#
+#
+# def extract_course_times(course=COURSE):
+#     """Return the course timings from the passed in
+#        course string. Timings are in mm:ss (minutes:seconds)
+#        format, so taking COURSE above you would extract:
+#        ['01:47', '32:03', '41:51', '27:48', '05:02']
+#        Return this list.
+#     """
+#     return re.findall(r'\d{2}:\d{2}', ''.join(c for c in course))
+#
+#
+# def get_all_hashtags_and_links(tweet=TWEET):
+#     """Get all hashtags and links from the tweet text
+#        that is passed into this function. So for TWEET
+#        above you need to extract the following list:
+#        ['http://pybit.es/requests-cache.html',
+#         '#python',
+#         '#APIs']
+#        Return this list.
+#     """
+#     pattern = r'http:\/\/[-a-zA-Z0-9\.\/#]+|#\w+'
+#     hashtab_list = re.findall(pattern, ''.join(t for t in tweet))
+#     return hashtab_list
+#
+#
+# def match_first_paragraph(html=HTML):
+#     """Extract the first paragraph of the passed in
+#        html, so for HTML above this would be:
+#        'pybites != greedy' (= content of first paragraph).
+#        Return this string.
+#     """
+#     match = re.search(r"<p>(.*?)<\/p>", html)
+#     return match.group(1)
+#
+# # Pybite solution
+# import re
+#
+# COURSE = ('Introduction 1 Lecture 01:47'
+#           'The Basics 4 Lectures 32:03'
+#           'Getting Technical!  4 Lectures 41:51'
+#           'Challenge 2 Lectures 27:48'
+#           'Afterword 1 Lecture 05:02')
+# TWEET = ('New PyBites article: Module of the Week - Requests-cache '
+#          'for Repeated API Calls - http://pybit.es/requests-cache.html '
+#          '#python #APIs')
+# HTML = ('<p>pybites != greedy</p>'
+#         '<p>not the same can be said REgarding ...</p>')
+#
+#
+# def extract_course_times(course=COURSE):
+#     """Return the course timings from the passed in
+#        course string. Timings are in mm:ss (minutes:seconds)
+#        format, so taking COURSE above you would extract:
+#        ['01:47', '32:03', '41:51', '27:48', '05:02']
+#        Return this list.
+#     """
+#     return re.findall(r'\d+:\d+', course)
+#
+#
+# def get_all_hashtags_and_links(tweet=TWEET):
+#     """Get all hashtags and links from the tweet text
+#        that is passed into this function. So for TWEET
+#        above you need to extract the following list:
+#        ['http://pybit.es/requests-cache.html',
+#         '#python',
+#         '#APIs']
+#        Return this list.
+#     """
+#     return re.findall(r'((?:#|http)\S+)', tweet)
+#
+#
+# def match_first_paragraph(html=HTML):
+#     """Extract the first paragraph of the passed in
+#        html, so for HTML above this would be:
+#        'pybites != greedy' (= content of first paragraph).
+#        Return this string.
+#     """
+#     return re.sub(r'^<p>(.*?)</p>.*$', r'\1', html)
+class Account:
+
+    def __init__(self, name, start_balance=0):
+        self.name = name
+        self.start_balance = start_balance
+        self._transactions = []
+
+    @property
+    def balance(self):
+        return self.start_balance + sum(self._transactions)
+
+    # add dunder methods below

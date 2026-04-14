@@ -13079,6 +13079,287 @@ Inputs are modified to check how the function deals with unknown characters
 #     assert len(squats_logs) == 1
 #     assert bench_logs[0].weight == 100
 #     assert squats_logs[0].weight == 200
+# from datetime import date
+#
+# from wc import (
+#     LogEntry,
+#     LogEntryBase,
+#     LogEntryCreate,
+#     LogEntryRead,
+#     Workout,
+#     WorkoutBase,
+#     WorkoutCreate,
+#     WorkoutRead,
+#     WorkoutWithExercises,
+# )
+#
+#
+# def test_workout_base_has_no_table():
+#     assert not hasattr(
+#         WorkoutBase, "__table__"
+#     ), "WorkoutBase should not have table=True"
+#
+#
+# def test_workout_base_has_name_field():
+#     assert "name" in WorkoutBase.model_fields
+#
+#
+# def test_workout_is_a_table():
+#     assert hasattr(Workout, "__table__"), "Workout must have table=True"
+#
+#
+# def test_workout_inherits_from_workout_base():
+#     assert issubclass(Workout, WorkoutBase)
+#
+#
+# def test_workout_has_id_field():
+#     columns = {col.name: col for col in Workout.__table__.columns}
+#     assert "id" in columns
+#
+#
+# def test_workout_has_name_field_from_base():
+#     columns = {col.name: col for col in Workout.__table__.columns}
+#     assert "name" in columns
+#
+#
+# def test_workout_create_is_not_a_table():
+#     assert not hasattr(
+#         WorkoutCreate, "__table__"
+#     ), "WorkoutCreate should not have table=True"
+#
+#
+# def test_workout_create_has_name_field():
+#     assert "name" in WorkoutCreate.model_fields
+#
+#
+# def test_workout_create_has_no_id_field():
+#     assert "id" not in WorkoutCreate.model_fields
+#
+#
+# def test_workout_read_is_not_a_table():
+#     assert not hasattr(
+#         WorkoutRead, "__table__"
+#     ), "WorkoutRead should not have table=True"
+#
+#
+# def test_workout_read_has_name_and_id():
+#     fields = WorkoutRead.model_fields
+#     assert "name" in fields
+#     assert "id" in fields
+#
+#
+# def test_workout_read_id_is_required_int():
+#     id_field = WorkoutRead.model_fields["id"]
+#     # In Pydantic v2, annotation is stored differently
+#     assert id_field.annotation is int or "int" in str(id_field.annotation)
+#
+#
+# def test_workout_with_exercises_has_exercises_field():
+#     fields = WorkoutWithExercises.model_fields
+#     assert "exercises" in fields
+#     assert "id" in fields
+#     assert "name" in fields
+#
+#
+# def test_log_entry_base_has_no_table():
+#     assert not hasattr(
+#         LogEntryBase, "__table__"
+#     ), "LogEntryBase should not have table=True"
+#
+#
+# def test_log_entry_base_has_required_fields():
+#     fields = LogEntryBase.model_fields
+#     assert "set_number" in fields
+#     assert "weight" in fields
+#     assert "reps" in fields
+#     assert "date_recorded" in fields
+#
+#
+# def test_log_entry_is_a_table():
+#     assert hasattr(LogEntry, "__table__"), "LogEntry must have table=True"
+#
+#
+# def test_log_entry_inherits_from_log_entry_base():
+#     assert issubclass(LogEntry, LogEntryBase)
+#
+#
+# def test_log_entry_has_all_fields():
+#     columns = {col.name: col for col in LogEntry.__table__.columns}
+#     assert "id" in columns
+#     assert "set_number" in columns
+#     assert "weight" in columns
+#     assert "reps" in columns
+#     assert "date_recorded" in columns
+#     assert "workoutexercise_id" in columns
+#
+#
+# def test_log_entry_create_has_workout_and_exercise_ids():
+#     fields = LogEntryCreate.model_fields
+#     assert "workout_id" in fields
+#     assert "exercise_id" in fields
+#     assert "set_number" in fields
+#     assert "weight" in fields
+#     assert "reps" in fields
+#
+#
+# def test_log_entry_create_has_no_id():
+#     assert "id" not in LogEntryCreate.model_fields
+#
+#
+# def test_log_entry_read_has_id():
+#     fields = LogEntryRead.model_fields
+#     assert "id" in fields
+#
+#
+# def test_log_entry_read_date_is_required():
+#     date_field = LogEntryRead.model_fields["date_recorded"]
+#     # Check it's date type (not optional)
+#     assert date_field.annotation == date or "date" in str(date_field.annotation)
+#
+#
+# def test_can_instantiate_workout_create():
+#     workout = WorkoutCreate(name="Upper Body Day")
+#     assert workout.name == "Upper Body Day"
+#
+#
+# def test_can_instantiate_workout_read():
+#     workout = WorkoutRead(id=1, name="Leg Day")
+#     assert workout.id == 1
+#     assert workout.name == "Leg Day"
+#
+#
+# def test_can_instantiate_log_entry_create():
+#     log = LogEntryCreate(workout_id=1, exercise_id=2, set_number=1, weight=100, reps=10)
+#     assert log.workout_id == 1
+#     assert log.exercise_id == 2
+#
+#
+# def test_can_instantiate_log_entry_read():
+#     log = LogEntryRead(
+#         id=1, set_number=1, weight=100, reps=10, date_recorded=date.today()
+#     )
+#     assert log.id == 1
+#     assert log.date_recorded == date.today()
+#
+#
+# from wc import (extract_course_times,
+#                    get_all_hashtags_and_links,
+#                    match_first_paragraph)
+#
+#
+# def test_extract_course_times_default_arg():
+#     expected = ['01:47', '32:03', '41:51', '27:48', '05:02']
+#     assert extract_course_times() == expected
+#
+#
+# def test_extract_course_times_other_course_input():
+#     course = ('00:40 Lesson introduction'
+#               '01:33 Your 3 day overview'
+#               '08:12 Learning datetime and date'
+#               '06:07 Datetime timedelta usage'
+#               '04:02 Concepts: what did we learn')
+#     expected = ['00:40', '01:33', '08:12', '06:07', '04:02']
+#     assert extract_course_times(course) == expected
+#
+#
+# def test_get_all_hashtags_and_links_default_arg():
+#     expected = ['http://pybit.es/requests-cache.html', '#python', '#APIs']
+#     assert get_all_hashtags_and_links() == expected
+#
+#
+# def test_get_all_hashtags_and_links_other_tweet():
+#     tweet = ('PyBites My Reading List | 12 Rules for Life - #books '
+#              'that expand the mind! '
+#              'http://pbreadinglist.herokuapp.com/books/'
+#              'TvEqDAAAQBAJ#.XVOriU5z2tA.twitter'
+#              ' #psychology #philosophy')
+#     expected = ['#books',
+#                 ('http://pbreadinglist.herokuapp.com/books/'
+#                  'TvEqDAAAQBAJ#.XVOriU5z2tA.twitter'),
+#                 '#psychology', '#philosophy']
+#     assert get_all_hashtags_and_links(tweet) == expected
+#
+#
+# def test_match_first_paragraph_default_arg():
+#     expected = 'pybites != greedy'
+#     assert match_first_paragraph() == expected
+#
+#
+# def test_match_first_paragraph_other_html():
+#     html = ('<p>Match only this paragraph.</p>'
+#             '<p>Not this one!</p><p>And this one neither.</p>')
+#     expected = 'Match only this paragraph.'
+#     assert match_first_paragraph(html) == expected
+
+import pytest
+from wc import Account
 
 
+@pytest.fixture
+def checking():
+    return Account("Checking")
 
+
+@pytest.fixture
+def checking_with_start_balance():
+    return Account("Checking", 10)
+
+
+@pytest.fixture
+def checking_with_more_start_balance():
+    return Account("Checking", 15)
+
+
+@pytest.fixture
+def saving():
+    return Account("Saving", 10)
+
+
+@pytest.fixture
+def saving_less():
+    return Account("Saving", 5)
+
+
+def test_account_balance(checking, saving):
+    assert checking.start_balance == 0
+    checking + 10
+    assert checking.balance == 10
+
+    assert saving.start_balance == 10
+    with pytest.raises(TypeError):
+        saving - "a"
+    saving - 5
+    assert saving.balance == 5
+
+
+def test_account_comparison(checking_with_start_balance, saving_less):
+    assert checking_with_start_balance > saving_less
+    assert checking_with_start_balance >= saving_less
+    assert saving_less < checking_with_start_balance
+    assert saving_less <= checking_with_start_balance
+    saving_less + 5
+    assert checking_with_start_balance == saving_less
+
+
+def test_account_len(checking):
+    checking + 10
+    checking + 3
+    checking - 8
+    assert len(checking) == 3
+
+
+def test_account_indexing_iter(checking):
+    checking + 10
+    checking + 10
+    checking + 3
+    checking - 8
+    assert checking[0] == 10
+    assert checking[-1] == -8
+    assert list(checking) == [10, 10, 3, -8]
+
+
+def test_account_str(checking_with_more_start_balance, saving):
+    assert str(checking_with_more_start_balance) == "Checking account - balance: 15"
+    assert str(saving) == "Saving account - balance: 10"
+    saving + 5
+    assert str(saving) == "Saving account - balance: 15"
