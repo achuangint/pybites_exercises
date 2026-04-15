@@ -12273,6 +12273,8 @@ enumerate through the text by letter
 #        Return this string.
 #     """
 #     return re.sub(r'^<p>(.*?)</p>.*$', r'\1', html)
+
+
 class Account:
 
     def __init__(self, name, start_balance=0):
@@ -12285,3 +12287,31 @@ class Account:
         return self.start_balance + sum(self._transactions)
 
     # add dunder methods below
+    def __add__(self, other):
+        if type(other) != int:
+            raise TypeError
+        self._transactions.append(other)
+
+    def __sub__(self, other):
+        if type(other) != int:
+            raise TypeError
+        self._transactions.append(-1 * other)
+
+    def __len__(self):
+        return len(self._transactions)
+    def __gt__(self, other):
+        return self.balance > other.balance
+    def __ge__(self, other):
+        return self.balance >= other.balance
+    def __lt__(self, other):
+        return self.balance < other.balance
+    def __le__(self, other):
+        return self.balance <= other.balance
+    def __eq__(self, other):
+        return self.balance == other.balance
+    def __getitem__(self, index):
+        return self._transactions[index]
+
+
+    def __str__(self):
+        return f"{self.name} account - balance: {self.balance}"
