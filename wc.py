@@ -12274,44 +12274,70 @@ enumerate through the text by letter
 #     """
 #     return re.sub(r'^<p>(.*?)</p>.*$', r'\1', html)
 
+#
+# class Account:
+#
+#     def __init__(self, name, start_balance=0):
+#         self.name = name
+#         self.start_balance = start_balance
+#         self._transactions = []
+#
+#     @property
+#     def balance(self):
+#         return self.start_balance + sum(self._transactions)
+#
+#     # add dunder methods below
+#     def __add__(self, other):
+#         if type(other) != int:
+#             raise TypeError
+#         self._transactions.append(other)
+#
+#     def __sub__(self, other):
+#         if type(other) != int:
+#             raise TypeError
+#         self._transactions.append(-1 * other)
+#
+#     def __len__(self):
+#         return len(self._transactions)
+#     def __gt__(self, other):
+#         return self.balance > other.balance
+#     def __ge__(self, other):
+#         return self.balance >= other.balance
+#     def __lt__(self, other):
+#         return self.balance < other.balance
+#     def __le__(self, other):
+#         return self.balance <= other.balance
+#     def __eq__(self, other):
+#         return self.balance == other.balance
+#     def __getitem__(self, index):
+#         return self._transactions[index]
+#
+#
+#     def __str__(self):
+#         return f"{self.name} account - balance: {self.balance}"
 
 class Account:
 
-    def __init__(self, name, start_balance=0):
-        self.name = name
-        self.start_balance = start_balance
+    def __init__(self):
         self._transactions = []
 
     @property
     def balance(self):
-        return self.start_balance + sum(self._transactions)
+        return sum(self._transactions)
 
-    # add dunder methods below
-    def __add__(self, other):
-        if type(other) != int:
-            raise TypeError
-        self._transactions.append(other)
+    def __add__(self, amount):
+        self._transactions.append(amount)
 
-    def __sub__(self, other):
-        if type(other) != int:
-            raise TypeError
-        self._transactions.append(-1 * other)
+    def __sub__(self, amount):
+        self._transactions.append(-amount)
 
-    def __len__(self):
-        return len(self._transactions)
-    def __gt__(self, other):
-        return self.balance > other.balance
-    def __ge__(self, other):
-        return self.balance >= other.balance
-    def __lt__(self, other):
-        return self.balance < other.balance
-    def __le__(self, other):
-        return self.balance <= other.balance
-    def __eq__(self, other):
-        return self.balance == other.balance
-    def __getitem__(self, index):
-        return self._transactions[index]
+    # add 2 dunder methods here to turn this class
+    # into a 'rollback' context manager
 
+    def __enter__(self):
+        self._transaction_copy =  self._transactions.copy()
+        return self
 
-    def __str__(self):
-        return f"{self.name} account - balance: {self.balance}"
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        if self.balance<0:
+            self._transactions = self._transaction_copy
