@@ -13363,45 +13363,73 @@ Inputs are modified to check how the function deals with unknown characters
 #     assert str(saving) == "Saving account - balance: 10"
 #     saving + 5
 #     assert str(saving) == "Saving account - balance: 15"
+#
+# import pytest
+#
+# from wc import Account
+#
+#
+# @pytest.fixture()
+# def account():
+#     return Account()
+#
+#
+# def test_balance(account):
+#     assert account.balance == 0
+#     account + 10
+#     assert account.balance == 10
+#     account - 5
+#     assert account.balance == 5
+#
+#
+# def test_without_contextman_balance_negative(account):
+#     assert account.balance == 0
+#     account - 5
+#     assert account.balance == -5
+#
+#
+# def test_with_contextman_performs_rollback(account):
+#     account + 3
+#     assert account.balance == 3
+#     # trigger rollback
+#     with account as acc:
+#         acc - 5
+#     assert account.balance == 3
+#     # adding this ensures all required dunders are used:
+#     with account as acc:
+#         acc + 10
+#         acc - 3
+#     assert account.balance == 10
+#     # make sure composite transactions are properly rolled back
+#     with account as acc:
+#         acc - 11
+#         acc - 2
+#     assert account.balance == 10
 
-import pytest
-
-from wc import Account
+from wc import get_similarities
 
 
-@pytest.fixture()
-def account():
-    return Account()
+def test_get_similarities():
+    # cast to list in case of generator
+    similar_tags = list(get_similarities())
 
+    # not interested in the order of the pairs
+    similar_tags = {tuple(sorted(pair)) for pair in similar_tags}
 
-def test_balance(account):
-    assert account.balance == 0
-    account + 10
-    assert account.balance == 10
-    account - 5
-    assert account.balance == 5
+    expected = [('cheat sheet', 'cheat sheets'),
+                ('python anywhere', 'pythonanywhere'),
+                ('web scraping', 'webscraping'),
+                ('object oriented', 'objectoriented'),
+                ('web scraping', 'webscraping'),
+                ('contextmanager', 'contextmanagers'),
+                ('python anywhere', 'pythonanywhere'),
+                ('contextmanager', 'contextmanagers'),
+                ('magic methods', 'magicmethods'),
+                ('magic methods', 'magicmethods'),
+                ('code challenges', 'codechallenges'),
+                ('cheat sheet', 'cheat sheets'),
+                ('object oriented', 'objectoriented'),
+                ('code challenges', 'codechallenges')]
 
-
-def test_without_contextman_balance_negative(account):
-    assert account.balance == 0
-    account - 5
-    assert account.balance == -5
-
-
-def test_with_contextman_performs_rollback(account):
-    account + 3
-    assert account.balance == 3
-    # trigger rollback
-    with account as acc:
-        acc - 5
-    assert account.balance == 3
-    # adding this ensures all required dunders are used:
-    with account as acc:
-        acc + 10
-        acc - 3
-    assert account.balance == 10
-    # make sure composite transactions are properly rolled back
-    with account as acc:
-        acc - 11
-        acc - 2
-    assert account.balance == 10
+    for hit in expected:
+        assert tuple(sorted(hit)) in similar_tags, f'{hit} not in similar tags'

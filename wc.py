@@ -12315,29 +12315,92 @@ enumerate through the text by letter
 #
 #     def __str__(self):
 #         return f"{self.name} account - balance: {self.balance}"
+#
+# class Account:
+#
+#     def __init__(self):
+#         self._transactions = []
+#
+#     @property
+#     def balance(self):
+#         return sum(self._transactions)
+#
+#     def __add__(self, amount):
+#         self._transactions.append(amount)
+#
+#     def __sub__(self, amount):
+#         self._transactions.append(-amount)
+#
+#     # add 2 dunder methods here to turn this class
+#     # into a 'rollback' context manager
+#
+#     def __enter__(self):
+#         self._transaction_copy =  self._transactions.copy()
+#         return self
+#
+#     def __exit__(self, exc_type, exc_val, exc_tb):
+#         if self.balance<0:
+#             self._transactions = self._transaction_copy
 
-class Account:
+import os
+import re
+from difflib import SequenceMatcher
+from itertools import combinations
+from urllib.request import urlretrieve
 
-    def __init__(self):
-        self._transactions = []
+# prep
+TAG_HTML = re.compile(r'<category>([^<]+)</category>')
+TMP = os.getenv("TMP", "/tmp")
+TEMPFILE = os.path.join(TMP, 'feed')
+MIN_TAG_LEN = 10
+IDENTICAL = 1.0
+SIMILAR = 0.95
 
-    @property
-    def balance(self):
-        return sum(self._transactions)
+urlretrieve(
+    'https://bites-data.s3.us-east-2.amazonaws.com/tags.xml',
+    TEMPFILE
+)
 
-    def __add__(self, amount):
-        self._transactions.append(amount)
 
-    def __sub__(self, amount):
-        self._transactions.append(-amount)
+def _get_tags(tempfile=TEMPFILE):
+    """Helper to parse all tags from a static copy of PyBites' feed,
+       providing this here so you can focus on difflib"""
+    with open(tempfile) as f:
+        content = f.read().lower()
+    # take a small subset to keep it performant
+    tags = TAG_HTML.findall(content)
+    tags = [tag for tag in tags if len(tag) > MIN_TAG_LEN]
+    return set(tags)
 
-    # add 2 dunder methods here to turn this class
-    # into a 'rollback' context manager
 
-    def __enter__(self):
-        self._transaction_copy =  self._transactions.copy()
-        return self
+def get_similarities(tags=None):
+    """Should return a list of similar tag pairs (tuples)"""
+    tags = tags or _get_tags()
+    # do your thing ...
+    cut_off = 0.8
+    return [ (s1,s2)   for s1, s2 in combinations(tags,2) if SequenceMatcher(None, s1,s2).ratio() > cut_off  ]
 
-    def __exit__(self, exc_type, exc_val, exc_tb):
-        if self.balance<0:
-            self._transactions = self._transaction_copy
+
+input_len = len(tags)
+tag_list = list(tags)
+cut_off = 0.8
+result = []
+for i in range(input_len):
+    for j in range(i+1,input_len):
+        s1,s2 = tag_list[i], tag_list[j]
+        if SequenceMatcher(None, s1, s2).ratio() > cut_off:
+            result.append((s1, s2))
+print(len(result))
+
+# Pybite solution
+def get_similarities(tags=None):
+    """Should return a list of similar tag pairs (tuples)"""
+    tags = tags or _get_tags()
+    for pair in product(tags, tags):
+        # bonus: better performance (shaved a second off pytest for me)
+        if pair[0][0] != pair[1][0]:
+            continue
+
+        similarity = SequenceMatcher(None, *pair).ratio()
+        if SIMILAR < similarity < IDENTICAL:
+            yield pair
