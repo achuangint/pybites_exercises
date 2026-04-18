@@ -12341,66 +12341,107 @@ enumerate through the text by letter
 #     def __exit__(self, exc_type, exc_val, exc_tb):
 #         if self.balance<0:
 #             self._transactions = self._transaction_copy
+#
+# import os
+# import re
+# from difflib import SequenceMatcher
+# from itertools import combinations
+# from urllib.request import urlretrieve
+#
+# # prep
+# TAG_HTML = re.compile(r'<category>([^<]+)</category>')
+# TMP = os.getenv("TMP", "/tmp")
+# TEMPFILE = os.path.join(TMP, 'feed')
+# MIN_TAG_LEN = 10
+# IDENTICAL = 1.0
+# SIMILAR = 0.95
+#
+# urlretrieve(
+#     'https://bites-data.s3.us-east-2.amazonaws.com/tags.xml',
+#     TEMPFILE
+# )
+#
+#
+# def _get_tags(tempfile=TEMPFILE):
+#     """Helper to parse all tags from a static copy of PyBites' feed,
+#        providing this here so you can focus on difflib"""
+#     with open(tempfile) as f:
+#         content = f.read().lower()
+#     # take a small subset to keep it performant
+#     tags = TAG_HTML.findall(content)
+#     tags = [tag for tag in tags if len(tag) > MIN_TAG_LEN]
+#     return set(tags)
+#
+#
+# def get_similarities(tags=None):
+#     """Should return a list of similar tag pairs (tuples)"""
+#     tags = tags or _get_tags()
+#     # do your thing ...
+#     cut_off = 0.8
+#     return [ (s1,s2)   for s1, s2 in combinations(tags,2) if SequenceMatcher(None, s1,s2).ratio() > cut_off  ]
+#
+#
+# input_len = len(tags)
+# tag_list = list(tags)
+# cut_off = 0.8
+# result = []
+# for i in range(input_len):
+#     for j in range(i+1,input_len):
+#         s1,s2 = tag_list[i], tag_list[j]
+#         if SequenceMatcher(None, s1, s2).ratio() > cut_off:
+#             result.append((s1, s2))
+# print(len(result))
+#
+# # Pybite solution
+# def get_similarities(tags=None):
+#     """Should return a list of similar tag pairs (tuples)"""
+#     tags = tags or _get_tags()
+#     for pair in product(tags, tags):
+#         # bonus: better performance (shaved a second off pytest for me)
+#         if pair[0][0] != pair[1][0]:
+#             continue
+#
+#         similarity = SequenceMatcher(None, *pair).ratio()
+#         if SIMILAR < similarity < IDENTICAL:
+#             yield pair
 
-import os
-import re
-from difflib import SequenceMatcher
-from itertools import combinations
-from urllib.request import urlretrieve
+from abc import ABC, abstractmethod
 
-# prep
-TAG_HTML = re.compile(r'<category>([^<]+)</category>')
-TMP = os.getenv("TMP", "/tmp")
-TEMPFILE = os.path.join(TMP, 'feed')
-MIN_TAG_LEN = 10
-IDENTICAL = 1.0
-SIMILAR = 0.95
+class Challenge(ABC):
+    def __init__(self, number, title):
+        self.number = number
+        self.title = title
 
-urlretrieve(
-    'https://bites-data.s3.us-east-2.amazonaws.com/tags.xml',
-    TEMPFILE
-)
+    @abstractmethod
+    def verify(self, result):
+        pass
 
+    @property
+    @abstractmethod
+    def pretty_title(self):
+        pass
 
-def _get_tags(tempfile=TEMPFILE):
-    """Helper to parse all tags from a static copy of PyBites' feed,
-       providing this here so you can focus on difflib"""
-    with open(tempfile) as f:
-        content = f.read().lower()
-    # take a small subset to keep it performant
-    tags = TAG_HTML.findall(content)
-    tags = [tag for tag in tags if len(tag) > MIN_TAG_LEN]
-    return set(tags)
+class BlogChallenge(Challenge):
+    def __init__(self, number, title, merged_prs):
+        super().__init__(number, title)
+        self.merged_prs = merged_prs
+
+    def verify(self, result):
+        return result in self.merged_prs
+
+    @property
+    def pretty_title(self):
+        return f'PCC{self.number} - {self.title}'
 
 
-def get_similarities(tags=None):
-    """Should return a list of similar tag pairs (tuples)"""
-    tags = tags or _get_tags()
-    # do your thing ...
-    cut_off = 0.8
-    return [ (s1,s2)   for s1, s2 in combinations(tags,2) if SequenceMatcher(None, s1,s2).ratio() > cut_off  ]
+class BiteChallenge(Challenge):
+    def __init__(self, number, title, result):
+        super().__init__(number, title)
+        self.result = result
 
+    def verify(self, result):
+        return self.result == result
 
-input_len = len(tags)
-tag_list = list(tags)
-cut_off = 0.8
-result = []
-for i in range(input_len):
-    for j in range(i+1,input_len):
-        s1,s2 = tag_list[i], tag_list[j]
-        if SequenceMatcher(None, s1, s2).ratio() > cut_off:
-            result.append((s1, s2))
-print(len(result))
-
-# Pybite solution
-def get_similarities(tags=None):
-    """Should return a list of similar tag pairs (tuples)"""
-    tags = tags or _get_tags()
-    for pair in product(tags, tags):
-        # bonus: better performance (shaved a second off pytest for me)
-        if pair[0][0] != pair[1][0]:
-            continue
-
-        similarity = SequenceMatcher(None, *pair).ratio()
-        if SIMILAR < similarity < IDENTICAL:
-            yield pair
+    @property
+    def pretty_title(self):
+        return f"Bite {self.number}. {self.title}"
