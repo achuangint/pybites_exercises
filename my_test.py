@@ -13433,55 +13433,113 @@ Inputs are modified to check how the function deals with unknown characters
 #
 #     for hit in expected:
 #         assert tuple(sorted(hit)) in similar_tags, f'{hit} not in similar tags'
+#
+# import inspect
+# import random
+# import re
+#
+# import pytest
+#
+# from wc import Challenge, BlogChallenge, BiteChallenge
+#
+#
+# def test_should_not_instantiate_abc():
+#     with pytest.raises(TypeError):
+#         ch = Challenge(0, 'Should not instantiate ABC')
+#         ch.number
+#
+#
+# def test_baseclass_methods_are_abstract():
+#     lines = [line.strip() for line in
+#              inspect.getsourcelines(Challenge)[0]]
+#     verify_method = [(i, line) for i, line in
+#                      enumerate(lines)
+#                      if 'def verify' in line]
+#     assert verify_method, "Cannot find a method called verify"
+#     verify_index = verify_method[0][0]
+#     assert lines[verify_index - 1] == "@abstractmethod"
+#     # remove type hints
+#     lines = [re.sub("^(def.*?\\)).*", r"\1:", line) for line in lines]
+#     pretty_title_index = lines.index('def pretty_title(self):')
+#     assert lines[pretty_title_index - 1] == "@abstractmethod"
+#
+#
+# def test_super_and_abst_method_implementation():
+#     merged_prs = [41, 42, 44]
+#     try:
+#         blog = BlogChallenge(1, 'Wordvalues', merged_prs)
+#     except TypeError:
+#         pytest.fail("Unexpected TypeError, missing methods/properties?")
+#
+#     assert blog.verify(random.choice(merged_prs))
+#     assert not blog.verify(43)
+#     assert blog.pretty_title == 'PCC1 - Wordvalues'
+#
+#
+# def test_super_and_abst_property_implementation():
+#     try:
+#         bite = BiteChallenge(24, 'ABC and class inheritance', 'my result')
+#     except TypeError:
+#         pytest.fail("Unexpected TypeError, missing methods/properties?")
+#
+#     assert bite.verify('my result')
+#     assert not bite.verify('other result')
+#     assert bite.pretty_title == 'Bite 24. ABC and class inheritance'
+from wc import Matrix
 
-import inspect
-import random
-import re
-
-import pytest
-
-from wc import Challenge, BlogChallenge, BiteChallenge
 
 
-def test_should_not_instantiate_abc():
-    with pytest.raises(TypeError):
-        ch = Challenge(0, 'Should not instantiate ABC')
-        ch.number
+
+class MatrixWithoutMatMul:
+
+    def __init__(self, values):
+        self.values = values
+        self.col = len(values[0])
+        self.row = len(values)
+
+    def __matmul__(self, other):
+        return NotImplemented
 
 
-def test_baseclass_methods_are_abstract():
-    lines = [line.strip() for line in
-             inspect.getsourcelines(Challenge)[0]]
-    verify_method = [(i, line) for i, line in
-                     enumerate(lines)
-                     if 'def verify' in line]
-    assert verify_method, "Cannot find a method called verify"
-    verify_index = verify_method[0][0]
-    assert lines[verify_index - 1] == "@abstractmethod"
-    # remove type hints
-    lines = [re.sub("^(def.*?\\)).*", r"\1:", line) for line in lines]
-    pretty_title_index = lines.index('def pretty_title(self):')
-    assert lines[pretty_title_index - 1] == "@abstractmethod"
+def test_matmul():
+    mat1 = Matrix([[1, 2], [3, 4]])
+    mat2 = Matrix([[11, 12], [13, 14]])
+    mat3 = mat1 @ mat2
+    assert mat3.values == [[37, 40], [85, 92]]
+    mat3 = mat2 @ mat1
+    assert mat3.values == [[47, 70], [55, 82]]
 
 
-def test_super_and_abst_method_implementation():
-    merged_prs = [41, 42, 44]
-    try:
-        blog = BlogChallenge(1, 'Wordvalues', merged_prs)
-    except TypeError:
-        pytest.fail("Unexpected TypeError, missing methods/properties?")
-
-    assert blog.verify(random.choice(merged_prs))
-    assert not blog.verify(43)
-    assert blog.pretty_title == 'PCC1 - Wordvalues'
+def test_rmatmul():
+    mat1 = Matrix([[1, 2], [3, 4]])
+    mat2 = MatrixWithoutMatMul([[11, 12], [13, 14]])
+    # mat2 does not implement matmul, so mat1's rmatmul is called
+    # which results in mat1 @ mat2
+    ret = mat2 @ mat1
+    assert ret.values == [[37, 40], [85, 92]]
 
 
-def test_super_and_abst_property_implementation():
-    try:
-        bite = BiteChallenge(24, 'ABC and class inheritance', 'my result')
-    except TypeError:
-        pytest.fail("Unexpected TypeError, missing methods/properties?")
+def test_imatmul():
+    mat1 = Matrix([[11, 12], [13, 14]])
+    org_id_of_mat1 = id(mat1)
+    mat2 = Matrix([[1, 2], [3, 4]])
+    mat1 @= mat2
+    id_of_mat1_after_inplace_operation = id(mat1)
+    assert mat1.values == [[47, 70], [55, 82]]
+    # as @= is in place, the id of the object should not change!
+    assert org_id_of_mat1 == id_of_mat1_after_inplace_operation
 
-    assert bite.verify('my result')
-    assert not bite.verify('other result')
-    assert bite.pretty_title == 'Bite 24. ABC and class inheritance'
+
+def test_imatmul_other_way_around():
+    mat1 = Matrix([[11, 12], [13, 14]])
+    mat2 = Matrix([[1, 2], [3, 4]])
+    org_id_of_mat2 = id(mat2)
+    mat2 @= mat1
+    id_of_mat2_after_inplace_operation = id(mat2)
+    assert mat2.values == [[37, 40], [85, 92]]
+    assert org_id_of_mat2 == id_of_mat2_after_inplace_operation
+
+
+def test_repr_output():
+    mat = Matrix([[11, 12], [13, 14], [15, 16]])
+    assert repr(mat) == '<Matrix values="[[11, 12], [13, 14], [15, 16]]">'

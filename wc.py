@@ -12404,44 +12404,98 @@ enumerate through the text by letter
 #         similarity = SequenceMatcher(None, *pair).ratio()
 #         if SIMILAR < similarity < IDENTICAL:
 #             yield pair
+#
+# from abc import ABC, abstractmethod
+#
+# class Challenge(ABC):
+#     def __init__(self, number, title):
+#         self.number = number
+#         self.title = title
+#
+#     @abstractmethod
+#     def verify(self, result):
+#         pass
+#
+#     @property
+#     @abstractmethod
+#     def pretty_title(self):
+#         pass
+#
+# class BlogChallenge(Challenge):
+#     def __init__(self, number, title, merged_prs):
+#         super().__init__(number, title)
+#         self.merged_prs = merged_prs
+#
+#     def verify(self, result):
+#         return result in self.merged_prs
+#
+#     @property
+#     def pretty_title(self):
+#         return f'PCC{self.number} - {self.title}'
+#
+#
+# class BiteChallenge(Challenge):
+#     def __init__(self, number, title, result):
+#         super().__init__(number, title)
+#         self.result = result
+#
+#     def verify(self, result):
+#         return self.result == result
+#
+#     @property
+#     def pretty_title(self):
+#         return f"Bite {self.number}. {self.title}"
+class Matrix:
 
-from abc import ABC, abstractmethod
+    def __init__(self, values):
+        self.values = values
 
-class Challenge(ABC):
-    def __init__(self, number, title):
-        self.number = number
-        self.title = title
+    def __repr__(self):
+        return f'<Matrix values="{self.values}">'
 
-    @abstractmethod
-    def verify(self, result):
-        pass
+    def __matmul__(self, other):
+        return Matrix([[self.values[0][0] * other.values[0][0] + self.values[0][1] * other.values[1][0],
+                 self.values[0][0] * other.values[0][1] + self.values[0][1] * other.values[1][1]],
+                [self.values[1][0] * other.values[0][0] + self.values[1][1] * other.values[1][0],
+                 self.values[1][0] * other.values[0][1] + self.values[1][1] * other.values[1][1]]])
 
-    @property
-    @abstractmethod
-    def pretty_title(self):
-        pass
+    def __rmatmul__(self, other):
+        return self.__matmul__(other)
 
-class BlogChallenge(Challenge):
-    def __init__(self, number, title, merged_prs):
-        super().__init__(number, title)
-        self.merged_prs = merged_prs
+    def __imatmul__(self, other):
+        self.values= self.__matmul__(other).values
+        return self
 
-    def verify(self, result):
-        return result in self.merged_prs
+# Pybite solution
+class Matrix:
 
-    @property
-    def pretty_title(self):
-        return f'PCC{self.number} - {self.title}'
+    def __init__(self, values):
+        self.values = values
+        self.col = len(values[0])
+        self.row = len(values)
 
+    def __matmul__(self, other):
+        if self.col != other.row:
+            raise ValueError(('Numbers rows first matrix != number columns '
+                             'second matrix'))
 
-class BiteChallenge(Challenge):
-    def __init__(self, number, title, result):
-        super().__init__(number, title)
-        self.result = result
+        result = [[0 for row in range(other.col)]
+                  for col in range(self.row)]
 
-    def verify(self, result):
-        return self.result == result
+        for i in range(self.row):
+            for j in range(other.col):
+                for k in range(self.col):
+                    res = self.values[i][k] * other.values[k][j]
+                    result[i][j] += res
 
-    @property
-    def pretty_title(self):
-        return f"Bite {self.number}. {self.title}"
+        return Matrix(result)
+
+    def __rmatmul__(self, other):
+        return self.__matmul__(other)
+
+    def __imatmul__(self, other):
+        self.values = self.__matmul__(other).values
+        return self
+
+    def __repr__(self):
+        return f'<Matrix values="{self.values}">'
