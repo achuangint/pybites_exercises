@@ -7,6 +7,8 @@ from string import punctuation
 from sys import exc_info
 
 import itertools
+
+from pygments.lexers import factor
 from sqlalchemy import true
 from sqlalchemy.sql.annotation import Annotated
 
@@ -12445,57 +12447,95 @@ enumerate through the text by letter
 #     @property
 #     def pretty_title(self):
 #         return f"Bite {self.number}. {self.title}"
-class Matrix:
+# class Matrix:
+#
+#     def __init__(self, values):
+#         self.values = values
+#
+#     def __repr__(self):
+#         return f'<Matrix values="{self.values}">'
+#
+#     def __matmul__(self, other):
+#         return Matrix([[self.values[0][0] * other.values[0][0] + self.values[0][1] * other.values[1][0],
+#                  self.values[0][0] * other.values[0][1] + self.values[0][1] * other.values[1][1]],
+#                 [self.values[1][0] * other.values[0][0] + self.values[1][1] * other.values[1][0],
+#                  self.values[1][0] * other.values[0][1] + self.values[1][1] * other.values[1][1]]])
+#
+#     def __rmatmul__(self, other):
+#         return self.__matmul__(other)
+#
+#     def __imatmul__(self, other):
+#         self.values= self.__matmul__(other).values
+#         return self
+#
+# # Pybite solution
+# class Matrix:
+#
+#     def __init__(self, values):
+#         self.values = values
+#         self.col = len(values[0])
+#         self.row = len(values)
+#
+#     def __matmul__(self, other):
+#         if self.col != other.row:
+#             raise ValueError(('Numbers rows first matrix != number columns '
+#                              'second matrix'))
+#
+#         result = [[0 for row in range(other.col)]
+#                   for col in range(self.row)]
+#
+#         for i in range(self.row):
+#             for j in range(other.col):
+#                 for k in range(self.col):
+#                     res = self.values[i][k] * other.values[k][j]
+#                     result[i][j] += res
+#
+#         return Matrix(result)
+#
+#     def __rmatmul__(self, other):
+#         return self.__matmul__(other)
+#
+#     def __imatmul__(self, other):
+#         self.values = self.__matmul__(other).values
+#         return self
+#
+#     def __repr__(self):
+#         return f'<Matrix values="{self.values}">'
 
-    def __init__(self, values):
-        self.values = values
+from collections import namedtuple
+from datetime import datetime
 
-    def __repr__(self):
-        return f'<Matrix values="{self.values}">'
+Transaction = namedtuple(
+    'Transaction',
+    'giver points date',
+    defaults=(None, None, datetime.now()))
 
-    def __matmul__(self, other):
-        return Matrix([[self.values[0][0] * other.values[0][0] + self.values[0][1] * other.values[1][0],
-                 self.values[0][0] * other.values[0][1] + self.values[0][1] * other.values[1][1]],
-                [self.values[1][0] * other.values[0][0] + self.values[1][1] * other.values[1][0],
-                 self.values[1][0] * other.values[0][1] + self.values[1][1] * other.values[1][1]]])
 
-    def __rmatmul__(self, other):
-        return self.__matmul__(other)
+class User:
+    def __init__(self, name):
+        self.name = name
+        self._transactions = []
+        self._fans = []
 
-    def __imatmul__(self, other):
-        self.values= self.__matmul__(other).values
+
+    def __add__(self, other):
+        self._transactions.append(other.points)
+        if other.giver not in self._fans:
+            self._fans.append(other.giver)
         return self
 
-# Pybite solution
-class Matrix:
+    @property
+    def karma(self):
+        return sum(self._transactions)
 
-    def __init__(self, values):
-        self.values = values
-        self.col = len(values[0])
-        self.row = len(values)
+    @property
+    def points(self):
+        return self._transactions
 
-    def __matmul__(self, other):
-        if self.col != other.row:
-            raise ValueError(('Numbers rows first matrix != number columns '
-                             'second matrix'))
+    @property
+    def fans(self):
+        return len(self._fans)
 
-        result = [[0 for row in range(other.col)]
-                  for col in range(self.row)]
-
-        for i in range(self.row):
-            for j in range(other.col):
-                for k in range(self.col):
-                    res = self.values[i][k] * other.values[k][j]
-                    result[i][j] += res
-
-        return Matrix(result)
-
-    def __rmatmul__(self, other):
-        return self.__matmul__(other)
-
-    def __imatmul__(self, other):
-        self.values = self.__matmul__(other).values
-        return self
-
-    def __repr__(self):
-        return f'<Matrix values="{self.values}">'
+    def __str__(self):
+        fan_str = 'fan' if self.fans==1 else 'fans'
+        return f'{self.name} has a karma of {self.karma} and {self.fans} {fan_str}'

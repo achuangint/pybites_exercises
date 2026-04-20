@@ -13485,61 +13485,136 @@ Inputs are modified to check how the function deals with unknown characters
 #     assert bite.verify('my result')
 #     assert not bite.verify('other result')
 #     assert bite.pretty_title == 'Bite 24. ABC and class inheritance'
-from wc import Matrix
+# from wc import Matrix
+#
+#
+#
+#
+# class MatrixWithoutMatMul:
+#
+#     def __init__(self, values):
+#         self.values = values
+#         self.col = len(values[0])
+#         self.row = len(values)
+#
+#     def __matmul__(self, other):
+#         return NotImplemented
+#
+#
+# def test_matmul():
+#     mat1 = Matrix([[1, 2], [3, 4]])
+#     mat2 = Matrix([[11, 12], [13, 14]])
+#     mat3 = mat1 @ mat2
+#     assert mat3.values == [[37, 40], [85, 92]]
+#     mat3 = mat2 @ mat1
+#     assert mat3.values == [[47, 70], [55, 82]]
+#
+#
+# def test_rmatmul():
+#     mat1 = Matrix([[1, 2], [3, 4]])
+#     mat2 = MatrixWithoutMatMul([[11, 12], [13, 14]])
+#     # mat2 does not implement matmul, so mat1's rmatmul is called
+#     # which results in mat1 @ mat2
+#     ret = mat2 @ mat1
+#     assert ret.values == [[37, 40], [85, 92]]
+#
+#
+# def test_imatmul():
+#     mat1 = Matrix([[11, 12], [13, 14]])
+#     org_id_of_mat1 = id(mat1)
+#     mat2 = Matrix([[1, 2], [3, 4]])
+#     mat1 @= mat2
+#     id_of_mat1_after_inplace_operation = id(mat1)
+#     assert mat1.values == [[47, 70], [55, 82]]
+#     # as @= is in place, the id of the object should not change!
+#     assert org_id_of_mat1 == id_of_mat1_after_inplace_operation
+#
+#
+# def test_imatmul_other_way_around():
+#     mat1 = Matrix([[11, 12], [13, 14]])
+#     mat2 = Matrix([[1, 2], [3, 4]])
+#     org_id_of_mat2 = id(mat2)
+#     mat2 @= mat1
+#     id_of_mat2_after_inplace_operation = id(mat2)
+#     assert mat2.values == [[37, 40], [85, 92]]
+#     assert org_id_of_mat2 == id_of_mat2_after_inplace_operation
+#
+#
+# def test_repr_output():
+#     mat = Matrix([[11, 12], [13, 14], [15, 16]])
+#     assert repr(mat) == '<Matrix values="[[11, 12], [13, 14], [15, 16]]">'
+import pytest
+
+from wc import User, Transaction
 
 
+@pytest.fixture
+def bob():
+    return User('bob')
 
 
-class MatrixWithoutMatMul:
-
-    def __init__(self, values):
-        self.values = values
-        self.col = len(values[0])
-        self.row = len(values)
-
-    def __matmul__(self, other):
-        return NotImplemented
+@pytest.fixture
+def tim():
+    return User('tim')
 
 
-def test_matmul():
-    mat1 = Matrix([[1, 2], [3, 4]])
-    mat2 = Matrix([[11, 12], [13, 14]])
-    mat3 = mat1 @ mat2
-    assert mat3.values == [[37, 40], [85, 92]]
-    mat3 = mat2 @ mat1
-    assert mat3.values == [[47, 70], [55, 82]]
+@pytest.fixture
+def alice():
+    return User('alice')
 
 
-def test_rmatmul():
-    mat1 = Matrix([[1, 2], [3, 4]])
-    mat2 = MatrixWithoutMatMul([[11, 12], [13, 14]])
-    # mat2 does not implement matmul, so mat1's rmatmul is called
-    # which results in mat1 @ mat2
-    ret = mat2 @ mat1
-    assert ret.values == [[37, 40], [85, 92]]
+@pytest.fixture
+def transactions(bob, tim, alice):
+    return [
+        Transaction(giver=alice, points=1),
+        Transaction(giver=bob, points=2),
+        Transaction(giver=tim, points=3),
+        Transaction(giver=tim, points=4),
+        Transaction(giver=alice, points=2),
+    ]
 
 
-def test_imatmul():
-    mat1 = Matrix([[11, 12], [13, 14]])
-    org_id_of_mat1 = id(mat1)
-    mat2 = Matrix([[1, 2], [3, 4]])
-    mat1 @= mat2
-    id_of_mat1_after_inplace_operation = id(mat1)
-    assert mat1.values == [[47, 70], [55, 82]]
-    # as @= is in place, the id of the object should not change!
-    assert org_id_of_mat1 == id_of_mat1_after_inplace_operation
+def test_init(transactions, bob, tim, alice):
+    assert alice.name == 'alice'
+    assert bob.name == 'bob'
+    assert tim.name == 'tim'
+    assert alice._transactions == []
+    assert bob._transactions == []
+    assert tim._transactions == []
 
 
-def test_imatmul_other_way_around():
-    mat1 = Matrix([[11, 12], [13, 14]])
-    mat2 = Matrix([[1, 2], [3, 4]])
-    org_id_of_mat2 = id(mat2)
-    mat2 @= mat1
-    id_of_mat2_after_inplace_operation = id(mat2)
-    assert mat2.values == [[37, 40], [85, 92]]
-    assert org_id_of_mat2 == id_of_mat2_after_inplace_operation
+def test_scores_and_points(transactions, bob, tim, alice):
+    bob + transactions[0]
+    assert bob.karma == 1
+    alice + transactions[1]
+    assert alice.karma == 2
+    bob + transactions[2]
+    assert bob.karma == 4
+    alice + transactions[3]
+    assert alice.karma == 6
+    tim + transactions[4]
+    assert tim.karma == 2
+    # point lists at this point
+    assert bob.points == [1, 3]
+    assert alice.points == [2, 4]
+    assert tim.points == [2]
 
 
-def test_repr_output():
-    mat = Matrix([[11, 12], [13, 14], [15, 16]])
-    assert repr(mat) == '<Matrix values="[[11, 12], [13, 14], [15, 16]]">'
+def test_fans_property(transactions, bob, tim, alice):
+    tim + transactions[4]
+    assert tim.fans == 1
+    bob + transactions[0]
+    bob + transactions[0]  # same giver, does not increase fan count
+    assert bob.fans == 1
+    alice + transactions[1]
+    alice + transactions[2]
+    assert alice.fans == 2
+
+
+def test_str_dunder(transactions, bob, tim, alice):
+    assert str(tim) == 'tim has a karma of 0 and 0 fans'
+    tim + transactions[4]
+    assert str(tim) == 'tim has a karma of 2 and 1 fan'
+    alice + transactions[1]
+    alice + transactions[3]
+    assert str(alice) == 'alice has a karma of 6 and 2 fans'
