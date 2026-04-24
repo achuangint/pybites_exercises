@@ -11,6 +11,7 @@ import itertools
 from pygments.lexers import factor
 from sqlalchemy import true
 from sqlalchemy.sql.annotation import Annotated
+from tqdm import gui
 
 # from pathlib import Path
 #
@@ -12501,41 +12502,487 @@ enumerate through the text by letter
 #
 #     def __repr__(self):
 #         return f'<Matrix values="{self.values}">'
+#
+# from collections import namedtuple
+# from datetime import datetime
+#
+# Transaction = namedtuple(
+#     'Transaction',
+#     'giver points date',
+#     defaults=(None, None, datetime.now()))
+#
+#
+# class User:
+#     def __init__(self, name):
+#         self.name = name
+#         self._transactions = []
+#         self._fans = []
+#
+#
+#     def __add__(self, other):
+#         self._transactions.append(other.points)
+#         if other.giver not in self._fans:
+#             self._fans.append(other.giver)
+#         return self
+#
+#     @property
+#     def karma(self):
+#         return sum(self._transactions)
+#
+#     @property
+#     def points(self):
+#         return self._transactions
+#
+#     @property
+#     def fans(self):
+#         return len(self._fans)
+#
+#     def __str__(self):
+#         fan_str = 'fan' if self.fans==1 else 'fans'
+#         return f'{self.name} has a karma of {self.karma} and {self.fans} {fan_str}'
+#
+# from string import ascii_lowercase
+#
+# PRIMES = [2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 41, 43, 47, 53, 59, 61]
+# ALPHABET = list(ascii_lowercase)
+#
+# def bst_helper(seq:list, target:str|int ,starting_idx:int):
+#     if len(seq)==0:
+#         return None
+#     if len(seq)==1:
+#         if seq[0]==target:
+#             return starting_idx
+#         else:
+#             return None
+#     mid_idx = len(seq) // 2
+#     if  target >= seq[mid_idx]:
+#         return bst_helper(seq[mid_idx:], target, starting_idx + mid_idx)
+#     else:
+#         return bst_helper(seq[0:mid_idx], target, starting_idx)
+#
+# def binary_search(sequence, target):
+#     return bst_helper(seq=sequence,target=target, starting_idx=0)
+#
+#
+# # Pybite solution #1
+# import string
+# def binary_search(sequence, target):
+#     start = 0
+#     end = len(sequence)
+#
+#     while start <= end:
+#         midp = (end + start) // 2
+#
+#         if sequence[midp] == target:
+#             return midp
+#
+#         if sequence[midp] < target:
+#             start = midp + 1
+#             continue
+#
+#         if sequence[midp] > target:
+#             end = midp - 1
+#             continue
+#
+#     return None
+#
+# # Pybite solution #2
+# def binary_search(sequence, target):
+#     result = None
+#     half = len(sequence) // 2
+#
+#     if sequence[half] != target:
+#         if half == 0:
+#             return result
+#         if sequence[half] > target:
+#             result = binary_search(sequence[:half], target)
+#         if sequence[half] < target:
+#             result = binary_search(sequence[half:], target)
+#             if result != None:
+#                 result = half + result
+#     else:
+#         return half
+#     return result
+#
+# import random
+#
+# MAX_GUESSES = 5
+# START, END = 1, 20
+#
+#
+# def get_random_number():
+#     """Get a random number between START and END, returns int"""
+#     return random.randint(START, END)
+#
+#
+# class Game:
+#     """Number guess class, make it callable to initiate game"""
+#
+#     def __init__(self, _max_tries: int =5):
+#         """Init _guesses, _answer, _win to set(), get_random_number(), False"""
+#         self._guesses=[]
+#         self._answer=get_random_number()
+#         self._max_tries=_max_tries
+#         self._win=False
+#         self._guess_count=0
+#         #print(f"Answer: {self._answer}")
+#
+#     def guess(self):
+#         """Ask user for input, convert to int, raise ValueError outputting
+#            the following errors when applicable:
+#            'Please enter a number'
+#            'Should be a number'
+#            'Number not in range'
+#            'Already guessed'
+#            If all good, return the int"""
+#         number = input("Please enter a number")
+#         if number is None:
+#             print("Please enter a number")
+#             raise ValueError
+#
+#         else:
+#             try:
+#                 input_number = int(number)
+#                 self._guess_count+=1
+#             except ValueError:
+#                 print("Should be a number")
+#                 raise ValueError
+#             if not (1<=input_number<=20):
+#                 print("Number not in range")
+#                 raise ValueError
+#             elif input_number in self._guesses:
+#                 print('Already guessed')
+#                 raise ValueError
+#
+#             self._validate_guess(input_number)
+#             return input_number
+#
+#     def _validate_guess(self, guess:int):
+#         """Verify if guess is correct, print the following when applicable:
+#            {guess} is correct!
+#            {guess} is too low
+#            {guess} is too high
+#            Return a boolean"""
+#         self._guesses.append(guess)
+#         if guess==self._answer:
+#             print(f"{guess} is correct!")
+#             self._win=True
+#             return True
+#         elif guess<self._answer:
+#             print(f"{guess} is too low")
+#             return False
+#         else:
+#             print(f"{guess} is too high")
+#             return False
+#
+#
+#     def __call__(self):
+#         """Entry point / game loop, use a loop break/continue,
+#            see the tests for the exact win/lose messaging"""
+#
+#         while not self._win and self._guess_count<self._max_tries:
+#             try:
+#                 self.guess()
+#             except ValueError as e:
+#                 pass
+#
+#         if self._win:
+#             print(f'It took you {len(self._guesses)} guesses')
+#         else:
+#             print(f"Guessed 5 times, answer was {self._answer}")
+#
+# if __name__ == '__main__':
+#     game = Game()
+#     game()
+
+# Pybites solution
+# import random
+#
+# MAX_GUESSES = 5
+# START, END = 1, 20
+#
+#
+# def get_random_number():
+#     """Get a random number between START and END, returns int"""
+#     return random.randint(START, END)
+#
+#
+# class Game:
+#     """Number guess class, make it callable to initiate game"""
+#
+#     def __init__(self):
+#         """Init _guesses, _answer, _win to set(), get_random_number(), False"""
+#         self._guesses = set()
+#         self._answer = get_random_number()
+#         self._win = False
+#
+#     def guess(self):
+#         """Ask user for input, convert to int, raise ValueError outputting
+#            the following errors when applicable:
+#            'Please enter a number'
+#            'Should be a number'
+#            'Number not in range'
+#            'Already guessed'
+#            If all good, return the int"""
+#         guess = input(f'Guess a number between {START} and {END}: ')
+#         if not guess:
+#             raise ValueError('Please enter a number')
+#
+#         try:
+#             guess = int(guess)
+#         except ValueError:
+#             raise ValueError('Should be a number')
+#
+#         if guess not in range(START, END+1):
+#             raise ValueError('Number not in range')
+#
+#         if guess in self._guesses:
+#             raise ValueError('Already guessed')
+#
+#         self._guesses.add(guess)
+#         return guess
+#
+#     def _validate_guess(self, guess):
+#         """Verify if guess is correct, print the following when applicable:
+#            {guess} is correct!
+#            {guess} is too low
+#            {guess} is too high
+#            Return a boolean"""
+#         if guess == self._answer:
+#             print(f'{guess} is correct!')
+#             return True
+#         else:
+#             high_or_low = 'low' if guess < self._answer else 'high'
+#             print(f'{guess} is too {high_or_low}')
+#             return False
+#
+#     @property
+#     def num_guesses(self):
+#         return len(self._guesses)
+#
+#     def __call__(self):
+#         """Entry point / game loop, use a loop break/continue,
+#            see the tests for the exact win/lose messaging"""
+#         while len(self._guesses) < MAX_GUESSES:
+#             try:
+#                 guess = self.guess()
+#             except ValueError as ve:
+#                 print(ve)
+#                 continue
+#
+#             win = self._validate_guess(guess)
+#             if win:
+#                 guess_str = self.num_guesses == 1 and "guess" or "guesses"
+#                 print(f'It took you {self.num_guesses} {guess_str}')
+#                 self._win = True
+#                 break
+#         else:
+#             # else on while/for = anti-pattern? do find it useful in this case!
+#             print(f'Guessed {MAX_GUESSES} times, answer was {self._answer}')
+#
+#
+# if __name__ == '__main__':
+#     game = Game()
+#     game()
 
 from collections import namedtuple
-from datetime import datetime
+from datetime import date
+from time import struct_time
 
-Transaction = namedtuple(
-    'Transaction',
-    'giver points date',
-    defaults=(None, None, datetime.now()))
+import feedparser
 
+FEED = 'https://bites-data.s3.us-east-2.amazonaws.com/all.rss.xml'
 
-class User:
-    def __init__(self, name):
-        self.name = name
-        self._transactions = []
-        self._fans = []
+Entry = namedtuple('Entry', 'date title link tags')
 
 
-    def __add__(self, other):
-        self._transactions.append(other.points)
-        if other.giver not in self._fans:
-            self._fans.append(other.giver)
-        return self
+def _convert_struct_time_to_dt(stime : struct_time):
+    """Convert a time.struct_time as returned by feedparser into a
+    datetime.date object, so:
+    time.struct_time(tm_year=2016, tm_mon=12, tm_mday=28, ...)
+    -> date(2016, 12, 28)
+    """
+    return date(year=stime.tm_year, month=stime.tm_mon, day=stime.tm_mday)
 
-    @property
-    def karma(self):
-        return sum(self._transactions)
 
-    @property
-    def points(self):
-        return self._transactions
+def get_feed_entries(feed=FEED):
+    """Use feedparser to parse PyBites RSS feed.
+       Return a list of Entry namedtuples (date = date, drop time part)
+    """
+    d=feedparser.parse(feed)
+    entries = d['entries']
+    result = []
+    for entry in entries:
+        date_var=_convert_struct_time_to_dt(entry.get('published_parsed'))
+        title=entry['title']
+        link=entry['link']
+        tags_list=[tag['term'].lower() for tag in entry['tags']]
+        result.append(Entry(date=date_var, title=title, link=link, tags=tags_list))
+    return result
 
-    @property
-    def fans(self):
-        return len(self._fans)
+def _search_helper(t1: str, t2:str) -> bool:
+    return t1.lower() == t2.lower()
 
-    def __str__(self):
-        fan_str = 'fan' if self.fans==1 else 'fans'
-        return f'{self.name} has a karma of {self.karma} and {self.fans} {fan_str}'
+def _in_list(s:str, s_list:list[str])->bool:
+    for element in s_list:
+        if _search_helper(element, s):
+            return True
+    return False
+
+
+def filter_entries_by_tag(search :str, entry:Entry) ->bool:
+    """Check if search matches any tags as stored in the Entry namedtuple
+       (case insensitive, only whole, not partial string matches).
+       Returns bool: True if match, False if not.
+       Supported searches:
+       1. If & in search do AND match,
+          e.g. flask&api should match entries with both tags
+       2. Elif | in search do an OR match,
+          e.g. flask|django should match entries with either tag
+       3. Else: match if search is in tags
+    """
+    tags = entry.tags
+
+    if '&' in search :
+        search_list = search.split('&')
+        return all([ _in_list(s,tags) for s in search_list])
+
+    elif '|' in search:
+        search_list = search.split('|')
+        return any([ _in_list(s,tags) for s in search_list])
+    else:
+        return _in_list(search,tags)
+
+
+def main():
+    """Entry point to the program
+       1. Call get_feed_entries and store them in entries
+       2. Initiate an infinite loop
+       3. Ask user for a search term:
+
+          - if enter was hit (empty string), print 'Please provide a search term'
+          - if 'q' was entered, print 'Bye' and exit/break the infinite loop
+       4. Filter/match the entries (see filter_entries_by_tag docstring)
+       5. Print the title of each match ordered by date ascending
+       6. Secondly, print the number of matches: 'n entries matched'
+          (use entry if only 1 match)
+    """
+    entries = get_feed_entries()
+    search_term = input('Please provide a search term')
+
+    while search_term !='q':
+        if not search_term:
+            print("Please provide a search term")
+        elif search_term=='q':
+            break
+        else:
+            match_list=[]
+            for entry in entries:
+                if filter_entries_by_tag(search_term,entry):
+                    match_list.append(entry)
+            sorted_list=sorted(match_list,key=lambda x: x.date)
+            for item in sorted_list:
+                print(item.title)
+            if len(sorted_list)==1:
+                print("1 entry matched")
+            else:
+                print(f"{len(sorted_list)} entries matched")
+
+        search_term = input('Please provide a search term')
+    print("Bye")
+
+if __name__ == '__main__':
+    main()
+
+
+## Pybite solution:
+from collections import namedtuple
+from datetime import date
+
+import feedparser
+
+FEED = 'https://bites-data.s3.us-east-2.amazonaws.com/all.rss.xml'
+
+Entry = namedtuple('Entry', 'date title link tags')
+
+
+def _convert_struct_time_to_dt(stime):
+    """Convert a time.struct_time as returned by feedparser into a
+    datetime.date object, so:
+    time.struct_time(tm_year=2016, tm_mon=12, tm_mday=28, ...)
+    -> date(2016, 12, 28)
+    """
+    return date(year=stime.tm_year, month=stime.tm_mon, day=stime.tm_mday)
+
+
+def get_feed_entries(feed=FEED):
+    """Use feedparser to parse PyBites RSS feed.
+       Return a list of Entry namedtuples (date = date, drop time part)
+    """
+    for entry in feedparser.parse(feed)['entries']:
+        dt = _convert_struct_time_to_dt(entry.published_parsed)
+        yield Entry(date=dt,
+                    title=entry.title,
+                    link=entry.link,
+                    tags={tag.term.lower() for tag in entry.tags})
+
+
+def filter_entries_by_tag(search, entry):
+    """Check if search matches any tags as stored in the Entry namedtuple
+       (case insensitive, only whole, not partial string matches).
+       Returns bool: True if match, False if not.
+       Supported searches:
+       1. If & in search do AND match,
+          e.g. flask&api should match entries with both tags
+       2. Elif | in search do an OR match,
+          e.g. flask|django should match entries with either tag
+       3. Else: match if search is in tags
+    """
+    if '&' in search:
+        return all(term.strip().lower() in entry.tags
+                   for term in search.split('&'))
+
+    elif '|' in search:
+        return any(term.strip().lower() in entry.tags
+                   for term in search.split('|'))
+
+    return search.lower() in entry.tags
+
+
+def main():
+    """Entry point to the program
+       1. Call get_feed_entries and store them in entries
+       2. Initiate an infinite loop
+       3. Ask user for a search term:
+          - if enter was hit (empty string), print 'Please provide a search term'
+          - if 'q' was entered, print 'Bye' and exit/break the infinite loop
+       4. Filter/match the entries (see filter_entries_by_tag docstring)
+       5. Print the title of each match ordered by date ascending
+       6. Secondly, print the number of matches: 'n entries matched'
+          (use entry if only 1 match)
+    """
+    entries = sorted(get_feed_entries(), key=lambda x: x.date)
+
+    while True:
+        search = input('\nSearch for (q for exit): ')
+
+        if not search:
+            print('Please provide a search term')
+            continue
+
+        if search == 'q':
+            print('Bye')
+            break
+
+        matches = 0
+        for entry in entries:
+            if filter_entries_by_tag(search, entry):
+                matches += 1
+                print(entry.title)
+
+        entry_str = matches == 1 and "entry" or "entries"
+        print(f'\n{matches} {entry_str} matched "{search}"')
+
+
+if __name__ == '__main__':
+    main()

@@ -13543,78 +13543,317 @@ Inputs are modified to check how the function deals with unknown characters
 # def test_repr_output():
 #     mat = Matrix([[11, 12], [13, 14], [15, 16]])
 #     assert repr(mat) == '<Matrix values="[[11, 12], [13, 14], [15, 16]]">'
+# import pytest
+#
+# from wc import User, Transaction
+#
+#
+# @pytest.fixture
+# def bob():
+#     return User('bob')
+#
+#
+# @pytest.fixture
+# def tim():
+#     return User('tim')
+#
+#
+# @pytest.fixture
+# def alice():
+#     return User('alice')
+#
+#
+# @pytest.fixture
+# def transactions(bob, tim, alice):
+#     return [
+#         Transaction(giver=alice, points=1),
+#         Transaction(giver=bob, points=2),
+#         Transaction(giver=tim, points=3),
+#         Transaction(giver=tim, points=4),
+#         Transaction(giver=alice, points=2),
+#     ]
+#
+#
+# def test_init(transactions, bob, tim, alice):
+#     assert alice.name == 'alice'
+#     assert bob.name == 'bob'
+#     assert tim.name == 'tim'
+#     assert alice._transactions == []
+#     assert bob._transactions == []
+#     assert tim._transactions == []
+#
+#
+# def test_scores_and_points(transactions, bob, tim, alice):
+#     bob + transactions[0]
+#     assert bob.karma == 1
+#     alice + transactions[1]
+#     assert alice.karma == 2
+#     bob + transactions[2]
+#     assert bob.karma == 4
+#     alice + transactions[3]
+#     assert alice.karma == 6
+#     tim + transactions[4]
+#     assert tim.karma == 2
+#     # point lists at this point
+#     assert bob.points == [1, 3]
+#     assert alice.points == [2, 4]
+#     assert tim.points == [2]
+#
+#
+# def test_fans_property(transactions, bob, tim, alice):
+#     tim + transactions[4]
+#     assert tim.fans == 1
+#     bob + transactions[0]
+#     bob + transactions[0]  # same giver, does not increase fan count
+#     assert bob.fans == 1
+#     alice + transactions[1]
+#     alice + transactions[2]
+#     assert alice.fans == 2
+#
+#
+# def test_str_dunder(transactions, bob, tim, alice):
+#     assert str(tim) == 'tim has a karma of 0 and 0 fans'
+#     tim + transactions[4]
+#     assert str(tim) == 'tim has a karma of 2 and 1 fan'
+#     alice + transactions[1]
+#     alice + transactions[3]
+#     assert str(alice) == 'alice has a karma of 6 and 2 fans'
+#
+# from string import ascii_lowercase
+#
+# from wc import binary_search
+#
+# PRIMES = [2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 41, 43, 47, 53, 59, 61]
+# ALPHABET = list(ascii_lowercase)
+#
+#
+# def test_binary_search_prime():
+#     assert binary_search(PRIMES, 2) == 0
+#     assert binary_search(PRIMES, 59) == 16
+#     assert binary_search(PRIMES, 5) == 2
+#     assert binary_search(PRIMES, 61) == 17
+#     assert binary_search(PRIMES, 18) == None
+#
+#
+# def test_binary_search_alpha():
+#     assert binary_search(ALPHABET, 'u') == 20
+#     assert binary_search(ALPHABET, 'a') == 0
+#     assert binary_search(ALPHABET, 'z') == 25
+
+#
+# from unittest.mock import patch
+# import random
+#
+# import pytest
+#
+# from wc import get_random_number, Game
+#
+#
+# @patch.object(random, 'randint')
+# def test_get_random_number(m):
+#     m.return_value = 17
+#     assert get_random_number() == 17
+#
+#
+# @patch("builtins.input", side_effect=[11, '12', 'Bob', 12, 5, -1, 21, 7, None])
+# def test_guess(inp):
+#     game = Game()
+#     # good
+#     assert game.guess() == 11
+#     assert game.guess() == 12
+#     # not a number
+#     with pytest.raises(ValueError):
+#         game.guess()
+#     # already guessed 12
+#     with pytest.raises(ValueError):
+#         game.guess()
+#
+#     # good
+#     assert game.guess() == 5
+#     # out of range (x2)
+#     with pytest.raises(ValueError):
+#         game.guess()
+#     with pytest.raises(ValueError):
+#         game.guess()
+#     # good
+#     assert game.guess() == 7
+#     # hitting enter / no input
+#     with pytest.raises(ValueError):
+#         game.guess()
+#
+#
+# def test_validate_guess(capfd):
+#     """pytest capture stdout:
+#        https://docs.pytest.org/en/2.9.1/capture.html"""
+#     game = Game()
+#     game._answer = 2
+#
+#     assert not game._validate_guess(1)
+#     out, _ = capfd.readouterr()
+#     assert out.rstrip() == '1 is too low'
+#
+#     assert not game._validate_guess(3)
+#     out, _ = capfd.readouterr()
+#     assert out.rstrip() == '3 is too high'
+#
+#     assert game._validate_guess(2)
+#     out, _ = capfd.readouterr()
+#     assert out.rstrip() == '2 is correct!'
+#
+#
+# @patch("builtins.input", side_effect=[4, 22, 9, 4, 6])
+# def test_game_win(inp, capfd):
+#     game = Game()
+#     game._answer = 6
+#
+#     game()
+#     assert game._win is True
+#
+#     out, _ = capfd.readouterr()
+#     expected = ['4 is too low', 'Number not in range',
+#                 '9 is too high', 'Already guessed',
+#                 '6 is correct!', 'It took you 3 guesses']
+#
+#     output = [line.strip() for line in out.split('\n') if line.strip()]
+#     for line, exp in zip(output, expected):
+#         assert line == exp
+#
+#
+# @patch("builtins.input", side_effect=[None, 5, 9, 14, 11, 12])
+# def test_game_lose(inp, capfd):
+#     game = Game()
+#     game._answer = 13
+#
+#     game()
+#     assert game._win is False
+#
+#     out, _ = capfd.readouterr()
+#     expected = ['Please enter a number', '5 is too low',
+#                 '9 is too low', '14 is too high',
+#                 '11 is too low', '12 is too low',
+#                 'Guessed 5 times, answer was 13']
+#
+#     output = [line.strip() for line in out.split('\n') if line.strip()]
+#     for line, exp in zip(output, expected):
+#         assert line == exp
+from datetime import datetime, date
+from unittest.mock import patch
+
 import pytest
 
-from wc import User, Transaction
+from wc import (_convert_struct_time_to_dt, get_feed_entries,
+                    filter_entries_by_tag, main, Entry)
 
 
-@pytest.fixture
-def bob():
-    return User('bob')
+class AttrDict(dict):
+    """feedparser lets you access dict keys as attributes, hence a bit of
+       mocking, got this from https://stackoverflow.com/a/14620633"""
+    def __init__(self, *args, **kwargs):
+        super(AttrDict, self).__init__(*args, **kwargs)
+        self.__dict__ = self
 
 
-@pytest.fixture
-def tim():
-    return User('tim')
+dt1 = datetime(2018, 2, 18, 19, 52, 0).timetuple()
+dt2 = datetime(2017, 1, 6, 11, 0, 0).timetuple()
+
+MOCK_ENTRIES = AttrDict({'entries':
+                [AttrDict({'author': 'PyBites',
+                           'link':
+                           'https://pybit.es/twitter_digest_201808.html',  # noqa E501
+                           'published': 'Sun, 18 Feb 2018 20:52:00 +0100',  # noqa E501
+                           'published_parsed': dt1,
+                           'summary': 'Every weekend we share ...',
+                           'tags': [AttrDict({'term': 'twitter'}),
+                                    AttrDict({'term': 'Flask'}),
+                                    AttrDict({'term': 'Python'}),
+                                    AttrDict({'term': 'Regex'})],
+                           'title': 'Twitter Digest 2018 Week 08'}),
+                 AttrDict({'author': 'Julian',
+                           'link': 'https://pybit.es/pyperclip.html',
+                           'published': 'Fri, 06 Jan 2017 12:00:00 +0100',  # noqa E501
+                           'published_parsed': dt2,
+                           'summary': 'Use the Pyperclip module to ...',
+                           'tags': [AttrDict({'term': 'python'}),
+                                    AttrDict({'term': 'tips'}),
+                                    AttrDict({'term': 'tricks'}),
+                                    AttrDict({'term': 'code'}),
+                                    AttrDict({'term': 'pybites'})],
+                           'title': 'Copy and Paste with Pyperclip'})]})
 
 
-@pytest.fixture
-def alice():
-    return User('alice')
+@pytest.mark.parametrize("arg, ret", [
+    (datetime(2017, 9, 12, 8, 50, 0).timetuple(),
+     date(year=2017, month=9, day=12)),
+    (datetime(2017, 9, 8, 14, 30, 0).timetuple(),
+     date(year=2017, month=9, day=8)),
+    (datetime(2016, 12, 19, 9, 26, 0).timetuple(),
+     date(year=2016, month=12, day=19)),
+])
+def test_convert_struct_time_to_dt(arg, ret):
+    assert _convert_struct_time_to_dt(arg) == ret
 
 
-@pytest.fixture
-def transactions(bob, tim, alice):
-    return [
-        Transaction(giver=alice, points=1),
-        Transaction(giver=bob, points=2),
-        Transaction(giver=tim, points=3),
-        Transaction(giver=tim, points=4),
-        Transaction(giver=alice, points=2),
-    ]
+@patch("feedparser.parse", side_effect=[MOCK_ENTRIES])
+def test_get_feed_entries(inp):
+    first, last = tuple(get_feed_entries())
+
+    assert first.date == date(year=2018, month=2, day=18)
+    assert first.title == 'Twitter Digest 2018 Week 08'
+    assert first.link == 'https://pybit.es/twitter_digest_201808.html'
+    expected = ['flask', 'python', 'regex', 'twitter']
+    # allow list or set
+    assert sorted(list(first.tags)) == expected
+
+    assert last.date == date(year=2017, month=1, day=6)
+    assert last.title == 'Copy and Paste with Pyperclip'
+    assert last.link == 'https://pybit.es/pyperclip.html'
+    expected = ['code', 'pybites', 'python', 'tips', 'tricks']
+    assert sorted(list(last.tags)) == expected
 
 
-def test_init(transactions, bob, tim, alice):
-    assert alice.name == 'alice'
-    assert bob.name == 'bob'
-    assert tim.name == 'tim'
-    assert alice._transactions == []
-    assert bob._transactions == []
-    assert tim._transactions == []
+@pytest.mark.parametrize("arg, ret", [
+    ('blabla', False),
+    ('tricks', True),
+    ('TRICKS', True),  # case should not matter
+    ('TriCkS', True),
+    ('python', False),  # whole term only so python != pythonic
+    ('matplotlib&pandas', True),
+    ('matplotlib&pandas&collections', True),
+    ('matplotlib&pandas&flask', False),
+    ('matplotlib|flask', True),
+    ('matplotlib|django|flask', True),
+    ('pyramid|django|flask', False),
+])
+def test_filter_entries_by_tag(arg, ret):
+    entry = Entry(date=date(2016, 12, 22),
+                  title='2016 py articles and useful books',
+                  link='https://pybit.es/py-articles-books2016.html',
+                  tags={'pythonic', 'data science',
+                        'tips', 'tricks', 'matplotlib',
+                        'pandas', 'books', 'collections'})
+    assert filter_entries_by_tag(arg, entry) is ret
 
 
-def test_scores_and_points(transactions, bob, tim, alice):
-    bob + transactions[0]
-    assert bob.karma == 1
-    alice + transactions[1]
-    assert alice.karma == 2
-    bob + transactions[2]
-    assert bob.karma == 4
-    alice + transactions[3]
-    assert alice.karma == 6
-    tim + transactions[4]
-    assert tim.karma == 2
-    # point lists at this point
-    assert bob.points == [1, 3]
-    assert alice.points == [2, 4]
-    assert tim.points == [2]
+@patch("feedparser.parse", side_effect=[MOCK_ENTRIES])
+@patch("builtins.input", side_effect=['pycon', 'twitter', 'python', 'nonsense',
+                                      'python|regex', 'python&regex', 'REGeX',
+                                      '', 'q'])
+def test_main(entries, inp, capfd):
+    main()
+    out, _ = capfd.readouterr()
 
+    output = [line for line in out.split('\n') if line.strip()]
 
-def test_fans_property(transactions, bob, tim, alice):
-    tim + transactions[4]
-    assert tim.fans == 1
-    bob + transactions[0]
-    bob + transactions[0]  # same giver, does not increase fan count
-    assert bob.fans == 1
-    alice + transactions[1]
-    alice + transactions[2]
-    assert alice.fans == 2
+    expected = ['0 entries matched', 'Twitter Digest 2018 Week 08',
+                '1 entry matched', 'Copy and Paste with Pyperclip',
+                'Twitter Digest 2018 Week 08', '2 entries matched',
+                '0 entries matched', 'Copy and Paste with Pyperclip',
+                'Twitter Digest 2018 Week 08', '2 entries matched',
+                'Twitter Digest 2018 Week 08', '1 entry matched',
+                'Twitter Digest 2018 Week 08', '1 entry matched',
+                'Please provide a search term', 'Bye']
 
+    assert len(output) == len(expected)
 
-def test_str_dunder(transactions, bob, tim, alice):
-    assert str(tim) == 'tim has a karma of 0 and 0 fans'
-    tim + transactions[4]
-    assert str(tim) == 'tim has a karma of 2 and 1 fan'
-    alice + transactions[1]
-    alice + transactions[3]
-    assert str(alice) == 'alice has a karma of 6 and 2 fans'
+    for line, exp in zip(output, expected):
+        assert exp in line
