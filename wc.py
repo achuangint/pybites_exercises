@@ -1,6 +1,7 @@
 #from __future__ import annotations
 
 import sys
+from email import generator
 from enum import StrEnum
 from http.client import HTTPException
 from string import punctuation
@@ -12784,205 +12785,305 @@ enumerate through the text by letter
 # if __name__ == '__main__':
 #     game = Game()
 #     game()
+#
+# from collections import namedtuple
+# from datetime import date
+# from time import struct_time
+#
+# import feedparser
+#
+# FEED = 'https://bites-data.s3.us-east-2.amazonaws.com/all.rss.xml'
+#
+# Entry = namedtuple('Entry', 'date title link tags')
+#
+#
+# def _convert_struct_time_to_dt(stime : struct_time):
+#     """Convert a time.struct_time as returned by feedparser into a
+#     datetime.date object, so:
+#     time.struct_time(tm_year=2016, tm_mon=12, tm_mday=28, ...)
+#     -> date(2016, 12, 28)
+#     """
+#     return date(year=stime.tm_year, month=stime.tm_mon, day=stime.tm_mday)
+#
+#
+# def get_feed_entries(feed=FEED):
+#     """Use feedparser to parse PyBites RSS feed.
+#        Return a list of Entry namedtuples (date = date, drop time part)
+#     """
+#     d=feedparser.parse(feed)
+#     entries = d['entries']
+#     result = []
+#     for entry in entries:
+#         date_var=_convert_struct_time_to_dt(entry.get('published_parsed'))
+#         title=entry['title']
+#         link=entry['link']
+#         tags_list=[tag['term'].lower() for tag in entry['tags']]
+#         result.append(Entry(date=date_var, title=title, link=link, tags=tags_list))
+#     return result
+#
+# def _search_helper(t1: str, t2:str) -> bool:
+#     return t1.lower() == t2.lower()
+#
+# def _in_list(s:str, s_list:list[str])->bool:
+#     for element in s_list:
+#         if _search_helper(element, s):
+#             return True
+#     return False
+#
+#
+# def filter_entries_by_tag(search :str, entry:Entry) ->bool:
+#     """Check if search matches any tags as stored in the Entry namedtuple
+#        (case insensitive, only whole, not partial string matches).
+#        Returns bool: True if match, False if not.
+#        Supported searches:
+#        1. If & in search do AND match,
+#           e.g. flask&api should match entries with both tags
+#        2. Elif | in search do an OR match,
+#           e.g. flask|django should match entries with either tag
+#        3. Else: match if search is in tags
+#     """
+#     tags = entry.tags
+#
+#     if '&' in search :
+#         search_list = search.split('&')
+#         return all([ _in_list(s,tags) for s in search_list])
+#
+#     elif '|' in search:
+#         search_list = search.split('|')
+#         return any([ _in_list(s,tags) for s in search_list])
+#     else:
+#         return _in_list(search,tags)
+#
+#
+# def main():
+#     """Entry point to the program
+#        1. Call get_feed_entries and store them in entries
+#        2. Initiate an infinite loop
+#        3. Ask user for a search term:
+#
+#           - if enter was hit (empty string), print 'Please provide a search term'
+#           - if 'q' was entered, print 'Bye' and exit/break the infinite loop
+#        4. Filter/match the entries (see filter_entries_by_tag docstring)
+#        5. Print the title of each match ordered by date ascending
+#        6. Secondly, print the number of matches: 'n entries matched'
+#           (use entry if only 1 match)
+#     """
+#     entries = get_feed_entries()
+#     search_term = input('Please provide a search term')
+#
+#     while search_term !='q':
+#         if not search_term:
+#             print("Please provide a search term")
+#         elif search_term=='q':
+#             break
+#         else:
+#             match_list=[]
+#             for entry in entries:
+#                 if filter_entries_by_tag(search_term,entry):
+#                     match_list.append(entry)
+#             sorted_list=sorted(match_list,key=lambda x: x.date)
+#             for item in sorted_list:
+#                 print(item.title)
+#             if len(sorted_list)==1:
+#                 print("1 entry matched")
+#             else:
+#                 print(f"{len(sorted_list)} entries matched")
+#
+#         search_term = input('Please provide a search term')
+#     print("Bye")
+#
+# if __name__ == '__main__':
+#     main()
+#
+#
+# ## Pybite solution:
+# from collections import namedtuple
+# from datetime import date
+#
+# import feedparser
+#
+# FEED = 'https://bites-data.s3.us-east-2.amazonaws.com/all.rss.xml'
+#
+# Entry = namedtuple('Entry', 'date title link tags')
+#
+#
+# def _convert_struct_time_to_dt(stime):
+#     """Convert a time.struct_time as returned by feedparser into a
+#     datetime.date object, so:
+#     time.struct_time(tm_year=2016, tm_mon=12, tm_mday=28, ...)
+#     -> date(2016, 12, 28)
+#     """
+#     return date(year=stime.tm_year, month=stime.tm_mon, day=stime.tm_mday)
+#
+#
+# def get_feed_entries(feed=FEED):
+#     """Use feedparser to parse PyBites RSS feed.
+#        Return a list of Entry namedtuples (date = date, drop time part)
+#     """
+#     for entry in feedparser.parse(feed)['entries']:
+#         dt = _convert_struct_time_to_dt(entry.published_parsed)
+#         yield Entry(date=dt,
+#                     title=entry.title,
+#                     link=entry.link,
+#                     tags={tag.term.lower() for tag in entry.tags})
+#
+#
+# def filter_entries_by_tag(search, entry):
+#     """Check if search matches any tags as stored in the Entry namedtuple
+#        (case insensitive, only whole, not partial string matches).
+#        Returns bool: True if match, False if not.
+#        Supported searches:
+#        1. If & in search do AND match,
+#           e.g. flask&api should match entries with both tags
+#        2. Elif | in search do an OR match,
+#           e.g. flask|django should match entries with either tag
+#        3. Else: match if search is in tags
+#     """
+#     if '&' in search:
+#         return all(term.strip().lower() in entry.tags
+#                    for term in search.split('&'))
+#
+#     elif '|' in search:
+#         return any(term.strip().lower() in entry.tags
+#                    for term in search.split('|'))
+#
+#     return search.lower() in entry.tags
+#
+#
+# def main():
+#     """Entry point to the program
+#        1. Call get_feed_entries and store them in entries
+#        2. Initiate an infinite loop
+#        3. Ask user for a search term:
+#           - if enter was hit (empty string), print 'Please provide a search term'
+#           - if 'q' was entered, print 'Bye' and exit/break the infinite loop
+#        4. Filter/match the entries (see filter_entries_by_tag docstring)
+#        5. Print the title of each match ordered by date ascending
+#        6. Secondly, print the number of matches: 'n entries matched'
+#           (use entry if only 1 match)
+#     """
+#     entries = sorted(get_feed_entries(), key=lambda x: x.date)
+#
+#     while True:
+#         search = input('\nSearch for (q for exit): ')
+#
+#         if not search:
+#             print('Please provide a search term')
+#             continue
+#
+#         if search == 'q':
+#             print('Bye')
+#             break
+#
+#         matches = 0
+#         for entry in entries:
+#             if filter_entries_by_tag(search, entry):
+#                 matches += 1
+#                 print(entry.title)
+#
+#         entry_str = matches == 1 and "entry" or "entries"
+#         print(f'\n{matches} {entry_str} matched "{search}"')
+#
+#
+# if __name__ == '__main__':
+#     main()
+from collections.abc import Generator
+import itertools
+COL_WIDTH = 20
 
-from collections import namedtuple
-from datetime import date
-from time import struct_time
-
-import feedparser
-
-FEED = 'https://bites-data.s3.us-east-2.amazonaws.com/all.rss.xml'
-
-Entry = namedtuple('Entry', 'date title link tags')
-
-
-def _convert_struct_time_to_dt(stime : struct_time):
-    """Convert a time.struct_time as returned by feedparser into a
-    datetime.date object, so:
-    time.struct_time(tm_year=2016, tm_mon=12, tm_mday=28, ...)
-    -> date(2016, 12, 28)
-    """
-    return date(year=stime.tm_year, month=stime.tm_mon, day=stime.tm_mday)
-
-
-def get_feed_entries(feed=FEED):
-    """Use feedparser to parse PyBites RSS feed.
-       Return a list of Entry namedtuples (date = date, drop time part)
-    """
-    d=feedparser.parse(feed)
-    entries = d['entries']
-    result = []
-    for entry in entries:
-        date_var=_convert_struct_time_to_dt(entry.get('published_parsed'))
-        title=entry['title']
-        link=entry['link']
-        tags_list=[tag['term'].lower() for tag in entry['tags']]
-        result.append(Entry(date=date_var, title=title, link=link, tags=tags_list))
-    return result
-
-def _search_helper(t1: str, t2:str) -> bool:
-    return t1.lower() == t2.lower()
-
-def _in_list(s:str, s_list:list[str])->bool:
-    for element in s_list:
-        if _search_helper(element, s):
-            return True
-    return False
-
-
-def filter_entries_by_tag(search :str, entry:Entry) ->bool:
-    """Check if search matches any tags as stored in the Entry namedtuple
-       (case insensitive, only whole, not partial string matches).
-       Returns bool: True if match, False if not.
-       Supported searches:
-       1. If & in search do AND match,
-          e.g. flask&api should match entries with both tags
-       2. Elif | in search do an OR match,
-          e.g. flask|django should match entries with either tag
-       3. Else: match if search is in tags
-    """
-    tags = entry.tags
-
-    if '&' in search :
-        search_list = search.split('&')
-        return all([ _in_list(s,tags) for s in search_list])
-
-    elif '|' in search:
-        search_list = search.split('|')
-        return any([ _in_list(s,tags) for s in search_list])
-    else:
-        return _in_list(search,tags)
-
-
-def main():
-    """Entry point to the program
-       1. Call get_feed_entries and store them in entries
-       2. Initiate an infinite loop
-       3. Ask user for a search term:
-
-          - if enter was hit (empty string), print 'Please provide a search term'
-          - if 'q' was entered, print 'Bye' and exit/break the infinite loop
-       4. Filter/match the entries (see filter_entries_by_tag docstring)
-       5. Print the title of each match ordered by date ascending
-       6. Secondly, print the number of matches: 'n entries matched'
-          (use entry if only 1 match)
-    """
-    entries = get_feed_entries()
-    search_term = input('Please provide a search term')
-
-    while search_term !='q':
-        if not search_term:
-            print("Please provide a search term")
-        elif search_term=='q':
-            break
+def str_generator(str1:str)->Generator[str, None, None]:
+    parts=str1.split()
+    current_str=''
+    for part in parts:
+        if len(current_str)==0:
+            current_str = part
+        elif len(current_str)+len(part)+1>COL_WIDTH:
+            yield current_str
+            current_str = part
         else:
-            match_list=[]
-            for entry in entries:
-                if filter_entries_by_tag(search_term,entry):
-                    match_list.append(entry)
-            sorted_list=sorted(match_list,key=lambda x: x.date)
-            for item in sorted_list:
-                print(item.title)
-            if len(sorted_list)==1:
-                print("1 entry matched")
-            else:
-                print(f"{len(sorted_list)} entries matched")
+            current_str+=' ' + part
+    yield current_str
 
-        search_term = input('Please provide a search term')
-    print("Bye")
-
-if __name__ == '__main__':
-    main()
+def tuple_to_str(element):
+    current_str=''
+    for e in element:
+        if e is None:
+            e=''
+        current_str += f"{e:<{COL_WIDTH+1}}"
+    return current_str
 
 
-## Pybite solution:
-from collections import namedtuple
-from datetime import date
+def text_to_columns(text):
+    """Split text (input arg) to columns, the amount of double
+       newlines (\n\n) in text determines the amount of columns.
+       Return a string with the column output like:
+       line1\nline2\nline3\n ... etc ...
+       See also the tests for more info."""
 
-import feedparser
-
-FEED = 'https://bites-data.s3.us-east-2.amazonaws.com/all.rss.xml'
-
-Entry = namedtuple('Entry', 'date title link tags')
-
-
-def _convert_struct_time_to_dt(stime):
-    """Convert a time.struct_time as returned by feedparser into a
-    datetime.date object, so:
-    time.struct_time(tm_year=2016, tm_mon=12, tm_mday=28, ...)
-    -> date(2016, 12, 28)
-    """
-    return date(year=stime.tm_year, month=stime.tm_mon, day=stime.tm_mday)
-
-
-def get_feed_entries(feed=FEED):
-    """Use feedparser to parse PyBites RSS feed.
-       Return a list of Entry namedtuples (date = date, drop time part)
-    """
-    for entry in feedparser.parse(feed)['entries']:
-        dt = _convert_struct_time_to_dt(entry.published_parsed)
-        yield Entry(date=dt,
-                    title=entry.title,
-                    link=entry.link,
-                    tags={tag.term.lower() for tag in entry.tags})
+    # Break into columns
+    columns = text.split('\n\n')
+    # Convert each column into a generator
+    output2 = map(str_generator, columns)
+    # Iterate over the generators in parallel
+    k = itertools.zip_longest(*output2)
+    output=''
+    for ele in k:
+        output+=tuple_to_str(ele) + '\n'
+    return output
 
 
-def filter_entries_by_tag(search, entry):
-    """Check if search matches any tags as stored in the Entry namedtuple
-       (case insensitive, only whole, not partial string matches).
-       Returns bool: True if match, False if not.
-       Supported searches:
-       1. If & in search do AND match,
-          e.g. flask&api should match entries with both tags
-       2. Elif | in search do an OR match,
-          e.g. flask|django should match entries with either tag
-       3. Else: match if search is in tags
-    """
-    if '&' in search:
-        return all(term.strip().lower() in entry.tags
-                   for term in search.split('&'))
 
-    elif '|' in search:
-        return any(term.strip().lower() in entry.tags
-                   for term in search.split('|'))
+# Pybite solution #1
+from itertools import zip_longest
+import textwrap
 
-    return search.lower() in entry.tags
+COL_WIDTH = 20
+PADDING = 5
 
 
-def main():
-    """Entry point to the program
-       1. Call get_feed_entries and store them in entries
-       2. Initiate an infinite loop
-       3. Ask user for a search term:
-          - if enter was hit (empty string), print 'Please provide a search term'
-          - if 'q' was entered, print 'Bye' and exit/break the infinite loop
-       4. Filter/match the entries (see filter_entries_by_tag docstring)
-       5. Print the title of each match ordered by date ascending
-       6. Secondly, print the number of matches: 'n entries matched'
-          (use entry if only 1 match)
-    """
-    entries = sorted(get_feed_entries(), key=lambda x: x.date)
-
-    while True:
-        search = input('\nSearch for (q for exit): ')
-
-        if not search:
-            print('Please provide a search term')
-            continue
-
-        if search == 'q':
-            print('Bye')
-            break
-
-        matches = 0
-        for entry in entries:
-            if filter_entries_by_tag(search, entry):
-                matches += 1
-                print(entry.title)
-
-        entry_str = matches == 1 and "entry" or "entries"
-        print(f'\n{matches} {entry_str} matched "{search}"')
+def _format(row):
+    return " ".join(['{c:{w}}'.format(c=col, w=COL_WIDTH+PADDING)
+                     for col in row])
 
 
-if __name__ == '__main__':
-    main()
+def text_to_columns(text):
+    """Split text (input arg) to columns, the amount of double
+       newlines (\n\n) in text determines the amount of columns.
+       Return a string with the column output like:
+       line1\nline2\nline3\n ... etc ...
+       See also the tests for more info."""
+    cols = []
+    for paragraph in text.split("\n\n"):
+        col_lines = textwrap.fill(paragraph, width=COL_WIDTH).split("\n")
+        cols.append(col_lines)
+
+    output = []
+    # need zip_longest otherwise text will get lost
+    for row in zip_longest(*cols, fillvalue=''):
+        output.append(_format(row))
+
+    return "\n".join(output)
+
+# Solution #2
+from itertools import zip_longest
+from textwrap import wrap
+
+COL_WIDTH = 20
+COL_PAD = 5
+
+
+def text_to_columns(text: str) -> str:
+    """Split text (input arg) to columns, the amount of double
+    newlines (\n\n) in text determines the amount of columns.
+    Return a string with the column output like:
+    line1\nline2\nline3\n ... etc ...
+    See also the tests for more info."""
+    lines = [tuple(wrap(line, COL_WIDTH)) for line in text.splitlines() if line]
+    columnized = ""
+    for line in zip_longest(*lines, fillvalue=""):
+        row = ""
+        for column in line:
+            row += f"{column: <{COL_WIDTH + COL_PAD}}"
+        columnized += row.rstrip()
+    return columnized
+
