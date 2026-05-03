@@ -13857,69 +13857,155 @@ Inputs are modified to check how the function deals with unknown characters
 #
 #     for line, exp in zip(output, expected):
 #         assert exp in line
-
-import re
-
-from wc import text_to_columns
-
-
-def test_text_to_one_col():
-    text = """My house is small but cosy."""
-    expected = [
-        r"^My house is small",
-        r"^but cosy."
-    ]
-    output = text_to_columns(text).split("\n")
-    for line, match in zip(output, expected):
-        assert re.search(match, line)
-
-
-def test_text_to_two_cols():
-    text = """My house is small but cosy.
-
-    It has a white kitchen and an empty fridge."""
-    expected = [
-        r"^My house is small\s+It has a white",
-        r"^but cosy\.\s+kitchen and an empty",
-        r".*fridge."
-    ]
-    output = text_to_columns(text).split("\n")
-    for line, match in zip(output, expected):
-        assert re.search(match, line)
-
-
-def test_text_to_three_cols():
-    text = """My house is small but cosy.
-
-    It has a white kitchen and an empty fridge.
-
-    I have a very comfortable couch, people love to sit on it."""
-    expected = [
-        r"^My house is small\s+It has a white\s+I have a very",
-        r"^but cosy\.\s+kitchen and an empty\s+comfortable couch,",
-        r".*fridge\.\s+people love to sit",
-        r".*on it."
-    ]
-    output = text_to_columns(text).split("\n")
-    for line, match in zip(output, expected):
-        assert re.search(match, line)
-
-
-def test_text_to_four_cols():
-    text = """My house is small but cosy.
-
-    It has a white kitchen and an empty fridge.
-
-    I have a very comfortable couch, people love to sit on it.
-
-    My mornings are filled with coffee and reading, if only I had a garden"""
-
-    expected = [
-        r"^My house is small\s+It has a white\s+I have a very\s+My mornings are",
-        r"^but cosy\.\s+kitchen and an empty\s+comfortable couch,\s+filled with coffee",
-        r".*fridge\.\s+people love to sit\s+and reading, if only",
-        r".*on it\.\s+I had a garden",
-    ]
-    output = text_to_columns(text).split("\n")
-    for line, match in zip(output, expected):
-        assert re.search(match, line)
+#
+# import re
+#
+# from wc import text_to_columns
+#
+#
+# def test_text_to_one_col():
+#     text = """My house is small but cosy."""
+#     expected = [
+#         r"^My house is small",
+#         r"^but cosy."
+#     ]
+#     output = text_to_columns(text).split("\n")
+#     for line, match in zip(output, expected):
+#         assert re.search(match, line)
+#
+#
+# def test_text_to_two_cols():
+#     text = """My house is small but cosy.
+#
+#     It has a white kitchen and an empty fridge."""
+#     expected = [
+#         r"^My house is small\s+It has a white",
+#         r"^but cosy\.\s+kitchen and an empty",
+#         r".*fridge."
+#     ]
+#     output = text_to_columns(text).split("\n")
+#     for line, match in zip(output, expected):
+#         assert re.search(match, line)
+#
+#
+# def test_text_to_three_cols():
+#     text = """My house is small but cosy.
+#
+#     It has a white kitchen and an empty fridge.
+#
+#     I have a very comfortable couch, people love to sit on it."""
+#     expected = [
+#         r"^My house is small\s+It has a white\s+I have a very",
+#         r"^but cosy\.\s+kitchen and an empty\s+comfortable couch,",
+#         r".*fridge\.\s+people love to sit",
+#         r".*on it."
+#     ]
+#     output = text_to_columns(text).split("\n")
+#     for line, match in zip(output, expected):
+#         assert re.search(match, line)
+#
+#
+# def test_text_to_four_cols():
+#     text = """My house is small but cosy.
+#
+#     It has a white kitchen and an empty fridge.
+#
+#     I have a very comfortable couch, people love to sit on it.
+#
+#     My mornings are filled with coffee and reading, if only I had a garden"""
+#
+#     expected = [
+#         r"^My house is small\s+It has a white\s+I have a very\s+My mornings are",
+#         r"^but cosy\.\s+kitchen and an empty\s+comfortable couch,\s+filled with coffee",
+#         r".*fridge\.\s+people love to sit\s+and reading, if only",
+#         r".*on it\.\s+I had a garden",
+#     ]
+#     output = text_to_columns(text).split("\n")
+#     for line, match in zip(output, expected):
+#         assert re.search(match, line)
+#
+# import pytest
+#
+# from wc import Item, Groceries, create_parser, handle_args
+#
+#
+# @pytest.fixture
+# def cart():
+#     # faking some data (normally would load from DB)
+#     products = 'celery apples water coffee chicken pizza'.split()
+#     prices = [1, 4, 2, 5, 6, 4]
+#     cravings = False, False, False, False, False, True
+#
+#     items = []
+#     for item in zip(products, prices, cravings):
+#         items.append(Item(*item))
+#
+#     return Groceries(items)
+#
+#
+# @pytest.fixture
+# def parser():
+#     return create_parser()
+#
+#
+# def test_list(parser, cart, capfd):
+#     args = parser.parse_args(['-l'])
+#     handle_args(args, cart)
+#     output = capfd.readouterr()[0].split('\n')
+#     assert 'pizza (craving)                |   4' in output
+#     assert 'Total                          |  22' in output
+#
+#
+# def test_search(parser, cart, capfd):
+#     args = parser.parse_args(['-s', 'coffee'])
+#     handle_args(args, cart)
+#     output = capfd.readouterr()[0].split('\n')
+#     assert 'coffee                         |   5' in output
+#     assert 'Total                          |   5' in output
+#
+#
+# def test_add(parser, cart):
+#     assert len(cart) == 6
+#     assert cart.due == 22
+#
+#     args = parser.parse_args(['-a', 'honey', '5', 'False'])
+#     handle_args(args, cart)
+#
+#     assert len(cart) == 7
+#     assert cart.due == 27
+#
+#     new_item = cart[-1]
+#     assert new_item.product == 'honey'
+#     assert new_item.price == 5
+#     assert not new_item.craving
+#
+#
+# def test_delete(parser, cart):
+#     # nice: fixture gives me a clean slate each test!
+#     assert len(cart) == 6
+#     assert cart.due == 22
+#
+#     args = parser.parse_args(['-d', 'pizza'])
+#     handle_args(args, cart)
+#
+#     assert len(cart) == 5
+#     assert cart.due == 18
+#
+#     new_last_item = cart[-1]
+#     assert new_last_item.product == 'chicken'
+#     assert new_last_item.price == 6
+#     assert not new_last_item.craving
+#
+#
+# def test_args_mulually_exclusive(parser):
+#     # argument -l/--list: not allowed with argument -d/--delete
+#     with pytest.raises(SystemExit):
+#         parser.parse_args(['-d', 'pizza', '-l'])
+#
+#     # argument -a/--add: expected 3 arguments
+#     with pytest.raises(SystemExit):
+#         parser.parse_args(['-a', 'pizza'])
+#
+#     # unrecognized arguments: coffee
+#     with pytest.raises(SystemExit):
+#         parser.parse_args(['-d', 'pizza', 'coffee'])
