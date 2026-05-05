@@ -13400,132 +13400,188 @@ enumerate through the text by letter
 #     for state in islice(traffic_light(), 10):
 #         print(f'{state.command}! The light is {state.color}')
 #         sleep(state.timeout)
+#
+# import re
+# from string import punctuation
+#
+# def has_timestamp(text):
+#     """Return True if text has a timestamp of this format:
+#        2014-07-03T23:30:37"""
+#     return bool(re.search(r'\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}', text))
+#
+#
+# def is_integer(number):
+#     """Return True if number is an integer"""
+#     return type(number)==int
+#
+#
+# def has_word_with_dashes(text):
+#     """Returns True if text has one or more words with dashes"""
+#     return bool(re.search(r'\S-\S', text))
+#
+#
+# def remove_all_parenthesis_words(text):
+#     """Return text but without any words or phrases in parenthesis:
+#        'Good morning (afternoon)' -> 'Good morning' (so don't forget
+#        leading spaces)"""
+#     return re.sub(r' \(\S+\)' , '', text)
+#
+#
+#
+#
+# def split_string_on_punctuation(text):
+#     """Split on ?!.,; - e.g. "hi, how are you doing? blabla" ->
+#        ['hi', 'how are you doing', 'blabla']
+#        (make sure you strip trailing spaces)"""
+#     # Get all puntuations
+#     table = str.maketrans(punctuation, ','*len(punctuation))
+#     # make translation table to ','
+#     new_text = text.translate(table)
+#     # split on , and return
+#     return [words.strip() for words in new_text.split(',') if words]
+#
+# def remove_duplicate_spacing(text):
+#     """Replace multiple spaces by one space"""
+#     return ' '.join(text.split())
+#
+#
+# def has_three_consecutive_vowels(word):
+#     """Returns True if word has at least 3 consecutive vowels"""
+#
+#     consecutive_count = 0
+#     last_position = -1
+#     for index, letter in enumerate(word):
+#         if letter.lower() in 'aeiou':
+#             if last_position == index -1:
+#                 consecutive_count += 1
+#             last_position = index
+#         else:
+#             consecutive_count=0
+#         if consecutive_count >= 2:
+#             return True
+#     return False
+#
+#     # Another idea:
+#     # make a translation table of aeiou => *, and * => ,
+#     # translate the string
+#     # Use re to look for *** pattern
+#
+#
+# def convert_emea_date_to_amer_date(date):
+#     """Convert dd/mm/yyyy (EMEA date format) to mm/dd/yyyy
+#        (AMER date format)"""
+#     if '/' in date:
+#         d,m,y = date.split('/')
+#         return f"{m}/{d}/{y}"
+#     return date
+#
+# # pybite solutions:
+# import re
+#
+#
+# def has_timestamp(text):
+#     """Return True if text has a timestamp of this format:
+#        2014-07-03T23:30:37"""
+#     return re.search(r'\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}', text)
+#
+#
+# def is_integer(number):
+#     """Return True if number is an integer"""
+#     return re.match(r'-?\d+$', str(number))
+#
+#
+# def has_word_with_dashes(text):
+#     """Returns True if text has one or more words with dashes"""
+#     return re.search(r'\w+-\w+', text)
+#
+#
+# def remove_all_parenthesis_words(text):
+#     """Return text but without any words or phrases in parenthesis:
+#        'Good morning (afternoon)' -> 'Good morning' (so don't forget
+#        leading spaces)"""
+#     # .*? for non-greedy version
+#
+#     return re.sub(r' +\(.*?\)', r'', text)
+#
+#
+# def split_string_on_punctuation(text):
+#     """Split on ?!.,; - e.g. "hi, how are you doing? blabla" ->
+#        ['hi', 'how are you doing', 'blabla']
+#        (make sure you strip trailing spaces)"""
+#     bits = re.split(r'[?!.,;]', text)
+#     return [bit.strip() for bit in bits if bit.strip()]
+#
+#
+# def remove_duplicate_spacing(text):
+#     """Replace multiple spaces by one space"""
+#     return re.sub(r' +', r' ', text)
+#
+#
+# def has_three_consecutive_vowels(word):
+#     """Returns True if word has at least 3 consecutive vowels"""
+#     return re.search(r'[aeiou]{3,}', word, re.IGNORECASE)
+#
+#
+# def convert_emea_date_to_amer_date(date):
+#     """Convert dd/mm/yyyy (EMEA date format) to mm/dd/yyyy
+#        (AMER date format)"""
+#
+#     # Cool solution su
+#
+#     return re.sub(r'(\d{2})/(\d{2})/(\d{4})', r'\2/\1/\3', date)
 
+from itertools import cycle
+
+def get_weekdays(calendar_output):
+    """Receives a multiline Unix cal output and returns a mapping (dict) where
+       keys are int days and values are the 2 letter weekdays (Su Mo Tu ...)"""
+
+    cal_lines=calendar_output.strip().split("\n")
+    last_line = cal_lines[-1]
+    last_line_splits = last_line.split()
+    days =['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa']
+    # The starting day
+    last_day_day_of_week = days[len(last_line_splits)-1]
+    days_reverse = days[::-1]
+
+    starting_index = days_reverse.index(last_day_day_of_week)
+    shifted = days_reverse[starting_index::] + days_reverse[0:starting_index]
+
+    # a list of days counting backward
+    last_day_of_month = int(calendar_output.strip().split()[-1])
+    dates = [d for d in range(last_day_of_month,0,-1)]
+    return { date:day_of_week for day_of_week, date in zip( cycle(shifted), dates)}
+
+
+
+calendar_output = """    January 1986
+Su Mo Tu We Th Fr Sa
+          1  2  3  4
+ 5  6  7  8  9 10 11
+12 13 14 15 16 17 18
+19 20 21 22 23 24 25
+26 27 28 29 30 31
+"""
+
+
+# Pybite solution
 import re
-from string import punctuation
 
-def has_timestamp(text):
-    """Return True if text has a timestamp of this format:
-       2014-07-03T23:30:37"""
-    return bool(re.search(r'\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}', text))
-
-
-def is_integer(number):
-    """Return True if number is an integer"""
-    return type(number)==int
+def get_weekdays(calendar_output):
+    """Receives a multiline Unix cal output and returns a mapping (dict) where
+       keys are int days and values are the 2 letter weekdays (Su Mo Tu ...)"""
+    lines = calendar_output.split("\n")
+    day_names = lines[1].split()  # day names are on 2nd row
+    day_rows = lines[2:-1]  # ignore last blank line
 
 
-def has_word_with_dashes(text):
-    """Returns True if text has one or more words with dashes"""
-    return bool(re.search(r'\S-\S', text))
+    # Findall is powerful, because you can get multiple occurrences,
+    # and multiple patterns.
+    weekdays = {}
+    for line in day_rows:
+        day_slots = re.findall(r'(\s{2}|\s\d|\d\d)\s?', line)
+        for name, num in zip(day_names, day_slots):
+            if num.strip():  # ignore empty slots (empty = Falsy)
+                weekdays[int(num)] = name
 
-
-def remove_all_parenthesis_words(text):
-    """Return text but without any words or phrases in parenthesis:
-       'Good morning (afternoon)' -> 'Good morning' (so don't forget
-       leading spaces)"""
-    return re.sub(r' \(\S+\)' , '', text)
-
-
-
-
-def split_string_on_punctuation(text):
-    """Split on ?!.,; - e.g. "hi, how are you doing? blabla" ->
-       ['hi', 'how are you doing', 'blabla']
-       (make sure you strip trailing spaces)"""
-    # Get all puntuations
-    table = str.maketrans(punctuation, ','*len(punctuation))
-    # make translation table to ','
-    new_text = text.translate(table)
-    # split on , and return
-    return [words.strip() for words in new_text.split(',') if words]
-
-def remove_duplicate_spacing(text):
-    """Replace multiple spaces by one space"""
-    return ' '.join(text.split())
-
-
-def has_three_consecutive_vowels(word):
-    """Returns True if word has at least 3 consecutive vowels"""
-
-    consecutive_count = 0
-    last_position = -1
-    for index, letter in enumerate(word):
-        if letter.lower() in 'aeiou':
-            if last_position == index -1:
-                consecutive_count += 1
-            last_position = index
-        else:
-            consecutive_count=0
-        if consecutive_count >= 2:
-            return True
-    return False
-
-    # Another idea:
-    # make a translation table of aeiou => *, and * => ,
-    # translate the string
-    # Use re to look for *** pattern
-    
-
-def convert_emea_date_to_amer_date(date):
-    """Convert dd/mm/yyyy (EMEA date format) to mm/dd/yyyy
-       (AMER date format)"""
-    if '/' in date:
-        d,m,y = date.split('/')
-        return f"{m}/{d}/{y}"
-    return date
-
-# pybite solutions:
-import re
-
-
-def has_timestamp(text):
-    """Return True if text has a timestamp of this format:
-       2014-07-03T23:30:37"""
-    return re.search(r'\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}', text)
-
-
-def is_integer(number):
-    """Return True if number is an integer"""
-    return re.match(r'-?\d+$', str(number))
-
-
-def has_word_with_dashes(text):
-    """Returns True if text has one or more words with dashes"""
-    return re.search(r'\w+-\w+', text)
-
-
-def remove_all_parenthesis_words(text):
-    """Return text but without any words or phrases in parenthesis:
-       'Good morning (afternoon)' -> 'Good morning' (so don't forget
-       leading spaces)"""
-    # .*? for non-greedy version
-
-    return re.sub(r' +\(.*?\)', r'', text)
-
-
-def split_string_on_punctuation(text):
-    """Split on ?!.,; - e.g. "hi, how are you doing? blabla" ->
-       ['hi', 'how are you doing', 'blabla']
-       (make sure you strip trailing spaces)"""
-    bits = re.split(r'[?!.,;]', text)
-    return [bit.strip() for bit in bits if bit.strip()]
-
-
-def remove_duplicate_spacing(text):
-    """Replace multiple spaces by one space"""
-    return re.sub(r' +', r' ', text)
-
-
-def has_three_consecutive_vowels(word):
-    """Returns True if word has at least 3 consecutive vowels"""
-    return re.search(r'[aeiou]{3,}', word, re.IGNORECASE)
-
-
-def convert_emea_date_to_amer_date(date):
-    """Convert dd/mm/yyyy (EMEA date format) to mm/dd/yyyy
-       (AMER date format)"""
-    
-    # Cool solution su
-    
-    return re.sub(r'(\d{2})/(\d{2})/(\d{4})', r'\2/\1/\3', date)
+    return weekdays
