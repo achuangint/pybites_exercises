@@ -13352,52 +13352,180 @@ enumerate through the text by letter
 #     paw_cards = [PawCard(card,action) for card, action in zip_longest(all_cards, actions_list, fillvalue=None)]
 #     random.shuffle(paw_cards)
 #     return paw_cards
+#
+# from collections import namedtuple
+# from itertools import cycle, islice
+# from time import sleep
+#
+# State = namedtuple('State', 'color command timeout')
+#
+#
+# def traffic_light():
+#     """Returns an itertools.cycle iterator that
+#        when iterated over returns State namedtuples
+#        as shown in the Bite's description"""
+#     red = State(color='red', command='Stop', timeout=2)
+#     green = State(color='green', command='Go', timeout=2)
+#     amber = State(color='amber', command='Caution', timeout=0.5)
+#     return cycle([red, green, amber])
+#
+#
+# if __name__ == '__main__':
+#     # print a sample of 10 states if run as standalone program
+#     for state in islice(traffic_light(), 10):
+#         print(f'{state.command}! The light is {state.color}')
+#         sleep(state.timeout)
+#
+# ## Pybite solutions:
+# from collections import namedtuple
+# from itertools import cycle, islice
+# from time import sleep
+#
+# State = namedtuple('State', 'color command timeout')
+#
+#
+# def traffic_light():
+#     """Returns an itertools.cycle iterator that
+#        when iterated over returns State namedtuples
+#        as shown in the Bite's description"""
+#     colors = ['red', 'green', 'amber']
+#     command = ['Stop', 'Go', 'Caution']
+#     timings = (2, 2, 0.5)
+#     return cycle([State(*s) for s in
+#                   zip(colors, command, timings)])
+#
+#
+# if __name__ == '__main__':
+#     # print a sample of 10 states if run as standalone program
+#     for state in islice(traffic_light(), 10):
+#         print(f'{state.command}! The light is {state.color}')
+#         sleep(state.timeout)
 
-from collections import namedtuple
-from itertools import cycle, islice
-from time import sleep
+import re
+from string import punctuation
 
-State = namedtuple('State', 'color command timeout')
-
-
-def traffic_light():
-    """Returns an itertools.cycle iterator that
-       when iterated over returns State namedtuples
-       as shown in the Bite's description"""
-    red = State(color='red', command='Stop', timeout=2)
-    green = State(color='green', command='Go', timeout=2)
-    amber = State(color='amber', command='Caution', timeout=0.5)
-    return cycle([red, green, amber])
+def has_timestamp(text):
+    """Return True if text has a timestamp of this format:
+       2014-07-03T23:30:37"""
+    return bool(re.search(r'\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}', text))
 
 
-if __name__ == '__main__':
-    # print a sample of 10 states if run as standalone program
-    for state in islice(traffic_light(), 10):
-        print(f'{state.command}! The light is {state.color}')
-        sleep(state.timeout)
-
-## Pybite solutions:
-from collections import namedtuple
-from itertools import cycle, islice
-from time import sleep
-
-State = namedtuple('State', 'color command timeout')
+def is_integer(number):
+    """Return True if number is an integer"""
+    return type(number)==int
 
 
-def traffic_light():
-    """Returns an itertools.cycle iterator that
-       when iterated over returns State namedtuples
-       as shown in the Bite's description"""
-    colors = ['red', 'green', 'amber']
-    command = ['Stop', 'Go', 'Caution']
-    timings = (2, 2, 0.5)
-    return cycle([State(*s) for s in
-                  zip(colors, command, timings)])
+def has_word_with_dashes(text):
+    """Returns True if text has one or more words with dashes"""
+    return bool(re.search(r'\S-\S', text))
 
 
-if __name__ == '__main__':
-    # print a sample of 10 states if run as standalone program
-    for state in islice(traffic_light(), 10):
-        print(f'{state.command}! The light is {state.color}')
-        sleep(state.timeout)
+def remove_all_parenthesis_words(text):
+    """Return text but without any words or phrases in parenthesis:
+       'Good morning (afternoon)' -> 'Good morning' (so don't forget
+       leading spaces)"""
+    return re.sub(r' \(\S+\)' , '', text)
 
+
+
+
+def split_string_on_punctuation(text):
+    """Split on ?!.,; - e.g. "hi, how are you doing? blabla" ->
+       ['hi', 'how are you doing', 'blabla']
+       (make sure you strip trailing spaces)"""
+    # Get all puntuations
+    table = str.maketrans(punctuation, ','*len(punctuation))
+    # make translation table to ','
+    new_text = text.translate(table)
+    # split on , and return
+    return [words.strip() for words in new_text.split(',') if words]
+
+def remove_duplicate_spacing(text):
+    """Replace multiple spaces by one space"""
+    return ' '.join(text.split())
+
+
+def has_three_consecutive_vowels(word):
+    """Returns True if word has at least 3 consecutive vowels"""
+
+    consecutive_count = 0
+    last_position = -1
+    for index, letter in enumerate(word):
+        if letter.lower() in 'aeiou':
+            if last_position == index -1:
+                consecutive_count += 1
+            last_position = index
+        else:
+            consecutive_count=0
+        if consecutive_count >= 2:
+            return True
+    return False
+
+    # Another idea:
+    # make a translation table of aeiou => *, and * => ,
+    # translate the string
+    # Use re to look for *** pattern
+    
+
+def convert_emea_date_to_amer_date(date):
+    """Convert dd/mm/yyyy (EMEA date format) to mm/dd/yyyy
+       (AMER date format)"""
+    if '/' in date:
+        d,m,y = date.split('/')
+        return f"{m}/{d}/{y}"
+    return date
+
+# pybite solutions:
+import re
+
+
+def has_timestamp(text):
+    """Return True if text has a timestamp of this format:
+       2014-07-03T23:30:37"""
+    return re.search(r'\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}', text)
+
+
+def is_integer(number):
+    """Return True if number is an integer"""
+    return re.match(r'-?\d+$', str(number))
+
+
+def has_word_with_dashes(text):
+    """Returns True if text has one or more words with dashes"""
+    return re.search(r'\w+-\w+', text)
+
+
+def remove_all_parenthesis_words(text):
+    """Return text but without any words or phrases in parenthesis:
+       'Good morning (afternoon)' -> 'Good morning' (so don't forget
+       leading spaces)"""
+    # .*? for non-greedy version
+
+    return re.sub(r' +\(.*?\)', r'', text)
+
+
+def split_string_on_punctuation(text):
+    """Split on ?!.,; - e.g. "hi, how are you doing? blabla" ->
+       ['hi', 'how are you doing', 'blabla']
+       (make sure you strip trailing spaces)"""
+    bits = re.split(r'[?!.,;]', text)
+    return [bit.strip() for bit in bits if bit.strip()]
+
+
+def remove_duplicate_spacing(text):
+    """Replace multiple spaces by one space"""
+    return re.sub(r' +', r' ', text)
+
+
+def has_three_consecutive_vowels(word):
+    """Returns True if word has at least 3 consecutive vowels"""
+    return re.search(r'[aeiou]{3,}', word, re.IGNORECASE)
+
+
+def convert_emea_date_to_amer_date(date):
+    """Convert dd/mm/yyyy (EMEA date format) to mm/dd/yyyy
+       (AMER date format)"""
+    
+    # Cool solution su
+    
+    return re.sub(r'(\d{2})/(\d{2})/(\d{4})', r'\2/\1/\3', date)

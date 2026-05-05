@@ -14090,52 +14090,115 @@ Inputs are modified to check how the function deals with unknown characters
 # def test_out_of_bound_arg():
 #     with pytest.raises(ValueError):
 #         create_paw_deck(n=27)
+#
+# from itertools import islice
+#
+# import pytest
+#
+# from wc import traffic_light, State
+#
+#
+# @pytest.fixture(scope="module")
+# def slice1():
+#     it = traffic_light()
+#     return list(islice(it, 96))
+#
+#
+# @pytest.fixture(scope="module")
+# def slice2():
+#     it = traffic_light()
+#     return list(islice(it, 100, 217))
+#
+#
+# def test_iterator_islice(slice1, slice2):
+#     assert len(slice1) == 96
+#     assert len(slice2) == 117
+#
+#     assert slice1[0] == State(color='red', command='Stop', timeout=2)
+#     assert slice2[0] == State(color='green', command='Go', timeout=2)
+#
+#     assert slice1[-1] == State(color='amber', command='Caution', timeout=0.5)
+#     assert slice2[-1] == State(color='red', command='Stop', timeout=2)
+#
+#
+# def test_equal_values_in_islice(slice1):
+#     for color in 'red green amber'.split():
+#         assert sum(1 for state in slice1 if state.color == color) == 32
+#
+#
+# def test_return_types(slice2):
+#     assert all(type(state) == State for state in slice2)
+#
+#
+# @pytest.mark.parametrize("color, expected", [
+#     ('red', 64),
+#     ('green', 64),
+#     ('amber', 16),
+# ])
+# def test_timings(slice1, color, expected):
+#     timeout_for_color = sum(state.timeout for state in slice1
+#                             if state.color == color)
+#     assert timeout_for_color == expected
 
-from itertools import islice
-
-import pytest
-
-from wc import traffic_light, State
-
-
-@pytest.fixture(scope="module")
-def slice1():
-    it = traffic_light()
-    return list(islice(it, 96))
+from wc import (has_timestamp, is_integer,
+                   has_word_with_dashes, remove_all_parenthesis_words,
+                   split_string_on_punctuation, remove_duplicate_spacing,
+                   has_three_consecutive_vowels,
+                   convert_emea_date_to_amer_date)
 
 
-@pytest.fixture(scope="module")
-def slice2():
-    it = traffic_light()
-    return list(islice(it, 100, 217))
+def test_has_timestamp():
+    assert has_timestamp('INFO 2014-07-03T23:27:51 Shutdown initiated.')
+    assert has_timestamp('INFO 2014-06-01T13:28:51 Shutdown initiated.')
+    assert not has_timestamp('INFO 2014-7-3T23:27:51 Shutdown initiated.')
+    assert not has_timestamp('INFO 2014-07-03t23:27:1 Shutdown initiated.')
 
 
-def test_iterator_islice(slice1, slice2):
-    assert len(slice1) == 96
-    assert len(slice2) == 117
-
-    assert slice1[0] == State(color='red', command='Stop', timeout=2)
-    assert slice2[0] == State(color='green', command='Go', timeout=2)
-
-    assert slice1[-1] == State(color='amber', command='Caution', timeout=0.5)
-    assert slice2[-1] == State(color='red', command='Stop', timeout=2)
+def test_is_integer():
+    assert is_integer(1)
+    assert is_integer(-1)
+    assert not is_integer('str')
+    assert not is_integer(1.1)
 
 
-def test_equal_values_in_islice(slice1):
-    for color in 'red green amber'.split():
-        assert sum(1 for state in slice1 if state.color == color) == 32
+def test_has_word_with_dashes():
+    assert has_word_with_dashes('this Bite is self-contained')
+    assert has_word_with_dashes('the match ended in 1-1')
+    assert not has_word_with_dashes('this Bite is not selfcontained')
+    assert not has_word_with_dashes('the match ended in 1- 1')
 
 
-def test_return_types(slice2):
-    assert all(type(state) == State for state in slice2)
+def test_remove_all_parenthesis_words():
+    input_string = 'good morning (afternoon), how are you?'
+    expected = 'good morning, how are you?'
+    assert remove_all_parenthesis_words(input_string) == expected
+    input_string = 'math (8.6) and science (9.1) where his strengths'
+    expected = 'math and science where his strengths'
+    assert remove_all_parenthesis_words(input_string) == expected
 
 
-@pytest.mark.parametrize("color, expected", [
-    ('red', 64),
-    ('green', 64),
-    ('amber', 16),
-])
-def test_timings(slice1, color, expected):
-    timeout_for_color = sum(state.timeout for state in slice1
-                            if state.color == color)
-    assert timeout_for_color == expected
+def test_split_string_on_punctuation():
+    input_string = 'hi, how are you doing? blabla'
+    expected = ['hi', 'how are you doing', 'blabla']
+    assert split_string_on_punctuation(input_string) == expected
+    input_string = ';String. with. punctuation characters!'
+    expected = ['String', 'with', 'punctuation characters']
+    assert split_string_on_punctuation(input_string) == expected
+
+
+def test_remove_duplicate_spacing():
+    input_string = 'This is a   string with  too    much spacing'
+    expected = 'This is a string with too much spacing'
+    assert remove_duplicate_spacing(input_string) == expected
+
+
+def test_has_three_consecutive_vowels():
+    assert has_three_consecutive_vowels('beautiful')
+    assert has_three_consecutive_vowels('queueing')
+    assert not has_three_consecutive_vowels('mountain')
+    assert not has_three_consecutive_vowels('house')
+
+
+def test_convert_emea_date_to_amer_date():
+    assert convert_emea_date_to_amer_date('31/03/2018') == '03/31/2018'
+    assert convert_emea_date_to_amer_date('none') == 'none'
