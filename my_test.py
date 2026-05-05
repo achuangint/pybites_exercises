@@ -14009,84 +14009,133 @@ Inputs are modified to check how the function deals with unknown characters
 #     # unrecognized arguments: coffee
 #     with pytest.raises(SystemExit):
 #         parser.parse_args(['-d', 'pizza', 'coffee'])
+#
+# from collections import Counter
+#
+# import pytest
+#
+# from wc import create_paw_deck
+#
+#
+# @pytest.fixture(scope="module")
+# def deck():
+#     return list(create_paw_deck())
+#
+#
+# @pytest.fixture(scope="module")
+# def small_deck():
+#     return list(create_paw_deck(4))
+#
+#
+# @pytest.fixture(scope="module")
+# def big_deck():
+#     return list(create_paw_deck(16))
+#
+#
+# def test_deck_size(deck, small_deck, big_deck):
+#     assert len(deck) == 32
+#     assert len(small_deck) == 16
+#     assert len(big_deck) == 64
+#
+#
+# def test_number_action_cards(deck, small_deck, big_deck):
+#     assert sum(1 for card in deck if card.action is not None) == 8
+#     assert sum(1 for card in deck if card.action is None) == 24
+#
+#     assert sum(1 for card in small_deck if card.action is not None) == 4
+#     assert sum(1 for card in small_deck if card.action is None) == 12
+#
+#     assert sum(1 for card in big_deck if card.action is not None) == 16
+#     assert sum(1 for card in big_deck if card.action is None) == 48
+#
+#
+# def test_all_action_cards_used(deck, small_deck, big_deck):
+#     cards = [card.action for card in deck if card.action is not None]
+#     assert sum(Counter(cards).values()) == 8
+#
+#     cards = [card.action for card in small_deck if card.action is not None]
+#     assert sum(Counter(cards).values()) == 4
+#
+#     cards = [card.action for card in big_deck if card.action is not None]
+#     assert sum(Counter(cards).values()) == 16
+#
+#
+# def test_action_cards_in_different_positions(deck):
+#     action_cards = [card.card for card in deck if card.action is not None]
+#
+#     deck2 = list(create_paw_deck())
+#     action_cards2 = [card.card for card in deck2 if card.action is not None]
+#     assert action_cards != action_cards2
+#
+#     deck3 = list(create_paw_deck())
+#     action_cards3 = [card.card for card in deck3 if card.action is not None]
+#     assert action_cards != action_cards2 != action_cards3
+#
+#
+# def test_deck_cards_numbers_constant(deck, small_deck, big_deck):
+#     for i in list('ABCDEFGH'):
+#         assert sum(1 for card in deck if card.card[0] == i) == 4
+#     for i in list('ABCD'):
+#         assert sum(1 for card in small_deck if card.card[0] == i) == 4
+#     for i in list('ABCDEFGHIJKLMNOP'):
+#         assert sum(1 for card in big_deck if card.card[0] == i) == 4
+#
+#
+# def test_deck_numbers_used():
+#     for i in range(1, 27):
+#         deck = list(create_paw_deck(i))
+#         assert sum(1 for card in deck if int(card.card[1:]) == 1) == i
+#
+#
+# def test_out_of_bound_arg():
+#     with pytest.raises(ValueError):
+#         create_paw_deck(n=27)
 
-from collections import Counter
+from itertools import islice
 
 import pytest
 
-from wc import create_paw_deck
+from wc import traffic_light, State
 
 
 @pytest.fixture(scope="module")
-def deck():
-    return list(create_paw_deck())
+def slice1():
+    it = traffic_light()
+    return list(islice(it, 96))
 
 
 @pytest.fixture(scope="module")
-def small_deck():
-    return list(create_paw_deck(4))
+def slice2():
+    it = traffic_light()
+    return list(islice(it, 100, 217))
 
 
-@pytest.fixture(scope="module")
-def big_deck():
-    return list(create_paw_deck(16))
+def test_iterator_islice(slice1, slice2):
+    assert len(slice1) == 96
+    assert len(slice2) == 117
+
+    assert slice1[0] == State(color='red', command='Stop', timeout=2)
+    assert slice2[0] == State(color='green', command='Go', timeout=2)
+
+    assert slice1[-1] == State(color='amber', command='Caution', timeout=0.5)
+    assert slice2[-1] == State(color='red', command='Stop', timeout=2)
 
 
-def test_deck_size(deck, small_deck, big_deck):
-    assert len(deck) == 32
-    assert len(small_deck) == 16
-    assert len(big_deck) == 64
+def test_equal_values_in_islice(slice1):
+    for color in 'red green amber'.split():
+        assert sum(1 for state in slice1 if state.color == color) == 32
 
 
-def test_number_action_cards(deck, small_deck, big_deck):
-    assert sum(1 for card in deck if card.action is not None) == 8
-    assert sum(1 for card in deck if card.action is None) == 24
-
-    assert sum(1 for card in small_deck if card.action is not None) == 4
-    assert sum(1 for card in small_deck if card.action is None) == 12
-
-    assert sum(1 for card in big_deck if card.action is not None) == 16
-    assert sum(1 for card in big_deck if card.action is None) == 48
+def test_return_types(slice2):
+    assert all(type(state) == State for state in slice2)
 
 
-def test_all_action_cards_used(deck, small_deck, big_deck):
-    cards = [card.action for card in deck if card.action is not None]
-    assert sum(Counter(cards).values()) == 8
-
-    cards = [card.action for card in small_deck if card.action is not None]
-    assert sum(Counter(cards).values()) == 4
-
-    cards = [card.action for card in big_deck if card.action is not None]
-    assert sum(Counter(cards).values()) == 16
-
-
-def test_action_cards_in_different_positions(deck):
-    action_cards = [card.card for card in deck if card.action is not None]
-
-    deck2 = list(create_paw_deck())
-    action_cards2 = [card.card for card in deck2 if card.action is not None]
-    assert action_cards != action_cards2
-
-    deck3 = list(create_paw_deck())
-    action_cards3 = [card.card for card in deck3 if card.action is not None]
-    assert action_cards != action_cards2 != action_cards3
-
-
-def test_deck_cards_numbers_constant(deck, small_deck, big_deck):
-    for i in list('ABCDEFGH'):
-        assert sum(1 for card in deck if card.card[0] == i) == 4
-    for i in list('ABCD'):
-        assert sum(1 for card in small_deck if card.card[0] == i) == 4
-    for i in list('ABCDEFGHIJKLMNOP'):
-        assert sum(1 for card in big_deck if card.card[0] == i) == 4
-
-
-def test_deck_numbers_used():
-    for i in range(1, 27):
-        deck = list(create_paw_deck(i))
-        assert sum(1 for card in deck if int(card.card[1:]) == 1) == i
-
-
-def test_out_of_bound_arg():
-    with pytest.raises(ValueError):
-        create_paw_deck(n=27)
+@pytest.mark.parametrize("color, expected", [
+    ('red', 64),
+    ('green', 64),
+    ('amber', 16),
+])
+def test_timings(slice1, color, expected):
+    timeout_for_color = sum(state.timeout for state in slice1
+                            if state.color == color)
+    assert timeout_for_color == expected

@@ -13327,28 +13327,77 @@ enumerate through the text by letter
 #
 # if __name__ == '__main__':
 #     handle_args()
+#
+# from collections import namedtuple
+# from string import ascii_uppercase
+# from itertools import zip_longest, product
+# import random
+#
+# ACTIONS = ['draw_card', 'play_again',
+#            'interchange_cards', 'change_turn_direction']
+# NUMBERS = range(1, 5)
+#
+# PawCard = namedtuple('PawCard', 'card action')
+#
+# def create_paw_deck(n=8):
+#     if n > 26:
+#         raise ValueError
+#     all_cards =[suit+str(num) for suit, num in product(ascii_uppercase[0:n], NUMBERS)]
+#
+#     # Shuffle the deck
+#     random.shuffle(all_cards)
+#
+#     # make a list of actions
+#     actions_list = ACTIONS * (n//4)
+#     paw_cards = [PawCard(card,action) for card, action in zip_longest(all_cards, actions_list, fillvalue=None)]
+#     random.shuffle(paw_cards)
+#     return paw_cards
 
 from collections import namedtuple
-from string import ascii_uppercase
-from itertools import zip_longest, product
-import random
+from itertools import cycle, islice
+from time import sleep
 
-ACTIONS = ['draw_card', 'play_again',
-           'interchange_cards', 'change_turn_direction']
-NUMBERS = range(1, 5)
+State = namedtuple('State', 'color command timeout')
 
-PawCard = namedtuple('PawCard', 'card action')
 
-def create_paw_deck(n=8):
-    if n > 26:
-        raise ValueError
-    all_cards =[suit+str(num) for suit, num in product(ascii_uppercase[0:n], NUMBERS)]
+def traffic_light():
+    """Returns an itertools.cycle iterator that
+       when iterated over returns State namedtuples
+       as shown in the Bite's description"""
+    red = State(color='red', command='Stop', timeout=2)
+    green = State(color='green', command='Go', timeout=2)
+    amber = State(color='amber', command='Caution', timeout=0.5)
+    return cycle([red, green, amber])
 
-    # Shuffle the deck
-    random.shuffle(all_cards)
 
-    # make a list of actions
-    actions_list = ACTIONS * (n//4)
-    paw_cards = [PawCard(card,action) for card, action in zip_longest(all_cards, actions_list, fillvalue=None)]
-    random.shuffle(paw_cards)
-    return paw_cards
+if __name__ == '__main__':
+    # print a sample of 10 states if run as standalone program
+    for state in islice(traffic_light(), 10):
+        print(f'{state.command}! The light is {state.color}')
+        sleep(state.timeout)
+
+## Pybite solutions:
+from collections import namedtuple
+from itertools import cycle, islice
+from time import sleep
+
+State = namedtuple('State', 'color command timeout')
+
+
+def traffic_light():
+    """Returns an itertools.cycle iterator that
+       when iterated over returns State namedtuples
+       as shown in the Bite's description"""
+    colors = ['red', 'green', 'amber']
+    command = ['Stop', 'Go', 'Caution']
+    timings = (2, 2, 0.5)
+    return cycle([State(*s) for s in
+                  zip(colors, command, timings)])
+
+
+if __name__ == '__main__':
+    # print a sample of 10 states if run as standalone program
+    for state in islice(traffic_light(), 10):
+        print(f'{state.command}! The light is {state.color}')
+        sleep(state.timeout)
+
