@@ -4,6 +4,7 @@ import sys
 from email import generator
 from enum import StrEnum
 from http.client import HTTPException
+from itertools import zip_longest
 from string import punctuation
 from sys import exc_info
 
@@ -13327,3 +13328,27 @@ enumerate through the text by letter
 # if __name__ == '__main__':
 #     handle_args()
 
+from collections import namedtuple
+from string import ascii_uppercase
+from itertools import zip_longest, product
+import random
+
+ACTIONS = ['draw_card', 'play_again',
+           'interchange_cards', 'change_turn_direction']
+NUMBERS = range(1, 5)
+
+PawCard = namedtuple('PawCard', 'card action')
+
+def create_paw_deck(n=8):
+    if n > 26:
+        raise ValueError
+    all_cards =[suit+str(num) for suit, num in product(ascii_uppercase[0:n], NUMBERS)]
+
+    # Shuffle the deck
+    random.shuffle(all_cards)
+
+    # make a list of actions
+    actions_list = ACTIONS * (n//4)
+    paw_cards = [PawCard(card,action) for card, action in zip_longest(all_cards, actions_list, fillvalue=None)]
+    random.shuffle(paw_cards)
+    return paw_cards
