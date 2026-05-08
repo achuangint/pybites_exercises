@@ -14202,55 +14202,106 @@ Inputs are modified to check how the function deals with unknown characters
 # def test_convert_emea_date_to_amer_date():
 #     assert convert_emea_date_to_amer_date('31/03/2018') == '03/31/2018'
 #     assert convert_emea_date_to_amer_date('none') == 'none'
+#
+# from wc import get_weekdays
+#
+# april_1981 = """     April 1981
+# Su Mo Tu We Th Fr Sa
+#           1  2  3  4
+#  5  6  7  8  9 10 11
+# 12 13 14 15 16 17 18
+# 19 20 21 22 23 24 25
+# 26 27 28 29 30
+# """
+#
+# jan_1986 = """    January 1986
+# Su Mo Tu We Th Fr Sa
+#           1  2  3  4
+#  5  6  7  8  9 10 11
+# 12 13 14 15 16 17 18
+# 19 20 21 22 23 24 25
+# 26 27 28 29 30 31
+# """
+#
+# jan_1956 = """    January 1956
+# Su Mo Tu We Th Fr Sa
+#  1  2  3  4  5  6  7
+#  8  9 10 11 12 13 14
+# 15 16 17 18 19 20 21
+# 22 23 24 25 26 27 28
+# 29 30 31
+# """
+#
+#
+# def test_april_1981():
+#     weekdays = get_weekdays(april_1981)
+#     assert len(weekdays) == 30
+#     assert weekdays[25] == 'Sa'
+#     assert weekdays[22] == 'We'
+#     assert weekdays[1] == 'We'
+#
+#
+# def test_jan_1986():
+#     weekdays = get_weekdays(jan_1986)
+#     assert len(weekdays) == 31
+#     assert weekdays[20] == 'Mo'
+#     assert weekdays[16] == 'Th'
+#     assert weekdays[2] == 'Th'
+#
+#
+# def test_jan_1956():
+#     weekdays = get_weekdays(jan_1956)
+#     assert len(weekdays) == 31
+#     assert weekdays[13] == 'Fr'
+#     assert weekdays[31] == 'Tu'
 
-from wc import get_weekdays
+from datetime import datetime
+from itertools import compress
+import inspect
+import re
 
-april_1981 = """     April 1981
-Su Mo Tu We Th Fr Sa
-          1  2  3  4
- 5  6  7  8  9 10 11
-12 13 14 15 16 17 18
-19 20 21 22 23 24 25
-26 27 28 29 30
-"""
+import pytest
 
-jan_1986 = """    January 1986
-Su Mo Tu We Th Fr Sa
-          1  2  3  4
- 5  6  7  8  9 10 11
-12 13 14 15 16 17 18
-19 20 21 22 23 24 25
-26 27 28 29 30 31
-"""
+from wc import count_down
 
-jan_1956 = """    January 1956
-Su Mo Tu We Th Fr Sa
- 1  2  3  4  5  6  7
- 8  9 10 11 12 13 14
-15 16 17 18 19 20 21
-22 23 24 25 26 27 28
-29 30 31
-"""
+DEFAULT_EXPECTED_OUTPUT = '1234\n123\n12\n1\n'
 
 
-def test_april_1981():
-    weekdays = get_weekdays(april_1981)
-    assert len(weekdays) == 30
-    assert weekdays[25] == 'Sa'
-    assert weekdays[22] == 'We'
-    assert weekdays[1] == 'We'
+def test_code_uses_singledispatch_decorator():
+    assert '@singledispatch' in inspect.getsource(count_down)
 
 
-def test_jan_1986():
-    weekdays = get_weekdays(jan_1986)
-    assert len(weekdays) == 31
-    assert weekdays[20] == 'Mo'
-    assert weekdays[16] == 'Th'
-    assert weekdays[2] == 'Th'
+@pytest.mark.parametrize("input_argument", [
+    '1234',
+    1234,
+    [1, 2, 3, 4],
+    ['1', '2', '3', '4'],
+    (1, 2, 3, 4),
+    ('1', '2', '3', '4'),
+    {1: 'one', 2: 'two', 3: 'three', 4: 'four'},
+    {'1': 'one', '2': 'two', '3': 'three', '4': 'four'},
+    range(1, 5),
+    {x for x in range(1, 5)},
+])
+def test_count_down_good_inputs(input_argument, capfd):
+    count_down(input_argument)
+    output = capfd.readouterr()[0]
+    assert output == DEFAULT_EXPECTED_OUTPUT
 
 
-def test_jan_1956():
-    weekdays = get_weekdays(jan_1956)
-    assert len(weekdays) == 31
-    assert weekdays[13] == 'Fr'
-    assert weekdays[31] == 'Tu'
+@pytest.mark.parametrize("input_argument", [
+    compress([1, 2, 3, 4], [1, 1, 1, 1]),
+    datetime(2018, 4, 21),
+    re.compile(r'\d{4}'),
+])
+def test_count_down_bad_inputs(input_argument, capfd):
+    with pytest.raises(ValueError):
+        count_down(input_argument)
+
+
+def test_count_down_float(capfd):
+    expected = '12.34\n12.3\n12.\n12\n1\n'
+    number = 12.34
+    count_down(number)
+    output = capfd.readouterr()[0]
+    assert output == expected

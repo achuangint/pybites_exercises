@@ -13529,59 +13529,173 @@ enumerate through the text by letter
 #     # Cool solution su
 #
 #     return re.sub(r'(\d{2})/(\d{2})/(\d{4})', r'\2/\1/\3', date)
+#
+# from itertools import cycle
+#
+# def get_weekdays(calendar_output):
+#     """Receives a multiline Unix cal output and returns a mapping (dict) where
+#        keys are int days and values are the 2 letter weekdays (Su Mo Tu ...)"""
+#
+#     cal_lines=calendar_output.strip().split("\n")
+#     last_line = cal_lines[-1]
+#     last_line_splits = last_line.split()
+#     days =['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa']
+#     # The starting day
+#     last_day_day_of_week = days[len(last_line_splits)-1]
+#     days_reverse = days[::-1]
+#
+#     starting_index = days_reverse.index(last_day_day_of_week)
+#     shifted = days_reverse[starting_index::] + days_reverse[0:starting_index]
+#
+#     # a list of days counting backward
+#     last_day_of_month = int(calendar_output.strip().split()[-1])
+#     dates = [d for d in range(last_day_of_month,0,-1)]
+#     return { date:day_of_week for day_of_week, date in zip( cycle(shifted), dates)}
+#
+#
+#
+# calendar_output = """    January 1986
+# Su Mo Tu We Th Fr Sa
+#           1  2  3  4
+#  5  6  7  8  9 10 11
+# 12 13 14 15 16 17 18
+# 19 20 21 22 23 24 25
+# 26 27 28 29 30 31
+# """
+#
+#
+# # Pybite solution
+# import re
+#
+# def get_weekdays(calendar_output):
+#     """Receives a multiline Unix cal output and returns a mapping (dict) where
+#        keys are int days and values are the 2 letter weekdays (Su Mo Tu ...)"""
+#     lines = calendar_output.split("\n")
+#     day_names = lines[1].split()  # day names are on 2nd row
+#     day_rows = lines[2:-1]  # ignore last blank line
+#
+#
+#     # Findall is powerful, because you can get multiple occurrences,
+#     # and multiple patterns.
+#     weekdays = {}
+#     for line in day_rows:
+#         day_slots = re.findall(r'(\s{2}|\s\d|\d\d)\s?', line)
+#         for name, num in zip(day_names, day_slots):
+#             if num.strip():  # ignore empty slots (empty = Falsy)
+#                 weekdays[int(num)] = name
+#
+#     return weekdays
+#
+#
+# # solution 2
+#
+# from textwrap import wrap
+#
+# # ok. This is really cool!!!!
+# def get_weekdays(calendar_output: str) -> dict[int, str]:
+#     """Receives a multiline Unix cal output and returns a mapping (dict) where
+#     keys are int days and values are the 2 letter weekdays (Su Mo Tu ...)"""
+#     lines = calendar_output.splitlines()
+#     weekdays = lines[1].split()
+#     mapping = {}
+#     for line in lines[2:]:
+#         for i, date in enumerate(wrap(line, 3, drop_whitespace=False)):
+#             if date := date.strip():
+#                 mapping[int(date)] = weekdays[i]
+#     return mapping
 
-from itertools import cycle
+from functools import singledispatch
 
-def get_weekdays(calendar_output):
-    """Receives a multiline Unix cal output and returns a mapping (dict) where
-       keys are int days and values are the 2 letter weekdays (Su Mo Tu ...)"""
+@singledispatch
+def count_down(data_type):
+    # Check types
+    if type(data_type) not in (int, str, list, dict, tuple, set, float):
+        raise ValueError
 
-    cal_lines=calendar_output.strip().split("\n")
-    last_line = cal_lines[-1]
-    last_line_splits = last_line.split()
-    days =['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa']
-    # The starting day
-    last_day_day_of_week = days[len(last_line_splits)-1]
-    days_reverse = days[::-1]
+@count_down.register(str)
+def print_str(str1):
+    for i in range(len(str1)):
+        print(str1[0:len(str1)-i])
 
-    starting_index = days_reverse.index(last_day_day_of_week)
-    shifted = days_reverse[starting_index::] + days_reverse[0:starting_index]
+@count_down.register(int)
+def print_int(num):
+    print_str(str(num))
 
-    # a list of days counting backward
-    last_day_of_month = int(calendar_output.strip().split()[-1])
-    dates = [d for d in range(last_day_of_month,0,-1)]
-    return { date:day_of_week for day_of_week, date in zip( cycle(shifted), dates)}
+@count_down.register(range)
+def print_range(r):
+    print_int_list(list(r))
+
+@count_down.register(list)
+def print_int_list(lst):
+    if type(lst[0])==int:
+        str1 = ''.join([str(i) for i in lst])
+        print_str(str1)
+    elif type(lst[0])==str:
+        str1 = ''.join(lst)
+        print_str(str1)
+
+@count_down.register(tuple)
+def print_int_list(lst):
+    if type(lst[0])==int:
+        str1 = ''.join([str(i) for i in lst])
+        print_str(str1)
+    elif type(lst[0])==str:
+        str1 = ''.join(lst)
+        print_str(str1)
+
+@count_down.register(set)
+def print_int_set(s):
+    print_int_list(list(s))
+
+@count_down.register(float)
+def print_float(f):
+    print_str(str(f))
+
+@count_down.register(dict)
+def print_int_dict(dic):
+
+    #dic = {1: 'one', 2: 'two', 3: 'three', 4: 'four'},
+    num_dict = {
+        'one':1,
+        'two':2,
+        'three':3,
+        'four':4,
+        'five':5,
+        'six':6,
+        'seven':7,
+        'eight':8,
+        'nine':9,
+        'ten':10
+    }
+    new_list = [ num_dict[val.lower()] for val in dic.values() ]
+    print_int_list(new_list)
+
+# Pybite solution:
+
+@singledispatch
+def count_down(data_type):
+    # default behavior
+    raise ValueError(f'{type(data_type).__name__.title()} is not supported')
 
 
-
-calendar_output = """    January 1986
-Su Mo Tu We Th Fr Sa
-          1  2  3  4
- 5  6  7  8  9 10 11
-12 13 14 15 16 17 18
-19 20 21 22 23 24 25
-26 27 28 29 30 31
-"""
+def display_output(data: list):
+    counter = len(data)
+    while counter:
+        print(''.join([str(item) for item in data[:counter]]))
+        counter -= 1
 
 
-# Pybite solution
-import re
-
-def get_weekdays(calendar_output):
-    """Receives a multiline Unix cal output and returns a mapping (dict) where
-       keys are int days and values are the 2 letter weekdays (Su Mo Tu ...)"""
-    lines = calendar_output.split("\n")
-    day_names = lines[1].split()  # day names are on 2nd row
-    day_rows = lines[2:-1]  # ignore last blank line
+@count_down.register(int)
+@count_down.register(float)
+@count_down.register(str)
+def _(arg):
+    display_output(list(str(arg)))
 
 
-    # Findall is powerful, because you can get multiple occurrences,
-    # and multiple patterns.
-    weekdays = {}
-    for line in day_rows:
-        day_slots = re.findall(r'(\s{2}|\s\d|\d\d)\s?', line)
-        for name, num in zip(day_names, day_slots):
-            if num.strip():  # ignore empty slots (empty = Falsy)
-                weekdays[int(num)] = name
-
-    return weekdays
+@count_down.register(set)
+@count_down.register(range)
+@count_down.register(list)
+@count_down.register(tuple)
+@count_down.register(dict)
+def _(arg):
+    display_output(list(arg))
