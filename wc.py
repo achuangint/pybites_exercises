@@ -13603,99 +13603,175 @@ enumerate through the text by letter
 #             if date := date.strip():
 #                 mapping[int(date)] = weekdays[i]
 #     return mapping
+#
+# from functools import singledispatch
+#
+# @singledispatch
+# def count_down(data_type):
+#     # Check types
+#     if type(data_type) not in (int, str, list, dict, tuple, set, float):
+#         raise ValueError
+#
+# @count_down.register(str)
+# def print_str(str1):
+#     for i in range(len(str1)):
+#         print(str1[0:len(str1)-i])
+#
+# @count_down.register(int)
+# def print_int(num):
+#     print_str(str(num))
+#
+# @count_down.register(range)
+# def print_range(r):
+#     print_int_list(list(r))
+#
+# @count_down.register(list)
+# def print_int_list(lst):
+#     if type(lst[0])==int:
+#         str1 = ''.join([str(i) for i in lst])
+#         print_str(str1)
+#     elif type(lst[0])==str:
+#         str1 = ''.join(lst)
+#         print_str(str1)
+#
+# @count_down.register(tuple)
+# def print_int_list(lst):
+#     if type(lst[0])==int:
+#         str1 = ''.join([str(i) for i in lst])
+#         print_str(str1)
+#     elif type(lst[0])==str:
+#         str1 = ''.join(lst)
+#         print_str(str1)
+#
+# @count_down.register(set)
+# def print_int_set(s):
+#     print_int_list(list(s))
+#
+# @count_down.register(float)
+# def print_float(f):
+#     print_str(str(f))
+#
+# @count_down.register(dict)
+# def print_int_dict(dic):
+#
+#     #dic = {1: 'one', 2: 'two', 3: 'three', 4: 'four'},
+#     num_dict = {
+#         'one':1,
+#         'two':2,
+#         'three':3,
+#         'four':4,
+#         'five':5,
+#         'six':6,
+#         'seven':7,
+#         'eight':8,
+#         'nine':9,
+#         'ten':10
+#     }
+#     new_list = [ num_dict[val.lower()] for val in dic.values() ]
+#     print_int_list(new_list)
+#
+# # Pybite solution:
+#
+# @singledispatch
+# def count_down(data_type):
+#     # default behavior
+#     raise ValueError(f'{type(data_type).__name__.title()} is not supported')
+#
+#
+# def display_output(data: list):
+#     counter = len(data)
+#     while counter:
+#         print(''.join([str(item) for item in data[:counter]]))
+#         counter -= 1
+#
+#
+# @count_down.register(int)
+# @count_down.register(float)
+# @count_down.register(str)
+# def _(arg):
+#     display_output(list(str(arg)))
+#
+#
+# @count_down.register(set)
+# @count_down.register(range)
+# @count_down.register(list)
+# @count_down.register(tuple)
+# @count_down.register(dict)
+# def _(arg):
+#     display_output(list(arg))
+#
+# SCORES = [10, 50, 100, 175, 250, 400, 600, 800, 1000]
+# RANKS = 'white yellow orange green blue brown black paneled red'.split()
+# BELTS = dict(zip(SCORES, RANKS))
+#
+#
+# class NinjaBelt:
+#
+#     def __init__(self, score=0):
+#         self._score = score
+#         self._last_earned_belt = None
+#
+#     def _get_belt(self, new_score):
+#         """Might be a useful helper"""
+#         for point, belt in BELTS.items():
+#             if new_score >= point:
+#                 self._last_earned_belt=belt
+#             else:
+#                 break
+#         return self._last_earned_belt
+#
+#     def _get_score(self):
+#         return self._score
+#
+#
+#     def _set_score(self, new_score):
+#         if type(new_score)!=int:
+#             raise ValueError("Score takes an int")
+#
+#         if new_score < self._score:
+#             raise ValueError("Cannot lower score")
+#
+#         if new_score > self._score:
+#             self._score = new_score
+#
+#             if self._last_earned_belt != self._get_belt(new_score):
+#                 print(f'Congrats, you earned {new_score} points obtaining the PyBites Ninja {self._last_earned_belt.title()} Belt', end='')
+#
+#             else:
+#                 print(f"Set new score to {new_score}")
+#
+#     score = property(_get_score, _set_score)
 
-from functools import singledispatch
-
-@singledispatch
-def count_down(data_type):
-    # Check types
-    if type(data_type) not in (int, str, list, dict, tuple, set, float):
-        raise ValueError
-
-@count_down.register(str)
-def print_str(str1):
-    for i in range(len(str1)):
-        print(str1[0:len(str1)-i])
-
-@count_down.register(int)
-def print_int(num):
-    print_str(str(num))
-
-@count_down.register(range)
-def print_range(r):
-    print_int_list(list(r))
-
-@count_down.register(list)
-def print_int_list(lst):
-    if type(lst[0])==int:
-        str1 = ''.join([str(i) for i in lst])
-        print_str(str1)
-    elif type(lst[0])==str:
-        str1 = ''.join(lst)
-        print_str(str1)
-
-@count_down.register(tuple)
-def print_int_list(lst):
-    if type(lst[0])==int:
-        str1 = ''.join([str(i) for i in lst])
-        print_str(str1)
-    elif type(lst[0])==str:
-        str1 = ''.join(lst)
-        print_str(str1)
-
-@count_down.register(set)
-def print_int_set(s):
-    print_int_list(list(s))
-
-@count_down.register(float)
-def print_float(f):
-    print_str(str(f))
-
-@count_down.register(dict)
-def print_int_dict(dic):
-
-    #dic = {1: 'one', 2: 'two', 3: 'three', 4: 'four'},
-    num_dict = {
-        'one':1,
-        'two':2,
-        'three':3,
-        'four':4,
-        'five':5,
-        'six':6,
-        'seven':7,
-        'eight':8,
-        'nine':9,
-        'ten':10
-    }
-    new_list = [ num_dict[val.lower()] for val in dic.values() ]
-    print_int_list(new_list)
-
-# Pybite solution:
-
-@singledispatch
-def count_down(data_type):
-    # default behavior
-    raise ValueError(f'{type(data_type).__name__.title()} is not supported')
+from collections import Counter
+from contextlib import contextmanager
+from datetime import date
+from time import time
 
 
-def display_output(data: list):
-    counter = len(data)
-    while counter:
-        print(''.join([str(item) for item in data[:counter]]))
-        counter -= 1
+
+OPERATION_THRESHOLD_IN_SECONDS = 2.2
+ALERT_THRESHOLD = 3
+ALERT_MSG = 'ALERT: suffering performance hit today'
+
+violations = Counter()
+
+def get_today():
+    """Making it easier to test/mock"""
+    return date.today()
 
 
-@count_down.register(int)
-@count_down.register(float)
-@count_down.register(str)
-def _(arg):
-    display_output(list(str(arg)))
+@contextmanager
+def timeit():
+    start = time()
 
+    try:
+        yield None
+    finally:
+        end = time()
+        diff_time = end -  start
 
-@count_down.register(set)
-@count_down.register(range)
-@count_down.register(list)
-@count_down.register(tuple)
-@count_down.register(dict)
-def _(arg):
-    display_output(list(arg))
+        if diff_time >= OPERATION_THRESHOLD_IN_SECONDS:
+            violations[get_today()] += 1
+
+        if violations[get_today()]>=ALERT_THRESHOLD:
+            print(ALERT_MSG)

@@ -14254,54 +14254,242 @@ Inputs are modified to check how the function deals with unknown characters
 #     assert len(weekdays) == 31
 #     assert weekdays[13] == 'Fr'
 #     assert weekdays[31] == 'Tu'
+#
+# from datetime import datetime
+# from itertools import compress
+# import inspect
+# import re
+#
+# import pytest
+#
+# from wc import count_down
+#
+# DEFAULT_EXPECTED_OUTPUT = '1234\n123\n12\n1\n'
+#
+#
+# def test_code_uses_singledispatch_decorator():
+#     assert '@singledispatch' in inspect.getsource(count_down)
+#
+#
+# @pytest.mark.parametrize("input_argument", [
+#     '1234',
+#     1234,
+#     [1, 2, 3, 4],
+#     ['1', '2', '3', '4'],
+#     (1, 2, 3, 4),
+#     ('1', '2', '3', '4'),
+#     {1: 'one', 2: 'two', 3: 'three', 4: 'four'},
+#     {'1': 'one', '2': 'two', '3': 'three', '4': 'four'},
+#     range(1, 5),
+#     {x for x in range(1, 5)},
+# ])
+# def test_count_down_good_inputs(input_argument, capfd):
+#     count_down(input_argument)
+#     output = capfd.readouterr()[0]
+#     assert output == DEFAULT_EXPECTED_OUTPUT
+#
+#
+# @pytest.mark.parametrize("input_argument", [
+#     compress([1, 2, 3, 4], [1, 1, 1, 1]),
+#     datetime(2018, 4, 21),
+#     re.compile(r'\d{4}'),
+# ])
+# def test_count_down_bad_inputs(input_argument, capfd):
+#     with pytest.raises(ValueError):
+#         count_down(input_argument)
+#
+#
+# def test_count_down_float(capfd):
+#     expected = '12.34\n12.3\n12.\n12\n1\n'
+#     number = 12.34
+#     count_down(number)
+#     output = capfd.readouterr()[0]
+#     assert output == expected
 
-from datetime import datetime
-from itertools import compress
-import inspect
-import re
+#
+# import pytest
+#
+# from wc import NinjaBelt
+#
+# CONGRATS_MSG = ('Congrats, you earned {score} points '
+#                 'obtaining the PyBites Ninja {rank} Belt')
+# NEW_SCORE_MSG = 'Set new score to {score}'
+#
+#
+# @pytest.fixture
+# def ninja():
+#     return NinjaBelt()
+#
+#
+# @pytest.fixture
+# def white_belt():
+#     ninja = NinjaBelt(score=10)
+#     ninja._last_earned_belt = 'white'
+#     return ninja
+#
+#
+# @pytest.fixture
+# def yellow_belt():
+#     ninja = NinjaBelt(score=50)
+#     ninja._last_earned_belt = 'yellow'
+#     return ninja
+#
+#
+# def test_initial_state(ninja):
+#     assert ninja.score == 0
+#     assert ninja._last_earned_belt is None
+#
+#
+# def test_white_belt(ninja, capfd):
+#     ninja.score = 20
+#     assert ninja._last_earned_belt == 'white'
+#     output = capfd.readouterr()[0].split('\n')
+#     assert CONGRATS_MSG.format(score=20, rank='White') in output
+#
+#
+# def test_new_score_same_belt_no_congrats_msg(white_belt, capfd):
+#     assert white_belt.score == 10
+#     white_belt.score = 49
+#     assert white_belt._last_earned_belt == 'white'
+#     output = capfd.readouterr()[0].split('\n')
+#     assert NEW_SCORE_MSG.format(score=49) in output
+#
+#
+# def test_new_score_new_belt(ninja, capfd):
+#     ninja.score = 50
+#     assert ninja._last_earned_belt == 'yellow'
+#     output = capfd.readouterr()[0].split('\n')
+#     assert CONGRATS_MSG.format(score=50, rank='Yellow') in output
+#
+#
+# def test_higher_belt(ninja, capfd):
+#     ninja.score = 177
+#     assert ninja._last_earned_belt.lower() == 'green'
+#     output = capfd.readouterr()[0].split('\n')
+#     assert CONGRATS_MSG.format(score=177, rank='Green') in output
+#
+#
+# def test_gt_max_score_highest_belt(ninja, capfd):
+#     ninja.score = 1010
+#     assert ninja._last_earned_belt.lower() == 'red'
+#     output = capfd.readouterr()[0].split('\n')
+#     assert CONGRATS_MSG.format(score=1010, rank='Red') in output
+#
+#
+# def test_new_score_should_be_int(ninja):
+#     with pytest.raises(ValueError, match="Score takes an int"):
+#         ninja.score = 'a'
+#
+#
+# def test_new_score_should_be_higher(yellow_belt):
+#     assert yellow_belt.score == 50
+#     with pytest.raises(ValueError, match="Cannot lower score"):
+#         yellow_belt.score = 40
+
+from collections import Counter
+from datetime import date
+from unittest.mock import patch, MagicMock
 
 import pytest
 
-from wc import count_down
-
-DEFAULT_EXPECTED_OUTPUT = '1234\n123\n12\n1\n'
-
-
-def test_code_uses_singledispatch_decorator():
-    assert '@singledispatch' in inspect.getsource(count_down)
+import wc
+from wc import timeit, ALERT_MSG
 
 
-@pytest.mark.parametrize("input_argument", [
-    '1234',
-    1234,
-    [1, 2, 3, 4],
-    ['1', '2', '3', '4'],
-    (1, 2, 3, 4),
-    ('1', '2', '3', '4'),
-    {1: 'one', 2: 'two', 3: 'three', 4: 'four'},
-    {'1': 'one', '2': 'two', '3': 'three', '4': 'four'},
-    range(1, 5),
-    {x for x in range(1, 5)},
-])
-def test_count_down_good_inputs(input_argument, capfd):
-    count_down(input_argument)
+@pytest.fixture()
+def clean_cache():
+    """Make sure each test starts with a clean cache dict"""
+    wc.violations = Counter()
+
+
+@patch('wc.time', MagicMock(side_effect=[0, 2]))
+def test_one_operation_within_time(clean_cache, capfd):
+    """1 operation took 2 seconds = ok"""
+    with timeit():
+        pass
     output = capfd.readouterr()[0]
-    assert output == DEFAULT_EXPECTED_OUTPUT
+    assert not output
 
 
-@pytest.mark.parametrize("input_argument", [
-    compress([1, 2, 3, 4], [1, 1, 1, 1]),
-    datetime(2018, 4, 21),
-    re.compile(r'\d{4}'),
-])
-def test_count_down_bad_inputs(input_argument, capfd):
-    with pytest.raises(ValueError):
-        count_down(input_argument)
-
-
-def test_count_down_float(capfd):
-    expected = '12.34\n12.3\n12.\n12\n1\n'
-    number = 12.34
-    count_down(number)
+@patch('wc.time', MagicMock(side_effect=[0, 2, 0, 3]))
+def test_two_operations_one_too_long(clean_cache, capfd):
+    """2 operations, 1 took >= 3 seconds = still ok"""
+    with timeit():
+        pass
+    # this one took too long
+    with timeit():
+        pass
     output = capfd.readouterr()[0]
-    assert output == expected
+    assert not output
+
+
+@patch('wc.time', MagicMock(side_effect=[0, 2, 0, 3, 0, 4]))
+def test_three_operations_two_too_long(clean_cache, capfd):
+    """3 operations, 2 took >= 3 seconds = still ok"""
+    # Note that each timeit call takes the next 2 elements of side_effect
+    # = mocked start/end times in seconds
+    with timeit():
+        pass
+    with timeit():
+        pass
+    with timeit():
+        pass
+    output = capfd.readouterr()[0]
+    assert not output
+
+
+@patch('wc.time', MagicMock(side_effect=[0, 2, 0, 3, 0, 4, 0, 5]))
+def test_four_operations_three_took_too_long(clean_cache, capfd):
+    """4 operations, 3 tooks >= 3 seconds = NOT ok, prints ALERT"""
+    with timeit():
+        pass
+    with timeit():
+        pass
+    with timeit():
+        pass
+    with timeit():
+        pass
+    output = capfd.readouterr()[0]
+    print(f"counter: {wc.violations}")
+    assert output.strip() == ALERT_MSG
+
+
+@patch('wc.time', MagicMock(
+    side_effect=[0, 2.3, 0, 3.3, 0, 2.1, 0, 2.21]
+))
+def test_four_operations_three_took_too_long_using_floats(clean_cache, capfd):
+
+    """4 operations, 3 tooks > 2.2 seconds = NOT ok, prints ALERT"""
+    with timeit():
+        pass
+    with timeit():
+        pass
+    with timeit():
+        pass
+    with timeit():
+        pass
+    output = capfd.readouterr()[0]
+
+
+    assert output.strip() == ALERT_MSG
+
+
+@patch('wc.time', MagicMock(side_effect=[0, 3, 0, 3, 0, 4, 0, 5]))
+def test_four_operations_took_too_long_but_on_two_days(clean_cache, capfd):
+    """4 tooks >= 3 seconds, but spread over 2 days = ok / no alert"""
+    # 2 violations yesterday
+    with patch('wc.get_today', return_value=date(2018, 5, 1)):
+        with timeit():
+            pass
+        with timeit():
+            pass
+    # 2 violations today
+    with patch('wc.get_today', return_value=date(2018, 5, 2)):
+        with timeit():
+            pass
+        with timeit():
+            pass
+    output = capfd.readouterr()[0]
+    assert not output
+
+
