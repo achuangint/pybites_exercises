@@ -1,5 +1,5 @@
 #from __future__ import annotations
-
+import random
 import sys
 from email import generator
 from enum import StrEnum
@@ -13741,37 +13741,122 @@ enumerate through the text by letter
 #                 print(f"Set new score to {new_score}")
 #
 #     score = property(_get_score, _set_score)
+#
+# from collections import Counter
+# from contextlib import contextmanager
+# from datetime import date
+# from time import time
+#
+# OPERATION_THRESHOLD_IN_SECONDS = 2.2
+# ALERT_THRESHOLD = 3
+# ALERT_MSG = 'ALERT: suffering performance hit today'
+#
+# violations = Counter()
+#
+# def get_today():
+#     """Making it easier to test/mock"""
+#     return date.today()
+#
+#
+# @contextmanager
+# def timeit():
+#     start = time()
+#
+#     try:
+#         yield None
+#     finally:
+#         end = time()
+#         diff_time = end -  start
+#
+#         if diff_time >= OPERATION_THRESHOLD_IN_SECONDS:
+#             violations[get_today()] += 1
+#
+#         if violations[get_today()]>=ALERT_THRESHOLD:
+#             print(ALERT_MSG)
 
-from collections import Counter
-from contextlib import contextmanager
-from datetime import date
-from time import time
+from random import choice
+
+defeated_by = dict(paper='scissors',
+                   rock='paper',
+                   scissors='rock')
+lose = '{} beats {}, you lose!'
+win = '{} beats {}, you win!'
+tie = 'tie!'
 
 
-
-OPERATION_THRESHOLD_IN_SECONDS = 2.2
-ALERT_THRESHOLD = 3
-ALERT_MSG = 'ALERT: suffering performance hit today'
-
-violations = Counter()
-
-def get_today():
-    """Making it easier to test/mock"""
-    return date.today()
+def _get_computer_move():
+    """Randomly select a move"""
+    return choice(['scissors', 'paper', 'rock'])
 
 
-@contextmanager
-def timeit():
-    start = time()
+def _get_winner(computer_choice, player_choice):
+    """Return above lose/win/tie strings populated with the
+       appropriate values (computer vs player)"""
+    if computer_choice ==  player_choice:
+        return tie
+    elif defeated_by[computer_choice]==player_choice:
+        return win.format(player_choice, computer_choice)
+    else:
+        return lose.format(computer_choice, player_choice)
 
-    try:
-        yield None
-    finally:
-        end = time()
-        diff_time = end -  start
 
-        if diff_time >= OPERATION_THRESHOLD_IN_SECONDS:
-            violations[get_today()] += 1
+def game():
+    """Game loop, receive player's choice via the generator's
+       send method and get a random move from computer (_get_computer_move).
+       Raise a StopIteration exception if user value received = 'q'.
+       Check who wins with _get_winner and print its return output."""
 
-        if violations[get_today()]>=ALERT_THRESHOLD:
-            print(ALERT_MSG)
+    while True:
+        received = yield
+        if received == 'q':
+            return
+        elif received not in ('scissors', 'paper', 'rock'):
+            print("Invalid input")
+            continue
+        print(_get_winner(_get_computer_move(),received))
+
+# Pybite solution
+# from random import choice
+#
+# defeated_by = dict(paper='scissors',
+#                    rock='paper',
+#                    scissors='rock')
+# lose = '{} beats {}, you lose!'
+# win = '{} beats {}, you win!'
+# tie = 'tie!'
+#
+#
+# def _get_computer_move():
+#     """Randomly select a move"""
+#     return choice(list(defeated_by.keys()))
+#
+#
+# def _get_winner(computer_choice, player_choice):
+#     """Return above lose/win/tie strings populated with the
+#        appropriate values (computer vs player)"""
+#     if computer_choice == defeated_by[player_choice]:
+#         return lose.format(computer_choice, player_choice)
+#     elif player_choice == defeated_by[computer_choice]:
+#         return win.format(player_choice, computer_choice)
+#     return tie
+#
+#
+# def game():
+#     """Game loop, receive player's choice via the generator'
+#        send method, raise StopIteration if value received = 'q',
+#        get random move for computer, print _get_winner output"""
+#     print('Welcome to Rock-paper-scissors')
+#     while True:
+#         # using this order for the test mocking to work
+#         player_choice = (yield)  # receives from send
+#         computer_choice = _get_computer_move()
+#
+#         if player_choice == 'q':
+#             raise StopIteration
+#
+#         if player_choice not in defeated_by.keys():
+#             print('Invalid choice')
+#             continue
+#
+#         output = _get_winner(computer_choice, player_choice)
+#         print(output)

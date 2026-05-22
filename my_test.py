@@ -14385,111 +14385,189 @@ Inputs are modified to check how the function deals with unknown characters
 #     assert yellow_belt.score == 50
 #     with pytest.raises(ValueError, match="Cannot lower score"):
 #         yellow_belt.score = 40
+#
+# from collections import Counter
+# from datetime import date
+# from unittest.mock import patch, MagicMock
+#
+# import pytest
+#
+# import wc
+# from wc import timeit, ALERT_MSG
+#
+#
+# @pytest.fixture()
+# def clean_cache():
+#     """Make sure each test starts with a clean cache dict"""
+#     wc.violations = Counter()
+#
+#
+# @patch('wc.time', MagicMock(side_effect=[0, 2]))
+# def test_one_operation_within_time(clean_cache, capfd):
+#     """1 operation took 2 seconds = ok"""
+#     with timeit():
+#         pass
+#     output = capfd.readouterr()[0]
+#     assert not output
+#
+#
+# @patch('wc.time', MagicMock(side_effect=[0, 2, 0, 3]))
+# def test_two_operations_one_too_long(clean_cache, capfd):
+#     """2 operations, 1 took >= 3 seconds = still ok"""
+#     with timeit():
+#         pass
+#     # this one took too long
+#     with timeit():
+#         pass
+#     output = capfd.readouterr()[0]
+#     assert not output
+#
+#
+# @patch('wc.time', MagicMock(side_effect=[0, 2, 0, 3, 0, 4]))
+# def test_three_operations_two_too_long(clean_cache, capfd):
+#     """3 operations, 2 took >= 3 seconds = still ok"""
+#     # Note that each timeit call takes the next 2 elements of side_effect
+#     # = mocked start/end times in seconds
+#     with timeit():
+#         pass
+#     with timeit():
+#         pass
+#     with timeit():
+#         pass
+#     output = capfd.readouterr()[0]
+#     assert not output
+#
+#
+# @patch('wc.time', MagicMock(side_effect=[0, 2, 0, 3, 0, 4, 0, 5]))
+# def test_four_operations_three_took_too_long(clean_cache, capfd):
+#     """4 operations, 3 tooks >= 3 seconds = NOT ok, prints ALERT"""
+#     with timeit():
+#         pass
+#     with timeit():
+#         pass
+#     with timeit():
+#         pass
+#     with timeit():
+#         pass
+#     output = capfd.readouterr()[0]
+#     print(f"counter: {wc.violations}")
+#     assert output.strip() == ALERT_MSG
+#
+#
+# @patch('wc.time', MagicMock(
+#     side_effect=[0, 2.3, 0, 3.3, 0, 2.1, 0, 2.21]
+# ))
+# def test_four_operations_three_took_too_long_using_floats(clean_cache, capfd):
+#
+#     """4 operations, 3 tooks > 2.2 seconds = NOT ok, prints ALERT"""
+#     with timeit():
+#         pass
+#     with timeit():
+#         pass
+#     with timeit():
+#         pass
+#     with timeit():
+#         pass
+#     output = capfd.readouterr()[0]
+#
+#
+#     assert output.strip() == ALERT_MSG
 
-from collections import Counter
-from datetime import date
-from unittest.mock import patch, MagicMock
+#
+# @patch('wc.time', MagicMock(side_effect=[0, 3, 0, 3, 0, 4, 0, 5]))
+# def test_four_operations_took_too_long_but_on_two_days(clean_cache, capfd):
+#     """4 tooks >= 3 seconds, but spread over 2 days = ok / no alert"""
+#     # 2 violations yesterday
+#     with patch('wc.get_today', return_value=date(2018, 5, 1)):
+#         with timeit():
+#             pass
+#         with timeit():
+#             pass
+#     # 2 violations today
+#     with patch('wc.get_today', return_value=date(2018, 5, 2)):
+#         with timeit():
+#             pass
+#         with timeit():
+#             pass
+#     output = capfd.readouterr()[0]
+#     assert not output
+#
+#
+
+from unittest.mock import patch
 
 import pytest
 
-import wc
-from wc import timeit, ALERT_MSG
+from wc import (_get_winner, game,
+                 lose, win, tie,
+                 defeated_by,
+                 _get_computer_move)
 
 
 @pytest.fixture()
-def clean_cache():
-    """Make sure each test starts with a clean cache dict"""
-    wc.violations = Counter()
+def my_game():
+    """Initialize game and move it to point where to
+       receive first player (send) input"""
+    gen = game()
+    next(gen)
+    return gen
 
 
-@patch('wc.time', MagicMock(side_effect=[0, 2]))
-def test_one_operation_within_time(clean_cache, capfd):
-    """1 operation took 2 seconds = ok"""
-    with timeit():
-        pass
-    output = capfd.readouterr()[0]
-    assert not output
+@patch('wc._get_computer_move')
+def test_win(computerMoveMock, my_game, capfd):
+    computerMoveMock.return_value = 'rock'
+    my_game.send('paper')
+    output = capfd.readouterr()[0].strip()
+    assert output == win.format('paper', 'rock')
 
 
-@patch('wc.time', MagicMock(side_effect=[0, 2, 0, 3]))
-def test_two_operations_one_too_long(clean_cache, capfd):
-    """2 operations, 1 took >= 3 seconds = still ok"""
-    with timeit():
-        pass
-    # this one took too long
-    with timeit():
-        pass
-    output = capfd.readouterr()[0]
-    assert not output
+@patch('wc._get_computer_move')
+def test_lose(computerMoveMock, my_game, capfd):
+    computerMoveMock.return_value = 'rock'
+    my_game.send('scissors')
+    output = capfd.readouterr()[0].strip()
+    assert output == lose.format('rock', 'scissors')
 
 
-@patch('wc.time', MagicMock(side_effect=[0, 2, 0, 3, 0, 4]))
-def test_three_operations_two_too_long(clean_cache, capfd):
-    """3 operations, 2 took >= 3 seconds = still ok"""
-    # Note that each timeit call takes the next 2 elements of side_effect
-    # = mocked start/end times in seconds
-    with timeit():
-        pass
-    with timeit():
-        pass
-    with timeit():
-        pass
-    output = capfd.readouterr()[0]
-    assert not output
+@patch('wc._get_computer_move')
+def test_tie(computerMoveMock, my_game, capfd):
+    computerMoveMock.return_value = 'paper'
+    my_game.send('paper')
+    output = capfd.readouterr()[0].strip()
+    assert output == tie
 
 
-@patch('wc.time', MagicMock(side_effect=[0, 2, 0, 3, 0, 4, 0, 5]))
-def test_four_operations_three_took_too_long(clean_cache, capfd):
-    """4 operations, 3 tooks >= 3 seconds = NOT ok, prints ALERT"""
-    with timeit():
-        pass
-    with timeit():
-        pass
-    with timeit():
-        pass
-    with timeit():
-        pass
-    output = capfd.readouterr()[0]
-    print(f"counter: {wc.violations}")
-    assert output.strip() == ALERT_MSG
+@patch('wc._get_computer_move')
+def test_invalid_choice(computerMoveMock, my_game, capfd):
+    my_game.send('spam')
+    output = capfd.readouterr()[0].strip()
+    assert 'Invalid' in output
 
 
-@patch('wc.time', MagicMock(
-    side_effect=[0, 2.3, 0, 3.3, 0, 2.1, 0, 2.21]
-))
-def test_four_operations_three_took_too_long_using_floats(clean_cache, capfd):
-
-    """4 operations, 3 tooks > 2.2 seconds = NOT ok, prints ALERT"""
-    with timeit():
-        pass
-    with timeit():
-        pass
-    with timeit():
-        pass
-    with timeit():
-        pass
-    output = capfd.readouterr()[0]
+@pytest.mark.parametrize("player1, player2, result", [
+    ('scissors', 'paper', 'lose'),
+    ('paper', 'scissors', 'win'),
+    ('rock', 'paper', 'win'),
+    ('paper', 'rock', 'lose'),
+    ('rock', 'scissors', 'lose'),
+    ('scissors', 'rock', 'win'),
+    ('rock', 'rock', 'tie'),
+    ('scissors', 'scissors', 'tie'),
+    ('paper', 'paper', 'tie'),
+])
+def test_get_winner(player1, player2, result):
+    assert result in _get_winner(player1, player2)
 
 
-    assert output.strip() == ALERT_MSG
+def test_stop_iteration(my_game):
+    # 3.6 = StopIteration
+    # 3.7 = RuntimeError - see: https://bugs.python.org/issue32670
+    with pytest.raises((StopIteration, RuntimeError)):
+        my_game.send('q')
 
 
-@patch('wc.time', MagicMock(side_effect=[0, 3, 0, 3, 0, 4, 0, 5]))
-def test_four_operations_took_too_long_but_on_two_days(clean_cache, capfd):
-    """4 tooks >= 3 seconds, but spread over 2 days = ok / no alert"""
-    # 2 violations yesterday
-    with patch('wc.get_today', return_value=date(2018, 5, 1)):
-        with timeit():
-            pass
-        with timeit():
-            pass
-    # 2 violations today
-    with patch('wc.get_today', return_value=date(2018, 5, 2)):
-        with timeit():
-            pass
-        with timeit():
-            pass
-    output = capfd.readouterr()[0]
-    assert not output
-
-
+def test_computer_move():
+    computer_moves = set()
+    for i in range(1000):
+        computer_moves.add(_get_computer_move())
+    assert computer_moves == defeated_by.keys()
