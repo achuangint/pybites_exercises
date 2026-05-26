@@ -13773,47 +13773,47 @@ enumerate through the text by letter
 #
 #         if violations[get_today()]>=ALERT_THRESHOLD:
 #             print(ALERT_MSG)
-
-from random import choice
-
-defeated_by = dict(paper='scissors',
-                   rock='paper',
-                   scissors='rock')
-lose = '{} beats {}, you lose!'
-win = '{} beats {}, you win!'
-tie = 'tie!'
-
-
-def _get_computer_move():
-    """Randomly select a move"""
-    return choice(['scissors', 'paper', 'rock'])
-
-
-def _get_winner(computer_choice, player_choice):
-    """Return above lose/win/tie strings populated with the
-       appropriate values (computer vs player)"""
-    if computer_choice ==  player_choice:
-        return tie
-    elif defeated_by[computer_choice]==player_choice:
-        return win.format(player_choice, computer_choice)
-    else:
-        return lose.format(computer_choice, player_choice)
-
-
-def game():
-    """Game loop, receive player's choice via the generator's
-       send method and get a random move from computer (_get_computer_move).
-       Raise a StopIteration exception if user value received = 'q'.
-       Check who wins with _get_winner and print its return output."""
-
-    while True:
-        received = yield
-        if received == 'q':
-            return
-        elif received not in ('scissors', 'paper', 'rock'):
-            print("Invalid input")
-            continue
-        print(_get_winner(_get_computer_move(),received))
+#
+# from random import choice
+#
+# defeated_by = dict(paper='scissors',
+#                    rock='paper',
+#                    scissors='rock')
+# lose = '{} beats {}, you lose!'
+# win = '{} beats {}, you win!'
+# tie = 'tie!'
+#
+#
+# def _get_computer_move():
+#     """Randomly select a move"""
+#     return choice(['scissors', 'paper', 'rock'])
+#
+#
+# def _get_winner(computer_choice, player_choice):
+#     """Return above lose/win/tie strings populated with the
+#        appropriate values (computer vs player)"""
+#     if computer_choice ==  player_choice:
+#         return tie
+#     elif defeated_by[computer_choice]==player_choice:
+#         return win.format(player_choice, computer_choice)
+#     else:
+#         return lose.format(computer_choice, player_choice)
+#
+#
+# def game():
+#     """Game loop, receive player's choice via the generator's
+#        send method and get a random move from computer (_get_computer_move).
+#        Raise a StopIteration exception if user value received = 'q'.
+#        Check who wins with _get_winner and print its return output."""
+#
+#     while True:
+#         received = yield
+#         if received == 'q':
+#             return
+#         elif received not in ('scissors', 'paper', 'rock'):
+#             print("Invalid input")
+#             continue
+#         print(_get_winner(_get_computer_move(),received))
 
 # Pybite solution
 # from random import choice
@@ -13860,3 +13860,149 @@ def game():
 #
 #         output = _get_winner(computer_choice, player_choice)
 #         print(output)
+
+from collections import namedtuple
+import os
+import pickle
+import urllib.request
+import re
+
+# prework
+# download pickle file and store it in a tmp file
+pkl_file = 'pycon_videos.pkl'
+data = f'https://bites-data.s3.us-east-2.amazonaws.com/{pkl_file}'
+tmp = os.getenv("TMP", "/tmp")
+pycon_videos = os.path.join(tmp, pkl_file)
+urllib.request.urlretrieve(data, pycon_videos)
+
+# the pkl contains a list of Video namedtuples
+Video = namedtuple('Video', 'id title duration metrics')
+
+
+
+def load_pycon_data(pycon_videos=pycon_videos):
+    """Load the pickle file (pycon_videos) and return the data structure
+       it holds"""
+    with open(pycon_videos, mode='rb') as f:
+        pycon_data = pickle.load(f)
+    return pycon_data
+
+
+def get_most_popular_talks_by_views(videos):
+    """Return the pycon video list sorted by viewCount"""
+    return sorted(videos, key=lambda x: int(x.metrics['viewCount']),reverse=True)
+
+
+
+def get_most_popular_talks_by_like_ratio(videos):
+    """Return the pycon video list sorted by most likes relative to
+       number of views, so 10 likes on 175 views ranks higher than
+       12 likes on 300 views. Discount the dislikeCount from the likeCount.
+       Return the filtered list"""
+    return sorted(videos, key=lambda x:   (int(x.metrics['likeCount']) - int(x.metrics['dislikeCount']) ) / int(x.metrics['viewCount']),reverse=True)
+
+
+def get_hour_min(duration):
+    pattern = r"PT(?P<hour>\d+)H(?P<min>\d+)M"
+    match = re.search(pattern, duration)
+    if match:
+        return int(match.group('hour'))*60+int(match.group('min'))
+    return 0
+
+
+
+def get_talks_gt_one_hour(videos):
+    """Filter the videos list down to videos of > 1 hour"""
+    return [v for v in videos if get_hour_min(v.duration)]
+
+
+def get_min(duration):
+    pattern = r"PT(?P<min>\d+)M"
+    match = re.search(pattern, duration)
+    if match and int(match.group('min'))<24:
+        return 1
+    return 0
+
+def get_talks_lt_twentyfour_min(videos):
+    """Filter videos list down to videos that have a duration of less than
+       24 minutes"""
+    return [v for v in videos if get_min(v.duration)]
+
+# pybite solution
+from collections import namedtuple
+import os
+import pickle
+import re
+import urllib.request
+
+# prework
+# download pickle file and store it in a tmp file
+pkl_file = 'pycon_videos.pkl'
+data = f'https://bites-data.s3.us-east-2.amazonaws.com/{pkl_file}'
+tmp = os.getenv("TMP", "/tmp")
+pycon_videos = os.path.join(tmp, pkl_file)
+urllib.request.urlretrieve(data, pycon_videos)
+
+# the pkl contains a list of Video namedtuples
+Video = namedtuple('Video', 'id title duration metrics')
+
+
+def load_pycon_data(pycon_videos=pycon_videos):
+    """Load the pickle file (pycon_videos) and return the data structure
+       it holds"""
+    with open(pycon_videos, 'rb') as f:
+        return pickle.load(f)
+
+
+def _rating(metrics):
+    """Get like/view ratio (discount dislikes)"""
+    views = int(metrics.get('viewCount', 0))
+    dislikes = int(metrics.get('dislikeCount', 0))
+    likes = int(metrics.get('likeCount', 0)) - dislikes
+    return likes/views
+
+
+def get_most_popular_talks_by_views(videos):
+    """Return the pycon video list sorted by viewCount"""
+    for vid in sorted(videos,
+                      key=lambda v: int(v.metrics.get('viewCount')),
+                      reverse=True):
+        yield vid
+
+
+def get_most_popular_talks_by_like_ratio(videos):
+    """Return the pycon video list sorted by most likes relative to
+       number of views, so 10 likes on 175 views ranks higher than
+       12 likes on 300 views. Discount the dislikeCount from the likeCount.
+       Return the filtered list"""
+    for vid in sorted(videos,
+                      key=lambda v: _rating(v.metrics),
+                      reverse=True):
+        yield vid
+
+
+def get_talks_gt_one_hour(videos):
+    """Filter the videos list down to videos of > 1 hour"""
+    return [vid for vid in videos if 'H' in vid.duration]
+
+
+def _is_lt_n_min(duration, n=24):
+    """Helper to determine if a video is less than n minutes"""
+    if 'H' in duration:
+        return False
+
+    seconds_limit = n*60
+
+    pat = re.compile(r'^PT(\d+)M(?:(\d+)S)?$')
+    m = pat.match(duration)
+    mm, ss = m.groups()
+
+    total_seconds = int(mm) * 60 + (ss and int(ss) or 0)
+
+    return total_seconds < seconds_limit
+
+
+def get_talks_lt_twentyfour_min(videos):
+    """Filter videos list down to videos that have a duration of less than
+       24 minutes"""
+    return [vid for vid in videos if _is_lt_n_min(vid.duration)]

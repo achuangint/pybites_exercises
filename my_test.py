@@ -14493,81 +14493,136 @@ Inputs are modified to check how the function deals with unknown characters
 #     assert not output
 #
 #
+#
+# from unittest.mock import patch
+#
+# import pytest
+#
+# from wc import (_get_winner, game,
+#                  lose, win, tie,
+#                  defeated_by,
+#                  _get_computer_move)
+#
+#
+# @pytest.fixture()
+# def my_game():
+#     """Initialize game and move it to point where to
+#        receive first player (send) input"""
+#     gen = game()
+#     next(gen)
+#     return gen
+#
+#
+# @patch('wc._get_computer_move')
+# def test_win(computerMoveMock, my_game, capfd):
+#     computerMoveMock.return_value = 'rock'
+#     my_game.send('paper')
+#     output = capfd.readouterr()[0].strip()
+#     assert output == win.format('paper', 'rock')
+#
+#
+# @patch('wc._get_computer_move')
+# def test_lose(computerMoveMock, my_game, capfd):
+#     computerMoveMock.return_value = 'rock'
+#     my_game.send('scissors')
+#     output = capfd.readouterr()[0].strip()
+#     assert output == lose.format('rock', 'scissors')
+#
+#
+# @patch('wc._get_computer_move')
+# def test_tie(computerMoveMock, my_game, capfd):
+#     computerMoveMock.return_value = 'paper'
+#     my_game.send('paper')
+#     output = capfd.readouterr()[0].strip()
+#     assert output == tie
+#
+#
+# @patch('wc._get_computer_move')
+# def test_invalid_choice(computerMoveMock, my_game, capfd):
+#     my_game.send('spam')
+#     output = capfd.readouterr()[0].strip()
+#     assert 'Invalid' in output
+#
+#
+# @pytest.mark.parametrize("player1, player2, result", [
+#     ('scissors', 'paper', 'lose'),
+#     ('paper', 'scissors', 'win'),
+#     ('rock', 'paper', 'win'),
+#     ('paper', 'rock', 'lose'),
+#     ('rock', 'scissors', 'lose'),
+#     ('scissors', 'rock', 'win'),
+#     ('rock', 'rock', 'tie'),
+#     ('scissors', 'scissors', 'tie'),
+#     ('paper', 'paper', 'tie'),
+# ])
+# def test_get_winner(player1, player2, result):
+#     assert result in _get_winner(player1, player2)
+#
+#
+# def test_stop_iteration(my_game):
+#     # 3.6 = StopIteration
+#     # 3.7 = RuntimeError - see: https://bugs.python.org/issue32670
+#     with pytest.raises((StopIteration, RuntimeError)):
+#         my_game.send('q')
+#
+#
+# def test_computer_move():
+#     computer_moves = set()
+#     for i in range(1000):
+#         computer_moves.add(_get_computer_move())
+#     assert computer_moves == defeated_by.keys()
 
-from unittest.mock import patch
+from copy import deepcopy
 
 import pytest
 
-from wc import (_get_winner, game,
-                 lose, win, tie,
-                 defeated_by,
-                 _get_computer_move)
+from wc import (load_pycon_data,
+                   get_most_popular_talks_by_views,
+                   get_most_popular_talks_by_like_ratio,
+                   get_talks_gt_one_hour,
+                   get_talks_lt_twentyfour_min)
 
 
-@pytest.fixture()
-def my_game():
-    """Initialize game and move it to point where to
-       receive first player (send) input"""
-    gen = game()
-    next(gen)
-    return gen
+@pytest.fixture(scope='module')
+def videos():
+    return load_pycon_data()
 
 
-@patch('wc._get_computer_move')
-def test_win(computerMoveMock, my_game, capfd):
-    computerMoveMock.return_value = 'rock'
-    my_game.send('paper')
-    output = capfd.readouterr()[0].strip()
-    assert output == win.format('paper', 'rock')
+def test_load_pycon_data(videos):
+    assert len(videos) == 147
+    assert isinstance(videos[0], tuple)
 
 
-@patch('wc._get_computer_move')
-def test_lose(computerMoveMock, my_game, capfd):
-    computerMoveMock.return_value = 'rock'
-    my_game.send('scissors')
-    output = capfd.readouterr()[0].strip()
-    assert output == lose.format('rock', 'scissors')
+def test_get_most_popular_talks_by_views(videos):
+    # as sort might be used in place, or any other list manipulation
+    # let's make sure we work with a copy of the module fixture
+    videos_copy = deepcopy(videos)
+    expected = ['T-TwcmT6Rcw', 'GBQAKldqgZs', 'ms29ZPUKxbU',
+                'zJ9z6Ge-vXs', 'WiQqqB9MlkA']
+    vids = list(get_most_popular_talks_by_views(videos_copy))
+    actual = [vid.id for vid in vids[:5]]
+    assert expected == actual
 
 
-@patch('wc._get_computer_move')
-def test_tie(computerMoveMock, my_game, capfd):
-    computerMoveMock.return_value = 'paper'
-    my_game.send('paper')
-    output = capfd.readouterr()[0].strip()
-    assert output == tie
+def test_get_most_popular_talks_by_like_ratio(videos):
+    # same here: let's use a local copy of videos
+    videos_copy = deepcopy(videos)
+    vids = list(get_most_popular_talks_by_like_ratio(videos_copy))
+    expected = ['8OoR-P6wE0M', 'h-38HZqanJs', 'C7ZhMnfUKIA',
+                'GmbaKdd6o6A', '3EXvR1shVFQ']
+    actual = [vid.id for vid in vids[:5]]
+    assert expected == actual
 
 
-@patch('wc._get_computer_move')
-def test_invalid_choice(computerMoveMock, my_game, capfd):
-    my_game.send('spam')
-    output = capfd.readouterr()[0].strip()
-    assert 'Invalid' in output
+def test_get_talks_gt_one_hour(videos):
+    vids = get_talks_gt_one_hour(videos)
+    assert vids[0].id == '0hsKLYfyQZc'
+    assert vids[-1].id == 'ZwvjtCjimiw'
+    assert len(vids) == 35
 
 
-@pytest.mark.parametrize("player1, player2, result", [
-    ('scissors', 'paper', 'lose'),
-    ('paper', 'scissors', 'win'),
-    ('rock', 'paper', 'win'),
-    ('paper', 'rock', 'lose'),
-    ('rock', 'scissors', 'lose'),
-    ('scissors', 'rock', 'win'),
-    ('rock', 'rock', 'tie'),
-    ('scissors', 'scissors', 'tie'),
-    ('paper', 'paper', 'tie'),
-])
-def test_get_winner(player1, player2, result):
-    assert result in _get_winner(player1, player2)
-
-
-def test_stop_iteration(my_game):
-    # 3.6 = StopIteration
-    # 3.7 = RuntimeError - see: https://bugs.python.org/issue32670
-    with pytest.raises((StopIteration, RuntimeError)):
-        my_game.send('q')
-
-
-def test_computer_move():
-    computer_moves = set()
-    for i in range(1000):
-        computer_moves.add(_get_computer_move())
-    assert computer_moves == defeated_by.keys()
+def test_get_talks_lt_twentyfour_min(videos):
+    vids = get_talks_lt_twentyfour_min(videos)
+    assert vids[0].id == 'zQeYx87mfyw'
+    assert vids[-1].id == 'TcHkkzWBMKY'
+    assert len(vids) == 12
