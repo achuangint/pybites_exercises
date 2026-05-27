@@ -14571,58 +14571,182 @@ Inputs are modified to check how the function deals with unknown characters
 #     for i in range(1000):
 #         computer_moves.add(_get_computer_move())
 #     assert computer_moves == defeated_by.keys()
+#
+# from copy import deepcopy
+#
+# import pytest
+#
+# from wc import (load_pycon_data,
+#                    get_most_popular_talks_by_views,
+#                    get_most_popular_talks_by_like_ratio,
+#                    get_talks_gt_one_hour,
+#                    get_talks_lt_twentyfour_min)
+#
+#
+# @pytest.fixture(scope='module')
+# def videos():
+#     return load_pycon_data()
+#
+#
+# def test_load_pycon_data(videos):
+#     assert len(videos) == 147
+#     assert isinstance(videos[0], tuple)
+#
+#
+# def test_get_most_popular_talks_by_views(videos):
+#     # as sort might be used in place, or any other list manipulation
+#     # let's make sure we work with a copy of the module fixture
+#     videos_copy = deepcopy(videos)
+#     expected = ['T-TwcmT6Rcw', 'GBQAKldqgZs', 'ms29ZPUKxbU',
+#                 'zJ9z6Ge-vXs', 'WiQqqB9MlkA']
+#     vids = list(get_most_popular_talks_by_views(videos_copy))
+#     actual = [vid.id for vid in vids[:5]]
+#     assert expected == actual
+#
+#
+# def test_get_most_popular_talks_by_like_ratio(videos):
+#     # same here: let's use a local copy of videos
+#     videos_copy = deepcopy(videos)
+#     vids = list(get_most_popular_talks_by_like_ratio(videos_copy))
+#     expected = ['8OoR-P6wE0M', 'h-38HZqanJs', 'C7ZhMnfUKIA',
+#                 'GmbaKdd6o6A', '3EXvR1shVFQ']
+#     actual = [vid.id for vid in vids[:5]]
+#     assert expected == actual
+#
+#
+# def test_get_talks_gt_one_hour(videos):
+#     vids = get_talks_gt_one_hour(videos)
+#     assert vids[0].id == '0hsKLYfyQZc'
+#     assert vids[-1].id == 'ZwvjtCjimiw'
+#     assert len(vids) == 35
+#
+#
+# def test_get_talks_lt_twentyfour_min(videos):
+#     vids = get_talks_lt_twentyfour_min(videos)
+#     assert vids[0].id == 'zQeYx87mfyw'
+#     assert vids[-1].id == 'TcHkkzWBMKY'
+#     assert len(vids) == 12
 
-from copy import deepcopy
+from wc import print_sequence_route
 
-import pytest
-
-from wc import (load_pycon_data,
-                   get_most_popular_talks_by_views,
-                   get_most_popular_talks_by_like_ratio,
-                   get_talks_gt_one_hour,
-                   get_talks_lt_twentyfour_min)
-
-
-@pytest.fixture(scope='module')
-def videos():
-    return load_pycon_data()
-
-
-def test_load_pycon_data(videos):
-    assert len(videos) == 147
-    assert isinstance(videos[0], tuple)
+small_grid = """
+21 - 22 - 23 - 24 - 25
+ |
+20    7 -  8 -  9 - 10
+ |    |              |
+19    6    1 -  2   11
+ |    |         |    |
+18    5 -  4 -  3   12
+ |                   |
+17 - 16 - 15 - 14 - 13
+"""
 
 
-def test_get_most_popular_talks_by_views(videos):
-    # as sort might be used in place, or any other list manipulation
-    # let's make sure we work with a copy of the module fixture
-    videos_copy = deepcopy(videos)
-    expected = ['T-TwcmT6Rcw', 'GBQAKldqgZs', 'ms29ZPUKxbU',
-                'zJ9z6Ge-vXs', 'WiQqqB9MlkA']
-    vids = list(get_most_popular_talks_by_views(videos_copy))
-    actual = [vid.id for vid in vids[:5]]
-    assert expected == actual
+def test_print_sequence_route_small_grid(capfd):
+    expected = """1 2 ⇓
+    3 ⇐
+    4 5 ⇑
+    6 7 ⇒
+    8 9 10 ⇓
+    11 12 13 ⇐
+    14 15 16 17 ⇑
+    18 19 20 21 ⇒
+    22 23 24 25""".splitlines()
+
+    print_sequence_route(small_grid)
+    actual = capfd.readouterr()[0].splitlines()
+
+    assert len(actual) == len(expected)
+
+    for i, j in zip(actual, expected):
+        assert i.strip() == j.strip()
 
 
-def test_get_most_popular_talks_by_like_ratio(videos):
-    # same here: let's use a local copy of videos
-    videos_copy = deepcopy(videos)
-    vids = list(get_most_popular_talks_by_like_ratio(videos_copy))
-    expected = ['8OoR-P6wE0M', 'h-38HZqanJs', 'C7ZhMnfUKIA',
-                'GmbaKdd6o6A', '3EXvR1shVFQ']
-    actual = [vid.id for vid in vids[:5]]
-    assert expected == actual
+intermediate_grid = """
+43 - 44 - 45 - 46 - 47 - 48 - 49
+ |
+42   21 - 22 - 23 - 24 - 25 - 26
+ |    |                        |
+41   20    7 -  8 -  9 - 10   27
+ |    |    |              |    |
+40   19    6    1 -  2   11   28
+ |    |    |         |    |    |
+39   18    5 -  4 -  3   12   29
+ |    |                   |    |
+38   17 - 16 - 15 - 14 - 13   30
+ |                             |
+37 - 36 - 35 - 34 - 33 - 32 - 31
+"""
 
 
-def test_get_talks_gt_one_hour(videos):
-    vids = get_talks_gt_one_hour(videos)
-    assert vids[0].id == '0hsKLYfyQZc'
-    assert vids[-1].id == 'ZwvjtCjimiw'
-    assert len(vids) == 35
+def test_print_sequence_route_intermediate_grid(capfd):
+    expected = """1 2 ⇓
+    3 ⇐
+    4 5 ⇑
+    6 7 ⇒
+    8 9 10 ⇓
+    11 12 13 ⇐
+    14 15 16 17 ⇑
+    18 19 20 21 ⇒
+    22 23 24 25 26 ⇓
+    27 28 29 30 31 ⇐
+    32 33 34 35 36 37 ⇑
+    38 39 40 41 42 43 ⇒
+    44 45 46 47 48 49""".splitlines()
+
+    print_sequence_route(intermediate_grid)
+    actual = capfd.readouterr()[0].splitlines()
+
+    assert len(actual) == len(expected)
+
+    for i, j in zip(actual, expected):
+        assert i.strip() == j.strip()
 
 
-def test_get_talks_lt_twentyfour_min(videos):
-    vids = get_talks_lt_twentyfour_min(videos)
-    assert vids[0].id == 'zQeYx87mfyw'
-    assert vids[-1].id == 'TcHkkzWBMKY'
-    assert len(vids) == 12
+big_grid = """
+73 - 74 - 75 - 76 - 77 - 78 - 79 - 80 - 81
+ |
+72   43 - 44 - 45 - 46 - 47 - 48 - 49 - 50
+ |    |                                  |
+71   42   21 - 22 - 23 - 24 - 25 - 26   51
+ |    |    |                        |    |
+70   41   20    7 -  8 -  9 - 10   27   52
+ |    |    |    |              |    |    |
+69   40   19    6    1 -  2   11   28   53
+ |    |    |    |         |    |    |    |
+68   39   18    5 -  4 -  3   12   29   54
+ |    |    |                   |    |    |
+67   38   17 - 16 - 15 - 14 - 13   30   55
+ |    |                             |    |
+66   37 - 36 - 35 - 34 - 33 - 32 - 31   56
+ |                                       |
+65 - 64 - 63 - 62 - 61 - 60 - 59 - 58 - 57
+"""
+
+
+def test_print_sequence_route_big_grid(capfd):
+    expected = """1 2 ⇓
+    3 ⇐
+    4 5 ⇑
+    6 7 ⇒
+    8 9 10 ⇓
+    11 12 13 ⇐
+    14 15 16 17 ⇑
+    18 19 20 21 ⇒
+    22 23 24 25 26 ⇓
+    27 28 29 30 31 ⇐
+    32 33 34 35 36 37 ⇑
+    38 39 40 41 42 43 ⇒
+    44 45 46 47 48 49 50 ⇓
+    51 52 53 54 55 56 57 ⇐
+    58 59 60 61 62 63 64 65 ⇑
+    66 67 68 69 70 71 72 73 ⇒
+    74 75 76 77 78 79 80 81 """.splitlines()
+
+    print_sequence_route(big_grid)
+    actual = capfd.readouterr()[0].splitlines()
+
+    assert len(actual) == len(expected)
+
+    for i, j in zip(actual, expected):
+        assert i.strip() == j.strip()

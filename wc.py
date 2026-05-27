@@ -13860,149 +13860,268 @@ enumerate through the text by letter
 #
 #         output = _get_winner(computer_choice, player_choice)
 #         print(output)
+#
+# from collections import namedtuple
+# import os
+# import pickle
+# import urllib.request
+# import re
+#
+# # prework
+# # download pickle file and store it in a tmp file
+# pkl_file = 'pycon_videos.pkl'
+# data = f'https://bites-data.s3.us-east-2.amazonaws.com/{pkl_file}'
+# tmp = os.getenv("TMP", "/tmp")
+# pycon_videos = os.path.join(tmp, pkl_file)
+# urllib.request.urlretrieve(data, pycon_videos)
+#
+# # the pkl contains a list of Video namedtuples
+# Video = namedtuple('Video', 'id title duration metrics')
+#
+#
+#
+# def load_pycon_data(pycon_videos=pycon_videos):
+#     """Load the pickle file (pycon_videos) and return the data structure
+#        it holds"""
+#     with open(pycon_videos, mode='rb') as f:
+#         pycon_data = pickle.load(f)
+#     return pycon_data
+#
+#
+# def get_most_popular_talks_by_views(videos):
+#     """Return the pycon video list sorted by viewCount"""
+#     return sorted(videos, key=lambda x: int(x.metrics['viewCount']),reverse=True)
+#
+#
+#
+# def get_most_popular_talks_by_like_ratio(videos):
+#     """Return the pycon video list sorted by most likes relative to
+#        number of views, so 10 likes on 175 views ranks higher than
+#        12 likes on 300 views. Discount the dislikeCount from the likeCount.
+#        Return the filtered list"""
+#     return sorted(videos, key=lambda x:   (int(x.metrics['likeCount']) - int(x.metrics['dislikeCount']) ) / int(x.metrics['viewCount']),reverse=True)
+#
+#
+# def get_hour_min(duration):
+#     pattern = r"PT(?P<hour>\d+)H(?P<min>\d+)M"
+#     match = re.search(pattern, duration)
+#     if match:
+#         return int(match.group('hour'))*60+int(match.group('min'))
+#     return 0
+#
+#
+#
+# def get_talks_gt_one_hour(videos):
+#     """Filter the videos list down to videos of > 1 hour"""
+#     return [v for v in videos if get_hour_min(v.duration)]
+#
+#
+# def get_min(duration):
+#     pattern = r"PT(?P<min>\d+)M"
+#     match = re.search(pattern, duration)
+#     if match and int(match.group('min'))<24:
+#         return 1
+#     return 0
+#
+# def get_talks_lt_twentyfour_min(videos):
+#     """Filter videos list down to videos that have a duration of less than
+#        24 minutes"""
+#     return [v for v in videos if get_min(v.duration)]
+#
+# # pybite solution
+# from collections import namedtuple
+# import os
+# import pickle
+# import re
+# import urllib.request
+#
+# # prework
+# # download pickle file and store it in a tmp file
+# pkl_file = 'pycon_videos.pkl'
+# data = f'https://bites-data.s3.us-east-2.amazonaws.com/{pkl_file}'
+# tmp = os.getenv("TMP", "/tmp")
+# pycon_videos = os.path.join(tmp, pkl_file)
+# urllib.request.urlretrieve(data, pycon_videos)
+#
+# # the pkl contains a list of Video namedtuples
+# Video = namedtuple('Video', 'id title duration metrics')
+#
+#
+# def load_pycon_data(pycon_videos=pycon_videos):
+#     """Load the pickle file (pycon_videos) and return the data structure
+#        it holds"""
+#     with open(pycon_videos, 'rb') as f:
+#         return pickle.load(f)
+#
+#
+# def _rating(metrics):
+#     """Get like/view ratio (discount dislikes)"""
+#     views = int(metrics.get('viewCount', 0))
+#     dislikes = int(metrics.get('dislikeCount', 0))
+#     likes = int(metrics.get('likeCount', 0)) - dislikes
+#     return likes/views
+#
+#
+# def get_most_popular_talks_by_views(videos):
+#     """Return the pycon video list sorted by viewCount"""
+#     for vid in sorted(videos,
+#                       key=lambda v: int(v.metrics.get('viewCount')),
+#                       reverse=True):
+#         yield vid
+#
+#
+# def get_most_popular_talks_by_like_ratio(videos):
+#     """Return the pycon video list sorted by most likes relative to
+#        number of views, so 10 likes on 175 views ranks higher than
+#        12 likes on 300 views. Discount the dislikeCount from the likeCount.
+#        Return the filtered list"""
+#     for vid in sorted(videos,
+#                       key=lambda v: _rating(v.metrics),
+#                       reverse=True):
+#         yield vid
+#
+#
+# def get_talks_gt_one_hour(videos):
+#     """Filter the videos list down to videos of > 1 hour"""
+#     return [vid for vid in videos if 'H' in vid.duration]
+#
+#
+# def _is_lt_n_min(duration, n=24):
+#     """Helper to determine if a video is less than n minutes"""
+#     if 'H' in duration:
+#         return False
+#
+#     seconds_limit = n*60
+#
+#     pat = re.compile(r'^PT(\d+)M(?:(\d+)S)?$')
+#     m = pat.match(duration)
+#     mm, ss = m.groups()
+#
+#     total_seconds = int(mm) * 60 + (ss and int(ss) or 0)
+#
+#     return total_seconds < seconds_limit
+#
+#
+# def get_talks_lt_twentyfour_min(videos):
+#     """Filter videos list down to videos that have a duration of less than
+#        24 minutes"""
+#     return [vid for vid in videos if _is_lt_n_min(vid.duration)]
 
+DOWN, UP, LEFT, RIGHT = '⇓', '⇑', '⇐', '⇒'
+START_VALUE = 1
+
+
+def get_matrix(grid):
+    result = []
+    for l in grid.split('\n'):
+        if l == '':
+            continue
+        elif '|' not in l:
+
+            filtered = [int(c) for c in l.split(' ') if c not in ('', '-') and c != []]
+            result.append(filtered)
+    return result
+
+def get_direction( p1, p2):
+    if p2[0] > p1[0]:
+        direction = DOWN
+    elif p2[0] < p1[0]:
+        direction = UP
+    elif p2[1] > p1[1]:
+        direction = RIGHT
+    elif p2[1] < p1[1]:
+        direction = LEFT
+    else:
+        raise ValueError("Cannot detect direction!!")
+    return direction
+
+def print_sequence_route(grid, start_coordinates=None):
+    """Receive grid string, convert to 2D matrix of ints, find the
+       START_VALUE coordinates and move through the numbers in order printing
+       them.  Each time you turn append the grid with its corresponding symbol
+       (DOWN / UP / LEFT / RIGHT). See the TESTS for more info."""
+
+    mat = get_matrix(grid)
+    dim = len(mat)
+
+    # a dictionary of positions
+    int_positions = {mat[i][j]: (i, j) for j in range(dim) for i in range(dim)}
+
+    # print out the direction:
+    last_direction = RIGHT
+    for key in range(1, max(int_positions.keys())):
+        print(key, end=' ')
+        next_direction = get_direction(int_positions[key], int_positions[key + 1])
+        if next_direction != last_direction:
+            print(next_direction)
+            last_direction = next_direction
+    print(f"{key+1}")
+
+# Pybite solution
 from collections import namedtuple
-import os
-import pickle
-import urllib.request
 import re
 
-# prework
-# download pickle file and store it in a tmp file
-pkl_file = 'pycon_videos.pkl'
-data = f'https://bites-data.s3.us-east-2.amazonaws.com/{pkl_file}'
-tmp = os.getenv("TMP", "/tmp")
-pycon_videos = os.path.join(tmp, pkl_file)
-urllib.request.urlretrieve(data, pycon_videos)
+DOWN, UP, LEFT, RIGHT = '⇓', '⇑', '⇐', '⇒'
+START_VALUE = 1
 
-# the pkl contains a list of Video namedtuples
-Video = namedtuple('Video', 'id title duration metrics')
-
+Move = namedtuple('Move', 'axis direction offset')
+# x = vertical (first list), y = horizontal (move in row = nested list)
+POSSIBLE_MOVES = [Move('|', DOWN, (1, 0)),
+                  Move('|', UP, (-1, 0)),
+                  Move('-', LEFT, (0, -1)),
+                  Move('-', RIGHT, (0, 1))]
 
 
-def load_pycon_data(pycon_videos=pycon_videos):
-    """Load the pickle file (pycon_videos) and return the data structure
-       it holds"""
-    with open(pycon_videos, mode='rb') as f:
-        pycon_data = pickle.load(f)
-    return pycon_data
+def _make_grid(grid):
+    """Turn grid string into 2D array of ints"""
+    for row in grid.strip().splitlines():
+        if not row[0].isdigit():
+            continue
+        yield [int(n) for n in re.split(r'[- ]+', row)]
 
 
-def get_most_popular_talks_by_views(videos):
-    """Return the pycon video list sorted by viewCount"""
-    return sorted(videos, key=lambda x: int(x.metrics['viewCount']),reverse=True)
+def _get_starting_point(grid):
+    """Get coordinates of starting point (cell with START_VALUE)"""
+    for x, row in enumerate(grid):
+        for y, val in enumerate(row):
+            if val == START_VALUE:
+                return (x, y)
+    raise RuntimeError(f'{START_VALUE} not found in grid')
 
 
+def print_sequence_route(grid, start_coordinates=None):
+    """Receive grid string, convert to 2D matrix of ints, find the
+       START_VALUE coordinates and move through the numbers in order printing
+       them.  Each time you turn append the grid with its corresponding symbol
+       (DOWN / UP / LEFT / RIGHT). See the TESTS for more info."""
+    if isinstance(grid, str):
+        grid = list(_make_grid(grid))
 
-def get_most_popular_talks_by_like_ratio(videos):
-    """Return the pycon video list sorted by most likes relative to
-       number of views, so 10 likes on 175 views ranks higher than
-       12 likes on 300 views. Discount the dislikeCount from the likeCount.
-       Return the filtered list"""
-    return sorted(videos, key=lambda x:   (int(x.metrics['likeCount']) - int(x.metrics['dislikeCount']) ) / int(x.metrics['viewCount']),reverse=True)
+    if start_coordinates is None:
+        start_coordinates = _get_starting_point(grid)
 
+    size_grid = sum(len(row) for row in grid)
+    vertical, horizontal = start_coordinates
 
-def get_hour_min(duration):
-    pattern = r"PT(?P<hour>\d+)H(?P<min>\d+)M"
-    match = re.search(pattern, duration)
-    if match:
-        return int(match.group('hour'))*60+int(match.group('min'))
-    return 0
+    previous_value, previous_move = START_VALUE, None
+    print(START_VALUE, end=' ')
 
+    while True:
+        for move in POSSIBLE_MOVES:
+            axis, direction, (vert_move, hor_move) = move
+            try:
+                new_value = grid[vertical + vert_move][horizontal + hor_move]
+            except IndexError:  # grid boundaries
+                continue
 
+            if new_value - previous_value == 1:
+                if previous_move and previous_move.axis != move.axis:
+                    print(move.direction)
+                print(new_value, end=' ')
 
-def get_talks_gt_one_hour(videos):
-    """Filter the videos list down to videos of > 1 hour"""
-    return [v for v in videos if get_hour_min(v.duration)]
+                vertical += vert_move
+                horizontal += hor_move
+                previous_value, previous_move = new_value, move
 
-
-def get_min(duration):
-    pattern = r"PT(?P<min>\d+)M"
-    match = re.search(pattern, duration)
-    if match and int(match.group('min'))<24:
-        return 1
-    return 0
-
-def get_talks_lt_twentyfour_min(videos):
-    """Filter videos list down to videos that have a duration of less than
-       24 minutes"""
-    return [v for v in videos if get_min(v.duration)]
-
-# pybite solution
-from collections import namedtuple
-import os
-import pickle
-import re
-import urllib.request
-
-# prework
-# download pickle file and store it in a tmp file
-pkl_file = 'pycon_videos.pkl'
-data = f'https://bites-data.s3.us-east-2.amazonaws.com/{pkl_file}'
-tmp = os.getenv("TMP", "/tmp")
-pycon_videos = os.path.join(tmp, pkl_file)
-urllib.request.urlretrieve(data, pycon_videos)
-
-# the pkl contains a list of Video namedtuples
-Video = namedtuple('Video', 'id title duration metrics')
-
-
-def load_pycon_data(pycon_videos=pycon_videos):
-    """Load the pickle file (pycon_videos) and return the data structure
-       it holds"""
-    with open(pycon_videos, 'rb') as f:
-        return pickle.load(f)
-
-
-def _rating(metrics):
-    """Get like/view ratio (discount dislikes)"""
-    views = int(metrics.get('viewCount', 0))
-    dislikes = int(metrics.get('dislikeCount', 0))
-    likes = int(metrics.get('likeCount', 0)) - dislikes
-    return likes/views
-
-
-def get_most_popular_talks_by_views(videos):
-    """Return the pycon video list sorted by viewCount"""
-    for vid in sorted(videos,
-                      key=lambda v: int(v.metrics.get('viewCount')),
-                      reverse=True):
-        yield vid
-
-
-def get_most_popular_talks_by_like_ratio(videos):
-    """Return the pycon video list sorted by most likes relative to
-       number of views, so 10 likes on 175 views ranks higher than
-       12 likes on 300 views. Discount the dislikeCount from the likeCount.
-       Return the filtered list"""
-    for vid in sorted(videos,
-                      key=lambda v: _rating(v.metrics),
-                      reverse=True):
-        yield vid
-
-
-def get_talks_gt_one_hour(videos):
-    """Filter the videos list down to videos of > 1 hour"""
-    return [vid for vid in videos if 'H' in vid.duration]
-
-
-def _is_lt_n_min(duration, n=24):
-    """Helper to determine if a video is less than n minutes"""
-    if 'H' in duration:
-        return False
-
-    seconds_limit = n*60
-
-    pat = re.compile(r'^PT(\d+)M(?:(\d+)S)?$')
-    m = pat.match(duration)
-    mm, ss = m.groups()
-
-    total_seconds = int(mm) * 60 + (ss and int(ss) or 0)
-
-    return total_seconds < seconds_limit
-
-
-def get_talks_lt_twentyfour_min(videos):
-    """Filter videos list down to videos that have a duration of less than
-       24 minutes"""
-    return [vid for vid in videos if _is_lt_n_min(vid.duration)]
+        if new_value == size_grid:  # end grid
+            break
