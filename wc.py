@@ -14006,122 +14006,297 @@ enumerate through the text by letter
 #     """Filter videos list down to videos that have a duration of less than
 #        24 minutes"""
 #     return [vid for vid in videos if _is_lt_n_min(vid.duration)]
+#
+# DOWN, UP, LEFT, RIGHT = '⇓', '⇑', '⇐', '⇒'
+# START_VALUE = 1
+#
+#
+# def get_matrix(grid):
+#     result = []
+#     for l in grid.split('\n'):
+#         if l == '':
+#             continue
+#         elif '|' not in l:
+#
+#             filtered = [int(c) for c in l.split(' ') if c not in ('', '-') and c != []]
+#             result.append(filtered)
+#     return result
+#
+# def get_direction( p1, p2):
+#     if p2[0] > p1[0]:
+#         direction = DOWN
+#     elif p2[0] < p1[0]:
+#         direction = UP
+#     elif p2[1] > p1[1]:
+#         direction = RIGHT
+#     elif p2[1] < p1[1]:
+#         direction = LEFT
+#     else:
+#         raise ValueError("Cannot detect direction!!")
+#     return direction
+#
+# def print_sequence_route(grid, start_coordinates=None):
+#     """Receive grid string, convert to 2D matrix of ints, find the
+#        START_VALUE coordinates and move through the numbers in order printing
+#        them.  Each time you turn append the grid with its corresponding symbol
+#        (DOWN / UP / LEFT / RIGHT). See the TESTS for more info."""
+#
+#     mat = get_matrix(grid)
+#     dim = len(mat)
+#
+#     # a dictionary of positions
+#     int_positions = {mat[i][j]: (i, j) for j in range(dim) for i in range(dim)}
+#
+#     # print out the direction:
+#     last_direction = RIGHT
+#     for key in range(1, max(int_positions.keys())):
+#         print(key, end=' ')
+#         next_direction = get_direction(int_positions[key], int_positions[key + 1])
+#         if next_direction != last_direction:
+#             print(next_direction)
+#             last_direction = next_direction
+#     print(f"{key+1}")
+#
+# # Pybite solution
+# from collections import namedtuple
+# import re
+#
+# DOWN, UP, LEFT, RIGHT = '⇓', '⇑', '⇐', '⇒'
+# START_VALUE = 1
+#
+# Move = namedtuple('Move', 'axis direction offset')
+# # x = vertical (first list), y = horizontal (move in row = nested list)
+# POSSIBLE_MOVES = [Move('|', DOWN, (1, 0)),
+#                   Move('|', UP, (-1, 0)),
+#                   Move('-', LEFT, (0, -1)),
+#                   Move('-', RIGHT, (0, 1))]
+#
+#
+# def _make_grid(grid):
+#     """Turn grid string into 2D array of ints"""
+#     for row in grid.strip().splitlines():
+#         if not row[0].isdigit():
+#             continue
+#         yield [int(n) for n in re.split(r'[- ]+', row)]
+#
+#
+# def _get_starting_point(grid):
+#     """Get coordinates of starting point (cell with START_VALUE)"""
+#     for x, row in enumerate(grid):
+#         for y, val in enumerate(row):
+#             if val == START_VALUE:
+#                 return (x, y)
+#     raise RuntimeError(f'{START_VALUE} not found in grid')
+#
+#
+# def print_sequence_route(grid, start_coordinates=None):
+#     """Receive grid string, convert to 2D matrix of ints, find the
+#        START_VALUE coordinates and move through the numbers in order printing
+#        them.  Each time you turn append the grid with its corresponding symbol
+#        (DOWN / UP / LEFT / RIGHT). See the TESTS for more info."""
+#     if isinstance(grid, str):
+#         grid = list(_make_grid(grid))
+#
+#     if start_coordinates is None:
+#         start_coordinates = _get_starting_point(grid)
+#
+#     size_grid = sum(len(row) for row in grid)
+#     vertical, horizontal = start_coordinates
+#
+#     previous_value, previous_move = START_VALUE, None
+#     print(START_VALUE, end=' ')
+#
+#     while True:
+#         for move in POSSIBLE_MOVES:
+#             axis, direction, (vert_move, hor_move) = move
+#             try:
+#                 new_value = grid[vertical + vert_move][horizontal + hor_move]
+#             except IndexError:  # grid boundaries
+#                 continue
+#
+#             if new_value - previous_value == 1:
+#                 if previous_move and previous_move.axis != move.axis:
+#                     print(move.direction)
+#                 print(new_value, end=' ')
+#
+#                 vertical += vert_move
+#                 horizontal += hor_move
+#                 previous_value, previous_move = new_value, move
+#
+#         if new_value == size_grid:  # end grid
+#             break
 
-DOWN, UP, LEFT, RIGHT = '⇓', '⇑', '⇐', '⇒'
-START_VALUE = 1
-
-
-def get_matrix(grid):
-    result = []
-    for l in grid.split('\n'):
-        if l == '':
-            continue
-        elif '|' not in l:
-
-            filtered = [int(c) for c in l.split(' ') if c not in ('', '-') and c != []]
-            result.append(filtered)
-    return result
-
-def get_direction( p1, p2):
-    if p2[0] > p1[0]:
-        direction = DOWN
-    elif p2[0] < p1[0]:
-        direction = UP
-    elif p2[1] > p1[1]:
-        direction = RIGHT
-    elif p2[1] < p1[1]:
-        direction = LEFT
-    else:
-        raise ValueError("Cannot detect direction!!")
-    return direction
-
-def print_sequence_route(grid, start_coordinates=None):
-    """Receive grid string, convert to 2D matrix of ints, find the
-       START_VALUE coordinates and move through the numbers in order printing
-       them.  Each time you turn append the grid with its corresponding symbol
-       (DOWN / UP / LEFT / RIGHT). See the TESTS for more info."""
-
-    mat = get_matrix(grid)
-    dim = len(mat)
-
-    # a dictionary of positions
-    int_positions = {mat[i][j]: (i, j) for j in range(dim) for i in range(dim)}
-
-    # print out the direction:
-    last_direction = RIGHT
-    for key in range(1, max(int_positions.keys())):
-        print(key, end=' ')
-        next_direction = get_direction(int_positions[key], int_positions[key + 1])
-        if next_direction != last_direction:
-            print(next_direction)
-            last_direction = next_direction
-    print(f"{key+1}")
-
-# Pybite solution
+# nice snippet: https://gist.github.com/tonybruess/9405134
 from collections import namedtuple
 import re
 
-DOWN, UP, LEFT, RIGHT = '⇓', '⇑', '⇐', '⇒'
-START_VALUE = 1
+social_platforms = """Twitter
+  Min: 1
+  Max: 15
+  Can contain: a-z A-Z 0-9 _
 
-Move = namedtuple('Move', 'axis direction offset')
-# x = vertical (first list), y = horizontal (move in row = nested list)
-POSSIBLE_MOVES = [Move('|', DOWN, (1, 0)),
-                  Move('|', UP, (-1, 0)),
-                  Move('-', LEFT, (0, -1)),
-                  Move('-', RIGHT, (0, 1))]
+Facebook
+  Min: 5
+  Max: 50
+  Can contain: a-z A-Z 0-9 .
 
+Reddit
+  Min: 3
+  Max: 20
+  Can contain: a-z A-Z 0-9 _ -
+"""
 
-def _make_grid(grid):
-    """Turn grid string into 2D array of ints"""
-    for row in grid.strip().splitlines():
-        if not row[0].isdigit():
-            continue
-        yield [int(n) for n in re.split(r'[- ]+', row)]
-
-
-def _get_starting_point(grid):
-    """Get coordinates of starting point (cell with START_VALUE)"""
-    for x, row in enumerate(grid):
-        for y, val in enumerate(row):
-            if val == START_VALUE:
-                return (x, y)
-    raise RuntimeError(f'{START_VALUE} not found in grid')
+# note range is of type range and regex is a re.compile object
+Validator = namedtuple('Validator', 'range regex')
 
 
-def print_sequence_route(grid, start_coordinates=None):
-    """Receive grid string, convert to 2D matrix of ints, find the
-       START_VALUE coordinates and move through the numbers in order printing
-       them.  Each time you turn append the grid with its corresponding symbol
-       (DOWN / UP / LEFT / RIGHT). See the TESTS for more info."""
-    if isinstance(grid, str):
-        grid = list(_make_grid(grid))
+def parse_social_platforms_string():
+    """Convert the social_platforms string above into a dict where
+       keys = social platformsname and values = validator namedtuples"""
 
-    if start_coordinates is None:
-        start_coordinates = _get_starting_point(grid)
+    sm_dict = {}
+    for line in social_platforms.split("\n"):
+        if re.search(r"^\S", line):
+            key = line.strip()
+        elif match:= re.search(r"^\s+Min: (?P<min>\d+)", line):
+            minimum = int(match.group('min'))
 
-    size_grid = sum(len(row) for row in grid)
-    vertical, horizontal = start_coordinates
+        elif match:= re.search(r"^\s+Max: (?P<max>\d+)", line):
+            maximum = int(match.group('max'))
 
-    previous_value, previous_move = START_VALUE, None
-    print(START_VALUE, end=' ')
+        elif match := re.search(r"^\s+Can contain: (?P<reg>.+)", line):
+            reg =match.group('reg')
+            rules = reg.strip().split()
+            patt_str = r'^['
+            for r in rules:
+                if re.search('.-.', r):
+                    patt_str += r
+                else:
+                    patt_str = patt_str + "\\"
+                    patt_str += r
+            patt_str += f"]{{{minimum},{maximum}}}$"
+            regex = re.compile(f"{patt_str}")
+        else:
+            sm_dict[key] = Validator(range(minimum, maximum), regex)
+    return sm_dict
+#
 
-    while True:
-        for move in POSSIBLE_MOVES:
-            axis, direction, (vert_move, hor_move) = move
-            try:
-                new_value = grid[vertical + vert_move][horizontal + hor_move]
-            except IndexError:  # grid boundaries
-                continue
+def validate_username(platform, username):
+    """Receives platforms(Twitter, Facebook or Reddit) and username string,
+       raise a ValueError if the wrong platform is passed in,
+       return True/False if username is valid for entered platform"""
+    all_validators = parse_social_platforms_string()
+    if platform not in all_validators.keys():
+        raise ValueError
+    p = all_validators[platform]
+    return re.search(p.regex, username)
 
-            if new_value - previous_value == 1:
-                if previous_move and previous_move.axis != move.axis:
-                    print(move.direction)
-                print(new_value, end=' ')
+# Thoughts:
+# Big lesson:
+# work flow: parse string / config file => obj / dict
 
-                vertical += vert_move
-                horizontal += hor_move
-                previous_value, previous_move = new_value, move
 
-        if new_value == size_grid:  # end grid
-            break
+
+# Pybite solution
+
+def parse_social_platforms_string():
+    """Convert the social_platforms string above into a dict where
+       keys = social platformsname and values = validator namedtuples"""
+    platforms = social_platforms.split('\n\n')
+    return dict(_parse_platformstext(nw) for nw in platforms)
+
+
+def _parse_platformstext(text):
+    """Helper to parse a block of platformstext, returns platform name
+       and Validator namedtuple"""
+    lines = text.split('\n')
+    name = lines[0].strip()
+
+    min_ = int(lines[1].split(': ')[1])
+    max_ = int(lines[2].split(': ')[1]) + 1  # upper range is exclusive
+
+    char_classes = lines[3].split(': ')[1].replace(' ', '').replace('.', '\.')
+    regex = f'^[{char_classes}]+$'  # one or more and make sure start to end
+
+    return name, Validator(range(min_, max_), re.compile(regex))
+
+
+def validate_username(platform, username):
+    """Receives platforms(Twitter, Facebook or Reddit) and username string,
+       raise a ValueError if the wrong platform is passed in,
+       return True/False if username is valid for entered platform"""
+    all_validators = parse_social_platforms_string()
+    validator = all_validators.get(platform)
+
+    if not validator:
+        raise ValueError('Not a valid platform')
+
+    if len(username) not in validator.range:
+        return False
+
+    return validator.regex.match(username)
+
+
+# Cleaner solution:
+from collections import namedtuple
+import re
+
+social_platforms = """Twitter
+  Min: 1
+  Max: 15
+  Can contain: a-z A-Z 0-9 _
+
+Facebook
+  Min: 5
+  Max: 50
+  Can contain: a-z A-Z 0-9 .
+
+Reddit
+  Min: 3
+  Max: 20
+  Can contain: a-z A-Z 0-9 _ -
+"""
+
+# note range is of type range and regex is a re.compile object
+Validator = namedtuple('Validator', 'range regex')
+
+
+def parse_social_platforms_string():
+    """Convert the social_platforms string above into a dict where
+       keys = social platform's name and values = validator namedtuples"""
+    result = {}
+
+    min = max = 0
+    name = regex = ''
+    for line in social_platforms.splitlines():
+        if line.strip():
+            if 'Min:' in line:
+                min = int(line.split(':')[1])
+            elif 'Max:' in line:
+                max = int(line.split(':')[1])
+            elif 'Can contain:' in line:
+                regex = ''.join(line.split(':')[1].split())
+            else:
+                name = line.strip()
+
+        if min and max and name and regex:
+            result[name] = Validator(range(min, max + 1), re.compile(f'^[{regex}]{{{min},{max}}}$'))
+
+    return result
+
+
+def validate_username(platform, username):
+    """Receives platforms(Twitter, Facebook or Reddit) and username string,
+       raise a ValueError if the wrong platform is passed in,
+       return True/False if username is valid for entered platform"""
+    all_validators = parse_social_platforms_string()
+
+    if platform not in all_validators:
+        raise ValueError(f'unknown platform: {platform}')
+
+    # it's not absolutely necessary to check the length of the input string, b/c the regex does that too
+    # if len(username) not in all_validators[platform].range:
+    #     return False
+
+    matches = all_validators[platform].regex.match(username)
+    return matches is not None

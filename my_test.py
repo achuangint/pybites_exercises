@@ -14626,127 +14626,194 @@ Inputs are modified to check how the function deals with unknown characters
 #     assert vids[0].id == 'zQeYx87mfyw'
 #     assert vids[-1].id == 'TcHkkzWBMKY'
 #     assert len(vids) == 12
+#
+# from wc import print_sequence_route
+#
+# small_grid = """
+# 21 - 22 - 23 - 24 - 25
+#  |
+# 20    7 -  8 -  9 - 10
+#  |    |              |
+# 19    6    1 -  2   11
+#  |    |         |    |
+# 18    5 -  4 -  3   12
+#  |                   |
+# 17 - 16 - 15 - 14 - 13
+# """
+#
+#
+# def test_print_sequence_route_small_grid(capfd):
+#     expected = """1 2 ⇓
+#     3 ⇐
+#     4 5 ⇑
+#     6 7 ⇒
+#     8 9 10 ⇓
+#     11 12 13 ⇐
+#     14 15 16 17 ⇑
+#     18 19 20 21 ⇒
+#     22 23 24 25""".splitlines()
+#
+#     print_sequence_route(small_grid)
+#     actual = capfd.readouterr()[0].splitlines()
+#
+#     assert len(actual) == len(expected)
+#
+#     for i, j in zip(actual, expected):
+#         assert i.strip() == j.strip()
+#
+#
+# intermediate_grid = """
+# 43 - 44 - 45 - 46 - 47 - 48 - 49
+#  |
+# 42   21 - 22 - 23 - 24 - 25 - 26
+#  |    |                        |
+# 41   20    7 -  8 -  9 - 10   27
+#  |    |    |              |    |
+# 40   19    6    1 -  2   11   28
+#  |    |    |         |    |    |
+# 39   18    5 -  4 -  3   12   29
+#  |    |                   |    |
+# 38   17 - 16 - 15 - 14 - 13   30
+#  |                             |
+# 37 - 36 - 35 - 34 - 33 - 32 - 31
+# """
+#
+#
+# def test_print_sequence_route_intermediate_grid(capfd):
+#     expected = """1 2 ⇓
+#     3 ⇐
+#     4 5 ⇑
+#     6 7 ⇒
+#     8 9 10 ⇓
+#     11 12 13 ⇐
+#     14 15 16 17 ⇑
+#     18 19 20 21 ⇒
+#     22 23 24 25 26 ⇓
+#     27 28 29 30 31 ⇐
+#     32 33 34 35 36 37 ⇑
+#     38 39 40 41 42 43 ⇒
+#     44 45 46 47 48 49""".splitlines()
+#
+#     print_sequence_route(intermediate_grid)
+#     actual = capfd.readouterr()[0].splitlines()
+#
+#     assert len(actual) == len(expected)
+#
+#     for i, j in zip(actual, expected):
+#         assert i.strip() == j.strip()
+#
+#
+# big_grid = """
+# 73 - 74 - 75 - 76 - 77 - 78 - 79 - 80 - 81
+#  |
+# 72   43 - 44 - 45 - 46 - 47 - 48 - 49 - 50
+#  |    |                                  |
+# 71   42   21 - 22 - 23 - 24 - 25 - 26   51
+#  |    |    |                        |    |
+# 70   41   20    7 -  8 -  9 - 10   27   52
+#  |    |    |    |              |    |    |
+# 69   40   19    6    1 -  2   11   28   53
+#  |    |    |    |         |    |    |    |
+# 68   39   18    5 -  4 -  3   12   29   54
+#  |    |    |                   |    |    |
+# 67   38   17 - 16 - 15 - 14 - 13   30   55
+#  |    |                             |    |
+# 66   37 - 36 - 35 - 34 - 33 - 32 - 31   56
+#  |                                       |
+# 65 - 64 - 63 - 62 - 61 - 60 - 59 - 58 - 57
+# """
+#
+#
+# def test_print_sequence_route_big_grid(capfd):
+#     expected = """1 2 ⇓
+#     3 ⇐
+#     4 5 ⇑
+#     6 7 ⇒
+#     8 9 10 ⇓
+#     11 12 13 ⇐
+#     14 15 16 17 ⇑
+#     18 19 20 21 ⇒
+#     22 23 24 25 26 ⇓
+#     27 28 29 30 31 ⇐
+#     32 33 34 35 36 37 ⇑
+#     38 39 40 41 42 43 ⇒
+#     44 45 46 47 48 49 50 ⇓
+#     51 52 53 54 55 56 57 ⇐
+#     58 59 60 61 62 63 64 65 ⇑
+#     66 67 68 69 70 71 72 73 ⇒
+#     74 75 76 77 78 79 80 81 """.splitlines()
+#
+#     print_sequence_route(big_grid)
+#     actual = capfd.readouterr()[0].splitlines()
+#
+#     assert len(actual) == len(expected)
+#
+#     for i, j in zip(actual, expected):
+#         assert i.strip() == j.strip()
 
-from wc import print_sequence_route
+from typing.re import Pattern
 
-small_grid = """
-21 - 22 - 23 - 24 - 25
- |
-20    7 -  8 -  9 - 10
- |    |              |
-19    6    1 -  2   11
- |    |         |    |
-18    5 -  4 -  3   12
- |                   |
-17 - 16 - 15 - 14 - 13
-"""
+import pytest
+
+from wc import (Validator,
+                                parse_social_platforms_string,
+                                validate_username)
 
 
-def test_print_sequence_route_small_grid(capfd):
-    expected = """1 2 ⇓
-    3 ⇐
-    4 5 ⇑
-    6 7 ⇒
-    8 9 10 ⇓
-    11 12 13 ⇐
-    14 15 16 17 ⇑
-    18 19 20 21 ⇒
-    22 23 24 25""".splitlines()
-
-    print_sequence_route(small_grid)
-    actual = capfd.readouterr()[0].splitlines()
-
-    assert len(actual) == len(expected)
-
-    for i, j in zip(actual, expected):
-        assert i.strip() == j.strip()
+def test_parse_social_platforms_string():
+    platforms = parse_social_platforms_string()
+    assert len(platforms) == 3
+    assert all([type(nw) == Validator for nw in platforms.values()])
+    twitter = platforms.get('Twitter')
+    assert type(twitter.range) == range  # range upper limit = exclusive!
+    assert isinstance(twitter.regex, Pattern)  # nope, no regex here ;)
 
 
-intermediate_grid = """
-43 - 44 - 45 - 46 - 47 - 48 - 49
- |
-42   21 - 22 - 23 - 24 - 25 - 26
- |    |                        |
-41   20    7 -  8 -  9 - 10   27
- |    |    |              |    |
-40   19    6    1 -  2   11   28
- |    |    |         |    |    |
-39   18    5 -  4 -  3   12   29
- |    |                   |    |
-38   17 - 16 - 15 - 14 - 13   30
- |                             |
-37 - 36 - 35 - 34 - 33 - 32 - 31
-"""
+def test_validate_username_wrong_validator():
+    with pytest.raises(ValueError):
+        validate_username('Github', 'bob')
 
 
-def test_print_sequence_route_intermediate_grid(capfd):
-    expected = """1 2 ⇓
-    3 ⇐
-    4 5 ⇑
-    6 7 ⇒
-    8 9 10 ⇓
-    11 12 13 ⇐
-    14 15 16 17 ⇑
-    18 19 20 21 ⇒
-    22 23 24 25 26 ⇓
-    27 28 29 30 31 ⇐
-    32 33 34 35 36 37 ⇑
-    38 39 40 41 42 43 ⇒
-    44 45 46 47 48 49""".splitlines()
-
-    print_sequence_route(intermediate_grid)
-    actual = capfd.readouterr()[0].splitlines()
-
-    assert len(actual) == len(expected)
-
-    for i, j in zip(actual, expected):
-        assert i.strip() == j.strip()
+def test_validate_username_twitter_range():
+    assert validate_username('Twitter', 'a')
+    assert not validate_username('Twitter', '')
+    assert not validate_username('Twitter', 'a'*16)
 
 
-big_grid = """
-73 - 74 - 75 - 76 - 77 - 78 - 79 - 80 - 81
- |
-72   43 - 44 - 45 - 46 - 47 - 48 - 49 - 50
- |    |                                  |
-71   42   21 - 22 - 23 - 24 - 25 - 26   51
- |    |    |                        |    |
-70   41   20    7 -  8 -  9 - 10   27   52
- |    |    |    |              |    |    |
-69   40   19    6    1 -  2   11   28   53
- |    |    |    |         |    |    |    |
-68   39   18    5 -  4 -  3   12   29   54
- |    |    |                   |    |    |
-67   38   17 - 16 - 15 - 14 - 13   30   55
- |    |                             |    |
-66   37 - 36 - 35 - 34 - 33 - 32 - 31   56
- |                                       |
-65 - 64 - 63 - 62 - 61 - 60 - 59 - 58 - 57
-"""
+def test_validate_username_twitter_regex():
+    assert validate_username('Twitter', 'bob')
+    assert validate_username('Twitter', 'boB123')
+    assert validate_username('Twitter', 'bo__89A')
+    assert not validate_username('Twitter', 'bob-123')
+    assert not validate_username('Twitter', 'bob@PyBites')
+    assert not validate_username('Twitter', 'bob.')
 
 
-def test_print_sequence_route_big_grid(capfd):
-    expected = """1 2 ⇓
-    3 ⇐
-    4 5 ⇑
-    6 7 ⇒
-    8 9 10 ⇓
-    11 12 13 ⇐
-    14 15 16 17 ⇑
-    18 19 20 21 ⇒
-    22 23 24 25 26 ⇓
-    27 28 29 30 31 ⇐
-    32 33 34 35 36 37 ⇑
-    38 39 40 41 42 43 ⇒
-    44 45 46 47 48 49 50 ⇓
-    51 52 53 54 55 56 57 ⇐
-    58 59 60 61 62 63 64 65 ⇑
-    66 67 68 69 70 71 72 73 ⇒
-    74 75 76 77 78 79 80 81 """.splitlines()
+def test_validate_username_facebook_range():
+    assert validate_username('Facebook', 'abc123')
+    assert not validate_username('Facebook', 'bob')
+    assert not validate_username('Facebook', 'a'*51)
 
-    print_sequence_route(big_grid)
-    actual = capfd.readouterr()[0].splitlines()
 
-    assert len(actual) == len(expected)
+def test_validate_username_facebook_regex():
+    assert validate_username('Facebook', 'bobb.')
+    assert validate_username('Facebook', 'bob.PyBites')
+    assert validate_username('Facebook', 'aAbB123')
+    assert not validate_username('Facebook', 'bobb,')
+    assert not validate_username('Facebook', 'bob$56')
+    assert not validate_username('Facebook', 'bob123_')
 
-    for i, j in zip(actual, expected):
-        assert i.strip() == j.strip()
+
+def test_validate_username_reddit_range():
+    assert validate_username('Reddit', 'abc')
+    assert not validate_username('Reddit', 'ab')
+    assert not validate_username('Reddit', 'a'*21)
+
+
+def test_validate_username_reddit_regex():
+    assert validate_username('Reddit', 'bob_PyBites')
+    assert validate_username('Reddit', '-123ABC')
+    assert validate_username('Reddit', '123-abc__')
+    assert not validate_username('Reddit', 'bobb.')
+    assert not validate_username('Reddit', 'bob@PyBites')
+    assert not validate_username('Reddit', 'bob$56')
