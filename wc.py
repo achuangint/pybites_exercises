@@ -14125,178 +14125,240 @@ enumerate through the text by letter
 #
 #         if new_value == size_grid:  # end grid
 #             break
+#
+# # nice snippet: https://gist.github.com/tonybruess/9405134
+# from collections import namedtuple
+# import re
+#
+# social_platforms = """Twitter
+#   Min: 1
+#   Max: 15
+#   Can contain: a-z A-Z 0-9 _
+#
+# Facebook
+#   Min: 5
+#   Max: 50
+#   Can contain: a-z A-Z 0-9 .
+#
+# Reddit
+#   Min: 3
+#   Max: 20
+#   Can contain: a-z A-Z 0-9 _ -
+# """
+#
+# # note range is of type range and regex is a re.compile object
+# Validator = namedtuple('Validator', 'range regex')
+#
+#
+# def parse_social_platforms_string():
+#     """Convert the social_platforms string above into a dict where
+#        keys = social platformsname and values = validator namedtuples"""
+#
+#     sm_dict = {}
+#     for line in social_platforms.split("\n"):
+#         if re.search(r"^\S", line):
+#             key = line.strip()
+#         elif match:= re.search(r"^\s+Min: (?P<min>\d+)", line):
+#             minimum = int(match.group('min'))
+#
+#         elif match:= re.search(r"^\s+Max: (?P<max>\d+)", line):
+#             maximum = int(match.group('max'))
+#
+#         elif match := re.search(r"^\s+Can contain: (?P<reg>.+)", line):
+#             reg =match.group('reg')
+#             rules = reg.strip().split()
+#             patt_str = r'^['
+#             for r in rules:
+#                 if re.search('.-.', r):
+#                     patt_str += r
+#                 else:
+#                     patt_str = patt_str + "\\"
+#                     patt_str += r
+#             patt_str += f"]{{{minimum},{maximum}}}$"
+#             regex = re.compile(f"{patt_str}")
+#         else:
+#             sm_dict[key] = Validator(range(minimum, maximum), regex)
+#     return sm_dict
+# #
+#
+# def validate_username(platform, username):
+#     """Receives platforms(Twitter, Facebook or Reddit) and username string,
+#        raise a ValueError if the wrong platform is passed in,
+#        return True/False if username is valid for entered platform"""
+#     all_validators = parse_social_platforms_string()
+#     if platform not in all_validators.keys():
+#         raise ValueError
+#     p = all_validators[platform]
+#     return re.search(p.regex, username)
+#
+# # Thoughts:
+# # Big lesson:
+# # work flow: parse string / config file => obj / dict
+#
+#
+#
+# # Pybite solution
+#
+# def parse_social_platforms_string():
+#     """Convert the social_platforms string above into a dict where
+#        keys = social platformsname and values = validator namedtuples"""
+#     platforms = social_platforms.split('\n\n')
+#     return dict(_parse_platformstext(nw) for nw in platforms)
+#
+#
+# def _parse_platformstext(text):
+#     """Helper to parse a block of platformstext, returns platform name
+#        and Validator namedtuple"""
+#     lines = text.split('\n')
+#     name = lines[0].strip()
+#
+#     min_ = int(lines[1].split(': ')[1])
+#     max_ = int(lines[2].split(': ')[1]) + 1  # upper range is exclusive
+#
+#     char_classes = lines[3].split(': ')[1].replace(' ', '').replace('.', '\.')
+#     regex = f'^[{char_classes}]+$'  # one or more and make sure start to end
+#
+#     return name, Validator(range(min_, max_), re.compile(regex))
+#
+#
+# def validate_username(platform, username):
+#     """Receives platforms(Twitter, Facebook or Reddit) and username string,
+#        raise a ValueError if the wrong platform is passed in,
+#        return True/False if username is valid for entered platform"""
+#     all_validators = parse_social_platforms_string()
+#     validator = all_validators.get(platform)
+#
+#     if not validator:
+#         raise ValueError('Not a valid platform')
+#
+#     if len(username) not in validator.range:
+#         return False
+#
+#     return validator.regex.match(username)
+#
+#
+# # Cleaner solution:
+# from collections import namedtuple
+# import re
+#
+# social_platforms = """Twitter
+#   Min: 1
+#   Max: 15
+#   Can contain: a-z A-Z 0-9 _
+#
+# Facebook
+#   Min: 5
+#   Max: 50
+#   Can contain: a-z A-Z 0-9 .
+#
+# Reddit
+#   Min: 3
+#   Max: 20
+#   Can contain: a-z A-Z 0-9 _ -
+# """
+#
+# # note range is of type range and regex is a re.compile object
+# Validator = namedtuple('Validator', 'range regex')
+#
+#
+# def parse_social_platforms_string():
+#     """Convert the social_platforms string above into a dict where
+#        keys = social platform's name and values = validator namedtuples"""
+#     result = {}
+#
+#     min = max = 0
+#     name = regex = ''
+#     for line in social_platforms.splitlines():
+#         if line.strip():
+#             if 'Min:' in line:
+#                 min = int(line.split(':')[1])
+#             elif 'Max:' in line:
+#                 max = int(line.split(':')[1])
+#             elif 'Can contain:' in line:
+#                 regex = ''.join(line.split(':')[1].split())
+#             else:
+#                 name = line.strip()
+#
+#         if min and max and name and regex:
+#             result[name] = Validator(range(min, max + 1), re.compile(f'^[{regex}]{{{min},{max}}}$'))
+#
+#     return result
+#
+#
+# def validate_username(platform, username):
+#     """Receives platforms(Twitter, Facebook or Reddit) and username string,
+#        raise a ValueError if the wrong platform is passed in,
+#        return True/False if username is valid for entered platform"""
+#     all_validators = parse_social_platforms_string()
+#
+#     if platform not in all_validators:
+#         raise ValueError(f'unknown platform: {platform}')
+#
+#     # it's not absolutely necessary to check the length of the input string, b/c the regex does that too
+#     # if len(username) not in all_validators[platform].range:
+#     #     return False
+#
+#     matches = all_validators[platform].regex.match(username)
+#     return matches is not None
 
-# nice snippet: https://gist.github.com/tonybruess/9405134
-from collections import namedtuple
 import re
 
-social_platforms = """Twitter
-  Min: 1
-  Max: 15
-  Can contain: a-z A-Z 0-9 _
 
-Facebook
-  Min: 5
-  Max: 50
-  Can contain: a-z A-Z 0-9 .
+# has both upper and lower case
+def upper_lower(password:str)->int:
+    return int(bool(re.search('[a-z][A-Z]|[A-Z][a-z]',password)))
 
-Reddit
-  Min: 3
-  Max: 20
-  Can contain: a-z A-Z 0-9 _ -
-"""
+# has both upper and lower case
+def char_and_1_num(password:str)->int:
+    return int(bool(re.search('\d.*[a-zA-Z]|[a-zA-Z].*\d',password)))
 
-# note range is of type range and regex is a re.compile object
-Validator = namedtuple('Validator', 'range regex')
+def has_special_char(password:str)->int:
+    return int(bool(re.search('\W',password)))
 
 
-def parse_social_platforms_string():
-    """Convert the social_platforms string above into a dict where
-       keys = social platformsname and values = validator namedtuples"""
+def length_8(password:str)->int:
+    return int(len(password)>=8)
 
-    sm_dict = {}
-    for line in social_platforms.split("\n"):
-        if re.search(r"^\S", line):
-            key = line.strip()
-        elif match:= re.search(r"^\s+Min: (?P<min>\d+)", line):
-            minimum = int(match.group('min'))
 
-        elif match:= re.search(r"^\s+Max: (?P<max>\d+)", line):
-            maximum = int(match.group('max'))
+def has_repeated_char(password:str)->int:
+    if len(password)>=8:
+        print(f"Repeated: {bool(re.search(r'(.)\1', password))} ")
+        return int(not bool(re.search(r'(.)\1',password)))
+    return 0
 
-        elif match := re.search(r"^\s+Can contain: (?P<reg>.+)", line):
-            reg =match.group('reg')
-            rules = reg.strip().split()
-            patt_str = r'^['
-            for r in rules:
-                if re.search('.-.', r):
-                    patt_str += r
-                else:
-                    patt_str = patt_str + "\\"
-                    patt_str += r
-            patt_str += f"]{{{minimum},{maximum}}}$"
-            regex = re.compile(f"{patt_str}")
-        else:
-            sm_dict[key] = Validator(range(minimum, maximum), regex)
-    return sm_dict
-#
+def password_complexity(password):
+    """Input: password string, calculate score according to 5 criteria in bite,
+       return: score int"""
+    function_list = [upper_lower, char_and_1_num, has_special_char,
+                     length_8, has_repeated_char]
 
-def validate_username(platform, username):
-    """Receives platforms(Twitter, Facebook or Reddit) and username string,
-       raise a ValueError if the wrong platform is passed in,
-       return True/False if username is valid for entered platform"""
-    all_validators = parse_social_platforms_string()
-    if platform not in all_validators.keys():
-        raise ValueError
-    p = all_validators[platform]
-    return re.search(p.regex, username)
-
-# Thoughts:
-# Big lesson:
-# work flow: parse string / config file => obj / dict
-
+    return sum([f(password) for f in function_list])
 
 
 # Pybite solution
-
-def parse_social_platforms_string():
-    """Convert the social_platforms string above into a dict where
-       keys = social platformsname and values = validator namedtuples"""
-    platforms = social_platforms.split('\n\n')
-    return dict(_parse_platformstext(nw) for nw in platforms)
-
-
-def _parse_platformstext(text):
-    """Helper to parse a block of platformstext, returns platform name
-       and Validator namedtuple"""
-    lines = text.split('\n')
-    name = lines[0].strip()
-
-    min_ = int(lines[1].split(': ')[1])
-    max_ = int(lines[2].split(': ')[1]) + 1  # upper range is exclusive
-
-    char_classes = lines[3].split(': ')[1].replace(' ', '').replace('.', '\.')
-    regex = f'^[{char_classes}]+$'  # one or more and make sure start to end
-
-    return name, Validator(range(min_, max_), re.compile(regex))
-
-
-def validate_username(platform, username):
-    """Receives platforms(Twitter, Facebook or Reddit) and username string,
-       raise a ValueError if the wrong platform is passed in,
-       return True/False if username is valid for entered platform"""
-    all_validators = parse_social_platforms_string()
-    validator = all_validators.get(platform)
-
-    if not validator:
-        raise ValueError('Not a valid platform')
-
-    if len(username) not in validator.range:
-        return False
-
-    return validator.regex.match(username)
-
-
-# Cleaner solution:
-from collections import namedtuple
 import re
 
-social_platforms = """Twitter
-  Min: 1
-  Max: 15
-  Can contain: a-z A-Z 0-9 _
 
-Facebook
-  Min: 5
-  Max: 50
-  Can contain: a-z A-Z 0-9 .
+def password_complexity(password):
+    """Input: password string, calculate score according to 5 criteria in bite,
+       return: score int"""
+    score = 0
 
-Reddit
-  Min: 3
-  Max: 20
-  Can contain: a-z A-Z 0-9 _ -
-"""
+    if re.search(r'[A-Z]+', password) and re.search(r'[a-z]+', password):
+        score += 1
 
-# note range is of type range and regex is a re.compile object
-Validator = namedtuple('Validator', 'range regex')
+    if re.search(r'[a-z]+', password.lower()) and re.search(r'\d+', password):
+        score += 1
 
+    if re.search('[^A-Za-z0-9]+', password):
+        score += 1
 
-def parse_social_platforms_string():
-    """Convert the social_platforms string above into a dict where
-       keys = social platform's name and values = validator namedtuples"""
-    result = {}
+    if len(password) >= 8:
+        score += 1
 
-    min = max = 0
-    name = regex = ''
-    for line in social_platforms.splitlines():
-        if line.strip():
-            if 'Min:' in line:
-                min = int(line.split(':')[1])
-            elif 'Max:' in line:
-                max = int(line.split(':')[1])
-            elif 'Can contain:' in line:
-                regex = ''.join(line.split(':')[1].split())
-            else:
-                name = line.strip()
+    # and now the most tricky one:
+    if len(password) >= 8 and not re.search(r'(.)(\1{1,})', password):
+        score += 1
 
-        if min and max and name and regex:
-            result[name] = Validator(range(min, max + 1), re.compile(f'^[{regex}]{{{min},{max}}}$'))
+    return score
 
-    return result
-
-
-def validate_username(platform, username):
-    """Receives platforms(Twitter, Facebook or Reddit) and username string,
-       raise a ValueError if the wrong platform is passed in,
-       return True/False if username is valid for entered platform"""
-    all_validators = parse_social_platforms_string()
-
-    if platform not in all_validators:
-        raise ValueError(f'unknown platform: {platform}')
-
-    # it's not absolutely necessary to check the length of the input string, b/c the regex does that too
-    # if len(username) not in all_validators[platform].range:
-    #     return False
-
-    matches = all_validators[platform].regex.match(username)
-    return matches is not None
