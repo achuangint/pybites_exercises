@@ -14817,38 +14817,85 @@ Inputs are modified to check how the function deals with unknown characters
 #     assert not validate_username('Reddit', 'bobb.')
 #     assert not validate_username('Reddit', 'bob@PyBites')
 #     assert not validate_username('Reddit', 'bob$56')
+#
+# import pytest
+#
+# from wc import password_complexity
+#
+#
+# @pytest.mark.parametrize("arg, expected", [
+#     ('abc', 0),
+#     ('ABC', 0),
+#     ('123', 0),
+#     ('abc1', 1),
+#     ('ABC1', 1),
+#     ('@', 1),
+#     ('aA@', 2),
+#     ('aA1@', 3),
+#     ('aA1@1224', 4),  # repeated 2
+#     ('aA1@1234', 5),
+#     ('aaaabbbbc', 1),
+#     ('abcdabcd', 2),
+#     ('Abcdabcd', 3),
+#     ('Abcdabc$', 4),
+#     ('Abcdab1$', 5),
+#     ('Abcdaac$', 3),
+#     ('123$abc', 2),
+#     ('123$abC', 3),
+#     ('123$abcd', 4),
+#     ('123$abC1', 5),
+#     ('123$abb1', 3),
+#     ('123$Abb1', 4),
+#     ('123$Abc1', 5),
+#     ('@@@@@@@@@@', 2),
+#     ('@$@$@$@$@$', 3),
+# ])
+# def test_password_complexity(arg, expected):
+#     assert password_complexity(arg) == expected
 
-import pytest
 
-from wc import password_complexity
+from wc import (characters,
+                    most_popular_characters,
+                    max_and_min_years_new_characters,
+                    get_percentage_female_characters)
+
+half_size = int(len(characters)/2)
+
+half_characters = characters[:half_size]
 
 
-@pytest.mark.parametrize("arg, expected", [
-    ('abc', 0),
-    ('ABC', 0),
-    ('123', 0),
-    ('abc1', 1),
-    ('ABC1', 1),
-    ('@', 1),
-    ('aA@', 2),
-    ('aA1@', 3),
-    ('aA1@1224', 4),  # repeated 2
-    ('aA1@1234', 5),
-    ('aaaabbbbc', 1),
-    ('abcdabcd', 2),
-    ('Abcdabcd', 3),
-    ('Abcdabc$', 4),
-    ('Abcdab1$', 5),
-    ('Abcdaac$', 3),
-    ('123$abc', 2),
-    ('123$abC', 3),
-    ('123$abcd', 4),
-    ('123$abC1', 5),
-    ('123$abb1', 3),
-    ('123$Abb1', 4),
-    ('123$Abc1', 5),
-    ('@@@@@@@@@@', 2),
-    ('@$@$@$@$@$', 3),
-])
-def test_password_complexity(arg, expected):
-    assert password_complexity(arg) == expected
+def test_most_popular_characters():
+    actual = most_popular_characters()
+    expected = ['Spider-Man', 'Captain America', 'Wolverine',
+                'Iron Man', 'Thor']
+    assert actual == expected
+
+
+def test_max_and_min_years_new_characters():
+    actual = max_and_min_years_new_characters()
+    expected = ('1993', '1958')
+    assert actual == expected
+
+
+def test_get_percentage_female_characters():
+    actual = get_percentage_female_characters()
+    expected = 24.72
+    assert actual == expected
+
+
+def test_most_popular_characters_smaller_data_set_and_top_2():
+    expected = ['Spider-Man', 'Captain America']
+    actual = most_popular_characters(half_characters, top=2)
+    assert actual == expected
+
+
+def test_max_and_min_years_new_characters_smaller_data_set():
+    expected = ('1992', '1959')
+    actual = max_and_min_years_new_characters(half_characters)
+    assert actual == expected
+
+
+def test_get_percentage_female_characters_smaller_data_set():
+    actual = get_percentage_female_characters(half_characters)
+    expected = 28.73
+    assert actual == expected
