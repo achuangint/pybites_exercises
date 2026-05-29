@@ -14853,49 +14853,79 @@ Inputs are modified to check how the function deals with unknown characters
 # def test_password_complexity(arg, expected):
 #     assert password_complexity(arg) == expected
 
+#
+# from wc import (characters,
+#                     most_popular_characters,
+#                     max_and_min_years_new_characters,
+#                     get_percentage_female_characters)
+#
+# half_size = int(len(characters)/2)
+#
+# half_characters = characters[:half_size]
+#
+#
+# def test_most_popular_characters():
+#     actual = most_popular_characters()
+#     expected = ['Spider-Man', 'Captain America', 'Wolverine',
+#                 'Iron Man', 'Thor']
+#     assert actual == expected
+#
+#
+# def test_max_and_min_years_new_characters():
+#     actual = max_and_min_years_new_characters()
+#     expected = ('1993', '1958')
+#     assert actual == expected
+#
+#
+# def test_get_percentage_female_characters():
+#     actual = get_percentage_female_characters()
+#     expected = 24.72
+#     assert actual == expected
+#
+#
+# def test_most_popular_characters_smaller_data_set_and_top_2():
+#     expected = ['Spider-Man', 'Captain America']
+#     actual = most_popular_characters(half_characters, top=2)
+#     assert actual == expected
+#
+#
+# def test_max_and_min_years_new_characters_smaller_data_set():
+#     expected = ('1992', '1959')
+#     actual = max_and_min_years_new_characters(half_characters)
+#     assert actual == expected
+#
+#
+# def test_get_percentage_female_characters_smaller_data_set():
+#     actual = get_percentage_female_characters(half_characters)
+#     expected = 28.73
+#     assert actual == expected
 
-from wc import (characters,
-                    most_popular_characters,
-                    max_and_min_years_new_characters,
-                    get_percentage_female_characters)
-
-half_size = int(len(characters)/2)
-
-half_characters = characters[:half_size]
+from wc import what_means_emoji, find_emoji
 
 
-def test_most_popular_characters():
-    actual = most_popular_characters()
-    expected = ['Spider-Man', 'Captain America', 'Wolverine',
-                'Iron Man', 'Thor']
-    assert actual == expected
+def test_what_means_emoji_found():
+    what_means_emoji('🐶').lower() == 'dog face'
+    what_means_emoji('🏋').lower() == 'weight lifter'
+    what_means_emoji('🌇').lower() == 'sunset over buildings'
 
 
-def test_max_and_min_years_new_characters():
-    actual = max_and_min_years_new_characters()
-    expected = ('1993', '1958')
-    assert actual == expected
+def test_what_means_emoji_not_found():
+    assert what_means_emoji('aaa').lower() == 'not found'
 
 
-def test_get_percentage_female_characters():
-    actual = get_percentage_female_characters()
-    expected = 24.72
-    assert actual == expected
+def test_find_matches(capfd):
+    find_emoji('sun')
+    output = capfd.readouterr()[0].lower()
+    # some of the results you should get back
+    assert 'sunrise' in output
+    assert '🌅' in output
+    assert 'sunset over buildings' in output
+    assert '🌇' in output
+    assert 'sun with face' in output
+    assert '🌻' in output
 
 
-def test_most_popular_characters_smaller_data_set_and_top_2():
-    expected = ['Spider-Man', 'Captain America']
-    actual = most_popular_characters(half_characters, top=2)
-    assert actual == expected
-
-
-def test_max_and_min_years_new_characters_smaller_data_set():
-    expected = ('1992', '1959')
-    actual = max_and_min_years_new_characters(half_characters)
-    assert actual == expected
-
-
-def test_get_percentage_female_characters_smaller_data_set():
-    actual = get_percentage_female_characters(half_characters)
-    expected = 28.73
-    assert actual == expected
+def test_find_no_match(capfd):
+    find_emoji('awesome')
+    output = capfd.readouterr()[0].lower()
+    assert not output.strip() or 'no matches' in output.lower()

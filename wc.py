@@ -14362,173 +14362,276 @@ enumerate through the text by letter
 #
 #     return score
 #
+#
+# from collections import Counter
+# import csv
+# import re
+# import requests
+# from typing import NamedTuple
+#
+#
+# class Character(NamedTuple):
+#     pid: str
+#     name: str
+#     sid: str
+#     align: str
+#     sex: str
+#     appearances: str
+#     year: str
+#
+#
+# MARVEL_CSV = "https://raw.githubusercontent.com/pybites/marvel_challenge/master/marvel-wikia-data.csv"  # noqa E501
+#
+#
+# def _get_csv_data() -> str:
+#     """Download the Marvel CSV data and return its decoded content as a string.
+#
+#     Returns:
+#         str: The raw CSV data content as a UTF-8 decoded string.
+#     """
+#     with requests.Session() as session:
+#         return session.get(MARVEL_CSV).content.decode("utf-8")
+#
+#
+# def _load_data() -> list[Character]:
+#     """Convert the Marvel CSV data into a list of Character namedtuples.
+#
+#     Returns:
+#         list[Character]: A list of Character namedtuples parsed from the CSV file.
+#     """
+#     content = _get_csv_data()
+#     reader = csv.DictReader(content.splitlines(), delimiter=",")
+#     characters = [
+#         Character(
+#             pid=row["page_id"],
+#             name=re.sub(r"(.*?)\(.*", r"\1", row["name"]).strip(),
+#             sid=row["ID"],
+#             align=row["ALIGN"],
+#             sex=row["SEX"],
+#             appearances=row["APPEARANCES"],
+#             year=row["Year"],
+#         )
+#         for row in reader
+#     ]
+#     return characters
+#
+#
+# characters = _load_data()
+#
+#
+# def most_popular_characters(
+#     characters: list[Character] = characters, top: int = 5
+# ) -> list[str]:
+#     """Get the most popular characters by the number of appearances.
+#
+#     Args:
+#         characters (list[Character]): The list of Character namedtuples.
+#         top (int): The number of top characters to return. Defaults to 5.
+#
+#     Returns:
+#         list[str]: A list of names of the top `n` most popular characters.
+#     """
+#     appearance_dict = { c.pid:((int(c.appearances) ,c.name ) if c.appearances.strip() else (0 ,c.name ))
+#                         for c in characters}
+#     sorted_appearance=dict(sorted(appearance_dict.items(),key=lambda item: int(item[1][0]), reverse=True))
+#
+#     return [sorted_appearance[c][1] for index, c in enumerate(sorted_appearance) if index<top]
+#
+#
+#
+# def max_and_min_years_new_characters(
+#     characters: list[Character] = characters,
+# ) -> tuple[str, str]:
+#     """Determine the years with the most and the least new Marvel characters introduced.
+#
+#     In cases where multiple years have the same number of new characters,
+#     the most recent year is chosen.
+#
+#     Args:
+#         characters (list[Character]): The list of Character namedtuples.
+#
+#     Returns:
+#         tuple[str, str]: A tuple containing the year with the most and the year with the least new characters.
+#     """
+#     c=Counter([c.year  for c in characters if c.year])
+#     return (c.most_common()[0][0] , c.most_common()[-1][0])
+#
+#
+# def get_percentage_female_characters(characters: list[Character] = characters) -> float:
+#     """Calculate the percentage of female characters across all appearances.
+#
+#     Characters without a specified gender (i.e., missing or other) are ignored.
+#
+#     Args:
+#         characters (list[Character]): The list of Character namedtuples.
+#
+#     Returns:
+#         float: The percentage of female characters, rounded to two decimal places.
+#     """
+#     c = Counter([c.sex for c in characters ])
+#     return round(c['Female Characters']*100 / (c['Male Characters']+c['Female Characters'] + (c['Agender Characters']) + (c['Genderfluid Characters'])),2)
+#
+# #pybite solutions
+#
+# def most_popular_characters(
+#     characters: list[Character] = characters, top: int = 5
+# ) -> list[str]:
+#     """Get the most popular characters by the number of appearances.
+#
+#     Args:
+#         characters (list[Character]): The list of Character namedtuples.
+#         top (int): The number of top characters to return. Defaults to 5.
+#
+#     Returns:
+#         list[str]: A list of names of the top `n` most popular characters.
+#     """
+#     appearances = (
+#         character for character in characters if character.appearances.isdigit()
+#     )
+#     top_characters = sorted(
+#         appearances, key=lambda x: int(x.appearances), reverse=True
+#     )[:top]
+#     return [character.name for character in top_characters]
+#
+#
+# def max_and_min_years_new_characters(
+#     characters: list[Character] = characters,
+# ) -> tuple[str, str]:
+#     """Determine the years with the most and the least new Marvel characters introduced.
+#
+#     In cases where multiple years have the same number of new characters,
+#     the most recent year is chosen.
+#
+#     Args:
+#         characters (list[Character]): The list of Character namedtuples.
+#
+#     Returns:
+#         tuple[str, str]: A tuple containing the year with the most and the year with the least new characters.
+#     """
+#     most_common = Counter(
+#         character.year for character in characters if character.year
+#     ).most_common()
+#     return most_common[0][0], most_common[-1][0]
+#
+#
+# def get_percentage_female_characters(characters: list[Character] = characters) -> float:
+#     """Calculate the percentage of female characters across all appearances.
+#
+#     Characters without a specified gender (i.e., missing or other) are ignored.
+#
+#     Args:
+#         characters (list[Character]): The list of Character namedtuples.
+#
+#     Returns:
+#         float: The percentage of female characters, rounded to two decimal places.
+#     """
+#     sexes = Counter(character.sex for character in characters if character.sex)
+#     female_percentage = (sexes["Female Characters"] / sum(sexes.values())) * 100
+#     return round(female_percentage, 2)
+#
+#
 
-from collections import Counter
-import csv
-import re
-import requests
-from typing import NamedTuple
+
+import sys
+import unicodedata
 
 
-class Character(NamedTuple):
-    pid: str
-    name: str
-    sid: str
-    align: str
-    sex: str
-    appearances: str
-    year: str
+START_EMOJI_RANGE = 100000  # estimate
 
 
-MARVEL_CSV = "https://raw.githubusercontent.com/pybites/marvel_challenge/master/marvel-wikia-data.csv"  # noqa E501
+def what_means_emoji(emoji):
+    """Receives emoji and returns its meaning,
+       in case of a TypeError return 'Not found'"""
+    try:
+        return unicodedata.name(emoji)
+    except TypeError:
+        return 'Not found'
 
 
-def _get_csv_data() -> str:
-    """Download the Marvel CSV data and return its decoded content as a string.
+def _make_emoji_mapping():
+    """Helper to make a mapping of all possible emojis:
+       - loop through range(START_EMOJI_RANGE, sys.maxunicode +1)
+       - return dict with keys=emojis, values=names"""
 
-    Returns:
-        str: The raw CSV data content as a UTF-8 decoded string.
-    """
-    with requests.Session() as session:
-        return session.get(MARVEL_CSV).content.decode("utf-8")
-
-
-def _load_data() -> list[Character]:
-    """Convert the Marvel CSV data into a list of Character namedtuples.
-
-    Returns:
-        list[Character]: A list of Character namedtuples parsed from the CSV file.
-    """
-    content = _get_csv_data()
-    reader = csv.DictReader(content.splitlines(), delimiter=",")
-    characters = [
-        Character(
-            pid=row["page_id"],
-            name=re.sub(r"(.*?)\(.*", r"\1", row["name"]).strip(),
-            sid=row["ID"],
-            align=row["ALIGN"],
-            sex=row["SEX"],
-            appearances=row["APPEARANCES"],
-            year=row["Year"],
-        )
-        for row in reader
-    ]
-    return characters
+    emoji_mapping={}
+    for c in range(START_EMOJI_RANGE,sys.maxunicode + 1):
+        try:
+            name = what_means_emoji(chr(c))
+            emoji_mapping[chr(c)]=name.lower()
+        except ValueError:
+            pass
+    return emoji_mapping
 
 
-characters = _load_data()
+def find_emoji(term):
+    """Return emojis and their texts that match (case insensitive)
+       term, print matches to console"""
+    term = term.lower()
+
+    emoji_mapping = _make_emoji_mapping()
+    for key, val in emoji_mapping.items():
+        if term in val:
+            print(f"{key} {val}")
 
 
-def most_popular_characters(
-    characters: list[Character] = characters, top: int = 5
-) -> list[str]:
-    """Get the most popular characters by the number of appearances.
-
-    Args:
-        characters (list[Character]): The list of Character namedtuples.
-        top (int): The number of top characters to return. Defaults to 5.
-
-    Returns:
-        list[str]: A list of names of the top `n` most popular characters.
-    """
-    appearance_dict = { c.pid:((int(c.appearances) ,c.name ) if c.appearances.strip() else (0 ,c.name ))
-                        for c in characters}
-    sorted_appearance=dict(sorted(appearance_dict.items(),key=lambda item: int(item[1][0]), reverse=True))
-
-    return [sorted_appearance[c][1] for index, c in enumerate(sorted_appearance) if index<top]
+# Pybite solution
+import sys
+import unicodedata
 
 
-
-def max_and_min_years_new_characters(
-    characters: list[Character] = characters,
-) -> tuple[str, str]:
-    """Determine the years with the most and the least new Marvel characters introduced.
-
-    In cases where multiple years have the same number of new characters,
-    the most recent year is chosen.
-
-    Args:
-        characters (list[Character]): The list of Character namedtuples.
-
-    Returns:
-        tuple[str, str]: A tuple containing the year with the most and the year with the least new characters.
-    """
-    c=Counter([c.year  for c in characters if c.year])
-    return (c.most_common()[0][0] , c.most_common()[-1][0])
+START_EMOJI_RANGE = 100000  # estimate
 
 
-def get_percentage_female_characters(characters: list[Character] = characters) -> float:
-    """Calculate the percentage of female characters across all appearances.
-
-    Characters without a specified gender (i.e., missing or other) are ignored.
-
-    Args:
-        characters (list[Character]): The list of Character namedtuples.
-
-    Returns:
-        float: The percentage of female characters, rounded to two decimal places.
-    """
-    c = Counter([c.sex for c in characters ])
-    return round(c['Female Characters']*100 / (c['Male Characters']+c['Female Characters'] + (c['Agender Characters']) + (c['Genderfluid Characters'])),2)
-
-#pybite solutions
-
-def most_popular_characters(
-    characters: list[Character] = characters, top: int = 5
-) -> list[str]:
-    """Get the most popular characters by the number of appearances.
-
-    Args:
-        characters (list[Character]): The list of Character namedtuples.
-        top (int): The number of top characters to return. Defaults to 5.
-
-    Returns:
-        list[str]: A list of names of the top `n` most popular characters.
-    """
-    appearances = (
-        character for character in characters if character.appearances.isdigit()
-    )
-    top_characters = sorted(
-        appearances, key=lambda x: int(x.appearances), reverse=True
-    )[:top]
-    return [character.name for character in top_characters]
+def what_means_emoji(emoji):
+    """Receives emoji and returns its meaning,
+       in case of a TypeError return 'Not found'"""
+    try:
+        return unicodedata.name(emoji)
+    except TypeError:
+        return 'Not found'
 
 
-def max_and_min_years_new_characters(
-    characters: list[Character] = characters,
-) -> tuple[str, str]:
-    """Determine the years with the most and the least new Marvel characters introduced.
-
-    In cases where multiple years have the same number of new characters,
-    the most recent year is chosen.
-
-    Args:
-        characters (list[Character]): The list of Character namedtuples.
-
-    Returns:
-        tuple[str, str]: A tuple containing the year with the most and the year with the least new characters.
-    """
-    most_common = Counter(
-        character.year for character in characters if character.year
-    ).most_common()
-    return most_common[0][0], most_common[-1][0]
+def _make_emoji_mapping():
+    """Helper to make a mapping of all possible emojis:
+       - loop through range(START_EMOJI_RANGE, sys.maxunicode +1)
+       - return dict with keys=emojis, values=names"""
+    # upper limit: https://stackoverflow.com/a/14246025
+    for i in range(START_EMOJI_RANGE, sys.maxunicode + 1):
+        char = chr(i)
+        try:
+            # https://stackoverflow.com/a/25707257
+            yield char, unicodedata.name(char)
+        except (TypeError, ValueError):
+            continue
 
 
-def get_percentage_female_characters(characters: list[Character] = characters) -> float:
-    """Calculate the percentage of female characters across all appearances.
+def find_emoji(term):
+    """Return emojis and their texts that match (case insensitive)
+       term, print matches to console"""
+    term = term.lower()
+    emojis = _make_emoji_mapping()
 
-    Characters without a specified gender (i.e., missing or other) are ignored.
+    for emoji, text in emojis:
+        if term in text.lower():
+            print(f'{text.title():<60} | {emoji}')
 
-    Args:
-        characters (list[Character]): The list of Character namedtuples.
 
-    Returns:
-        float: The percentage of female characters, rounded to two decimal places.
-    """
-    sexes = Counter(character.sex for character in characters if character.sex)
-    female_percentage = (sexes["Female Characters"] / sum(sexes.values())) * 100
-    return round(female_percentage, 2)
+if __name__ == '__main__':
+    # can easily be turned in cli utility
+    if len(sys.argv) == 1:
+        while True:
+            term = input('\nWhat emoji do you want? ')
+            if term == 'q':
+                print('Bye')
+                sys.exit(0)
+            find_emoji(term)
 
+    elif len(sys.argv) != 2:
+        print(f'Usage: {sys.argv[0]} search-term')
+        sys.exit(1)
+    else:
+        term = sys.argv[1]
+        find_emoji(term)
 
 
 
