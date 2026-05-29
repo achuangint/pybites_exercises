@@ -14531,107 +14531,160 @@ enumerate through the text by letter
 #
 #
 
+#
+# import sys
+# import unicodedata
+#
+#
+# START_EMOJI_RANGE = 100000  # estimate
+#
+#
+# def what_means_emoji(emoji):
+#     """Receives emoji and returns its meaning,
+#        in case of a TypeError return 'Not found'"""
+#     try:
+#         return unicodedata.name(emoji)
+#     except TypeError:
+#         return 'Not found'
+#
+#
+# def _make_emoji_mapping():
+#     """Helper to make a mapping of all possible emojis:
+#        - loop through range(START_EMOJI_RANGE, sys.maxunicode +1)
+#        - return dict with keys=emojis, values=names"""
+#
+#     emoji_mapping={}
+#     for c in range(START_EMOJI_RANGE,sys.maxunicode + 1):
+#         try:
+#             name = what_means_emoji(chr(c))
+#             emoji_mapping[chr(c)]=name.lower()
+#         except ValueError:
+#             pass
+#     return emoji_mapping
+#
+#
+# def find_emoji(term):
+#     """Return emojis and their texts that match (case insensitive)
+#        term, print matches to console"""
+#     term = term.lower()
+#
+#     emoji_mapping = _make_emoji_mapping()
+#     for key, val in emoji_mapping.items():
+#         if term in val:
+#             print(f"{key} {val}")
+#
+#
+# # Pybite solution
+# import sys
+# import unicodedata
+#
+#
+# START_EMOJI_RANGE = 100000  # estimate
+#
+#
+# def what_means_emoji(emoji):
+#     """Receives emoji and returns its meaning,
+#        in case of a TypeError return 'Not found'"""
+#     try:
+#         return unicodedata.name(emoji)
+#     except TypeError:
+#         return 'Not found'
+#
+#
+# def _make_emoji_mapping():
+#     """Helper to make a mapping of all possible emojis:
+#        - loop through range(START_EMOJI_RANGE, sys.maxunicode +1)
+#        - return dict with keys=emojis, values=names"""
+#     # upper limit: https://stackoverflow.com/a/14246025
+#     for i in range(START_EMOJI_RANGE, sys.maxunicode + 1):
+#         char = chr(i)
+#         try:
+#             # https://stackoverflow.com/a/25707257
+#             yield char, unicodedata.name(char)
+#         except (TypeError, ValueError):
+#             continue
+#
+#
+# def find_emoji(term):
+#     """Return emojis and their texts that match (case insensitive)
+#        term, print matches to console"""
+#     term = term.lower()
+#     emojis = _make_emoji_mapping()
+#
+#     for emoji, text in emojis:
+#         if term in text.lower():
+#             print(f'{text.title():<60} | {emoji}')
+#
+#
+# if __name__ == '__main__':
+#     # can easily be turned in cli utility
+#     if len(sys.argv) == 1:
+#         while True:
+#             term = input('\nWhat emoji do you want? ')
+#             if term == 'q':
+#                 print('Bye')
+#                 sys.exit(0)
+#             find_emoji(term)
+#
+#     elif len(sys.argv) != 2:
+#         print(f'Usage: {sys.argv[0]} search-term')
+#         sys.exit(1)
+#     else:
+#         term = sys.argv[1]
+#         find_emoji(term)
+import re
 
-import sys
-import unicodedata
+output = """
+                                       mohh@SERENiTY
+ MMMMMMMMMMMMMMMMMMMMMMMMMmds+.        OS: Mint 19 tara
+ MMm----::-://////////////oymNMd+'     Kernel: x86_64 Linux 4.15.0-34-generic
+ MMd      /++                -sNMd:    Uptime: 1d 4m
+ MMNso/'  dMM    '.::-. .-::.' .hMN:   Packages: 2351
+ ddddMMh  dMM   :hNMNMNhNMNMNh: 'NMm   Shell: zsh 5.4.2
+     NMm  dMM  .NMN/-+MMM+-/NMN' dMM   Resolution: 1366x768
+     NMm  dMM  -MMm  'MMM   dMM. dMM   DE: Cinnamon 3.8.9
+     NMm  dMM  -MMm  'MMM   dMM. dMM   WM: Muffin
+     NMm  dMM  .mmd  'mmm   yMM. dMM   WM Theme: Linux Mint (Mint-Y)
+     NMm  dMM'  ..'   ...   ydm. dMM   GTK Theme: Mint-Y [GTK2/3]
+     hMM- +MMd/-------...-:sdds  dMM   Icon Theme: Mint-Y
+     -NMm- :hNMNNNmdddddddddy/'  dMM   Font: Noto Sans 9
+      -dMNs-''-::::-------.''    dMM   CPU: AMD A10-7400P Radeon R6, 10 Compute Cores 4C+6G @ 4x 2.5GHz [101.0°C]
+       '/dMNmy+/:-------------:/yMMM   GPU: AMD KAVERI (DRM 2.50.0 / 4.15.0-34-generic, LLVM 6.0.0)
+          ./ydNMMMMMMMMMMMMMMMMMMMMM   RAM: 1886MiB / 6915MiB
+             \.MMMMMMMMMMMMMMMMMMM    
+"""
 
 
-START_EMOJI_RANGE = 100000  # estimate
+def sysinfo_scrape(output):
+    """Scrapes the output from screenfetch and returns a dictionary"""
 
+    params = [ 'OS', 'Kernel', 'Uptime', 'Packages', 'Shell',
+            'Resolution', 'DE', 'WM', 'WM Theme', 'GTK Theme', 'Icon Theme',
+            'Font', 'CPU', 'GPU', 'RAM']
+    info_dict={}
+    for line in output.split("\n"):
+        if match:=re.search(r"\w+@\w+",line):
+            info_dict['Name']= match.group()
+        else:
+            for p in params:
+                if p+':' in line:
+                    info_dict[p]=line.split(":")[-1].strip()
+    return info_dict
 
-def what_means_emoji(emoji):
-    """Receives emoji and returns its meaning,
-       in case of a TypeError return 'Not found'"""
-    try:
-        return unicodedata.name(emoji)
-    except TypeError:
-        return 'Not found'
+# pybite solution
 
+def sysinfo_scrape(output):
+    """Scrapes the output from screenfetch and returns a dictionary"""
+    start = [l.index("RAM") for l in output.split("\n") if "RAM" in l][0]
+    sysinfo = defaultdict(dict)
 
-def _make_emoji_mapping():
-    """Helper to make a mapping of all possible emojis:
-       - loop through range(START_EMOJI_RANGE, sys.maxunicode +1)
-       - return dict with keys=emojis, values=names"""
+    data = (info[start:] for info in output.split("\n") if len(info) > start)
 
-    emoji_mapping={}
-    for c in range(START_EMOJI_RANGE,sys.maxunicode + 1):
-        try:
-            name = what_means_emoji(chr(c))
-            emoji_mapping[chr(c)]=name.lower()
-        except ValueError:
-            pass
-    return emoji_mapping
+    for info in data:
+        if ":" in info:
+            key, value = info.split(": ")
+            sysinfo[key] = value
+        else:
+            sysinfo["Name"] = info
 
-
-def find_emoji(term):
-    """Return emojis and their texts that match (case insensitive)
-       term, print matches to console"""
-    term = term.lower()
-
-    emoji_mapping = _make_emoji_mapping()
-    for key, val in emoji_mapping.items():
-        if term in val:
-            print(f"{key} {val}")
-
-
-# Pybite solution
-import sys
-import unicodedata
-
-
-START_EMOJI_RANGE = 100000  # estimate
-
-
-def what_means_emoji(emoji):
-    """Receives emoji and returns its meaning,
-       in case of a TypeError return 'Not found'"""
-    try:
-        return unicodedata.name(emoji)
-    except TypeError:
-        return 'Not found'
-
-
-def _make_emoji_mapping():
-    """Helper to make a mapping of all possible emojis:
-       - loop through range(START_EMOJI_RANGE, sys.maxunicode +1)
-       - return dict with keys=emojis, values=names"""
-    # upper limit: https://stackoverflow.com/a/14246025
-    for i in range(START_EMOJI_RANGE, sys.maxunicode + 1):
-        char = chr(i)
-        try:
-            # https://stackoverflow.com/a/25707257
-            yield char, unicodedata.name(char)
-        except (TypeError, ValueError):
-            continue
-
-
-def find_emoji(term):
-    """Return emojis and their texts that match (case insensitive)
-       term, print matches to console"""
-    term = term.lower()
-    emojis = _make_emoji_mapping()
-
-    for emoji, text in emojis:
-        if term in text.lower():
-            print(f'{text.title():<60} | {emoji}')
-
-
-if __name__ == '__main__':
-    # can easily be turned in cli utility
-    if len(sys.argv) == 1:
-        while True:
-            term = input('\nWhat emoji do you want? ')
-            if term == 'q':
-                print('Bye')
-                sys.exit(0)
-            find_emoji(term)
-
-    elif len(sys.argv) != 2:
-        print(f'Usage: {sys.argv[0]} search-term')
-        sys.exit(1)
-    else:
-        term = sys.argv[1]
-        find_emoji(term)
-
-
-
+    return sysinfo
