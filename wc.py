@@ -14632,59 +14632,110 @@ enumerate through the text by letter
 #     else:
 #         term = sys.argv[1]
 #         find_emoji(term)
-import re
+# import re
+#
+# output = """
+#                                        mohh@SERENiTY
+#  MMMMMMMMMMMMMMMMMMMMMMMMMmds+.        OS: Mint 19 tara
+#  MMm----::-://////////////oymNMd+'     Kernel: x86_64 Linux 4.15.0-34-generic
+#  MMd      /++                -sNMd:    Uptime: 1d 4m
+#  MMNso/'  dMM    '.::-. .-::.' .hMN:   Packages: 2351
+#  ddddMMh  dMM   :hNMNMNhNMNMNh: 'NMm   Shell: zsh 5.4.2
+#      NMm  dMM  .NMN/-+MMM+-/NMN' dMM   Resolution: 1366x768
+#      NMm  dMM  -MMm  'MMM   dMM. dMM   DE: Cinnamon 3.8.9
+#      NMm  dMM  -MMm  'MMM   dMM. dMM   WM: Muffin
+#      NMm  dMM  .mmd  'mmm   yMM. dMM   WM Theme: Linux Mint (Mint-Y)
+#      NMm  dMM'  ..'   ...   ydm. dMM   GTK Theme: Mint-Y [GTK2/3]
+#      hMM- +MMd/-------...-:sdds  dMM   Icon Theme: Mint-Y
+#      -NMm- :hNMNNNmdddddddddy/'  dMM   Font: Noto Sans 9
+#       -dMNs-''-::::-------.''    dMM   CPU: AMD A10-7400P Radeon R6, 10 Compute Cores 4C+6G @ 4x 2.5GHz [101.0°C]
+#        '/dMNmy+/:-------------:/yMMM   GPU: AMD KAVERI (DRM 2.50.0 / 4.15.0-34-generic, LLVM 6.0.0)
+#           ./ydNMMMMMMMMMMMMMMMMMMMMM   RAM: 1886MiB / 6915MiB
+#              \.MMMMMMMMMMMMMMMMMMM
+# """
+#
+#
+# def sysinfo_scrape(output):
+#     """Scrapes the output from screenfetch and returns a dictionary"""
+#
+#     params = [ 'OS', 'Kernel', 'Uptime', 'Packages', 'Shell',
+#             'Resolution', 'DE', 'WM', 'WM Theme', 'GTK Theme', 'Icon Theme',
+#             'Font', 'CPU', 'GPU', 'RAM']
+#     info_dict={}
+#     for line in output.split("\n"):
+#         if match:=re.search(r"\w+@\w+",line):
+#             info_dict['Name']= match.group()
+#         else:
+#             for p in params:
+#                 if p+':' in line:
+#                     info_dict[p]=line.split(":")[-1].strip()
+#     return info_dict
+#
+# # pybite solution
+#
+# def sysinfo_scrape(output):
+#     """Scrapes the output from screenfetch and returns a dictionary"""
+#     start = [l.index("RAM") for l in output.split("\n") if "RAM" in l][0]
+#     sysinfo = defaultdict(dict)
+#
+#     data = (info[start:] for info in output.split("\n") if len(info) > start)
+#
+#     for info in data:
+#         if ":" in info:
+#             key, value = info.split(": ")
+#             sysinfo[key] = value
+#         else:
+#             sysinfo["Name"] = info
+#
+#     return sysinfo
 
-output = """
-                                       mohh@SERENiTY
- MMMMMMMMMMMMMMMMMMMMMMMMMmds+.        OS: Mint 19 tara
- MMm----::-://////////////oymNMd+'     Kernel: x86_64 Linux 4.15.0-34-generic
- MMd      /++                -sNMd:    Uptime: 1d 4m
- MMNso/'  dMM    '.::-. .-::.' .hMN:   Packages: 2351
- ddddMMh  dMM   :hNMNMNhNMNMNh: 'NMm   Shell: zsh 5.4.2
-     NMm  dMM  .NMN/-+MMM+-/NMN' dMM   Resolution: 1366x768
-     NMm  dMM  -MMm  'MMM   dMM. dMM   DE: Cinnamon 3.8.9
-     NMm  dMM  -MMm  'MMM   dMM. dMM   WM: Muffin
-     NMm  dMM  .mmd  'mmm   yMM. dMM   WM Theme: Linux Mint (Mint-Y)
-     NMm  dMM'  ..'   ...   ydm. dMM   GTK Theme: Mint-Y [GTK2/3]
-     hMM- +MMd/-------...-:sdds  dMM   Icon Theme: Mint-Y
-     -NMm- :hNMNNNmdddddddddy/'  dMM   Font: Noto Sans 9
-      -dMNs-''-::::-------.''    dMM   CPU: AMD A10-7400P Radeon R6, 10 Compute Cores 4C+6G @ 4x 2.5GHz [101.0°C]
-       '/dMNmy+/:-------------:/yMMM   GPU: AMD KAVERI (DRM 2.50.0 / 4.15.0-34-generic, LLVM 6.0.0)
-          ./ydNMMMMMMMMMMMMMMMMMMMMM   RAM: 1886MiB / 6915MiB
-             \.MMMMMMMMMMMMMMMMMMM    
-"""
 
+def two_sums(numbers, target):
+    """Finds the indexes of the two numbers that add up to target.
 
-def sysinfo_scrape(output):
-    """Scrapes the output from screenfetch and returns a dictionary"""
+    :param numbers: list - random unique numbers
+    :param target: int - sum of two values from numbers list
+    :return: tuple - (index1, index2) or None
+    """
+    candidate_list = []
+    array_len = len(numbers)
+    for i in range(array_len):
+        i_num =numbers[i]
+        j=i+1
+        while j<array_len:
+            j_num = numbers[j]
+            if i_num + j_num == target:
+                candidate_list.append((i,j))
+            j+=1
+    if len(candidate_list) == 0:
+        return None
+    elif len(candidate_list) ==1:
+        return candidate_list[0]
+    else:
+        candidate_list.sort(key=lambda x: numbers[x[0]] )
+        return candidate_list[0]
 
-    params = [ 'OS', 'Kernel', 'Uptime', 'Packages', 'Shell',
-            'Resolution', 'DE', 'WM', 'WM Theme', 'GTK Theme', 'Icon Theme',
-            'Font', 'CPU', 'GPU', 'RAM']
-    info_dict={}
-    for line in output.split("\n"):
-        if match:=re.search(r"\w+@\w+",line):
-            info_dict['Name']= match.group()
+# Pybite solution:
+# Slightly different strategy. (Sort first)
+
+def two_sums(numbers, target):
+    """Finds the indexes of the two numbers that add up to target.
+
+    :param numbers: list - random unique numbers
+    :param target: int - sum of two values from numbers list
+    :return: tuple - (index1, index2) or None
+    """
+    nums = sorted(numbers)
+    i = 0
+    j = len(numbers) - 1
+    while i < j:
+        total = nums[i] + nums[j]
+        if total < target:
+            i += 1
+        elif total > target:
+            j -= 1
         else:
-            for p in params:
-                if p+':' in line:
-                    info_dict[p]=line.split(":")[-1].strip()
-    return info_dict
-
-# pybite solution
-
-def sysinfo_scrape(output):
-    """Scrapes the output from screenfetch and returns a dictionary"""
-    start = [l.index("RAM") for l in output.split("\n") if "RAM" in l][0]
-    sysinfo = defaultdict(dict)
-
-    data = (info[start:] for info in output.split("\n") if len(info) > start)
-
-    for info in data:
-        if ":" in info:
-            key, value = info.split(": ")
-            sysinfo[key] = value
-        else:
-            sysinfo["Name"] = info
-
-    return sysinfo
+            index1 = numbers.index(nums[i])
+            index2 = numbers.index(nums[j])
+            return index1, index2
+    return None

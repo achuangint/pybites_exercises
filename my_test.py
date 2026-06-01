@@ -14929,101 +14929,152 @@ Inputs are modified to check how the function deals with unknown characters
 #     find_emoji('awesome')
 #     output = capfd.readouterr()[0].lower()
 #     assert not output.strip() or 'no matches' in output.lower()
+#
+# import pytest
+#
+# from wc import output, sysinfo_scrape
+#
+# debian = """
+#          _,met$$$$$gg.           mohh@SERENiTY
+#       ,g$$$$$$$$$$$$$$$P.        OS: Mint 19 tara
+#     ,g$$P""       ""'Y$$.".      Kernel: x86_64 Linux 4.15.0-34-generic
+#    ,$$P'              '$$$.      Uptime: 1d 2h 50m
+#   ',$$P       ,ggs.     '$$b:    Packages: 2352
+#   'd$$'     ,$P"'   .    $$$     Shell: zsh 5.4.2
+#    $$P      d$'     ,    $$P     Resolution: 1366x768
+#    $$:      $$.   -    ,d$$'     DE: Cinnamon 3.8.9
+#    $$\;      Y$b._   _,d$P'      WM: Muffin
+#    Y$$.    '.'"Y$$$$P"'          WM Theme: Linux Mint (Mint-Y)
+#    '$$b      "-.__               GTK Theme: Mint-Y [GTK2/3]
+#     'Y$$                         Icon Theme: Mint-Y
+#      'Y$$.                       Font: Noto Sans 9
+#        '$$b.                     CPU: AMD A10-7400P Radeon R6, 10 Compute Cores 4C+6G @ 4x 2.5GHz [101.0°C]
+#          'Y$$b.                  GPU: AMD KAVERI (DRM 2.50.0 / 4.15.0-34-generic, LLVM 6.0.0)
+#             '"Y$b._              RAM: 2429MiB / 6915MiB
+#                 '"'""
+# """
+# mac = """
+#                 -/+:.          ejo@BlackOil
+#                :++++.          OS: 64bit Mac OS X 10.13.6 17G65
+#               /+++/.           Kernel: x86_64 Darwin 17.7.0
+#       .:-::- .+/:-''.::-       Uptime: 1d 49m
+#    .:/++++++/::::/++++++/:'    Packages: 236
+#  .:///////////////////////:'   Shell: bash 4.4.23
+#  ////////////////////////'     Resolution: 2560x1600
+# -+++++++++++++++++++++++'      DE: Aqua
+# /++++++++++++++++++++++/       WM: Quartz Compositor
+# /sssssssssssssssssssssss.      WM Theme: Blue
+# :ssssssssssssssssssssssss-     Font: SourceCodePro-Medium
+#  osssssssssssssssssssssssso/'  CPU: Intel Core i7-4980HQ @ 2.80GHz
+#  'syyyyyyyyyyyyyyyyyyyyyyyy+'  GPU: Intel Iris Pro / NVIDIA GeForce GT 750M
+#   'ossssssssssssssssssssss/    RAM: 9960MiB / 16384MiB
+#     :ooooooooooooooooooo+.
+#      ':+oo+/:-..-:/+o+/-
+# """
+#
+#
+# @pytest.fixture(scope="module")
+# def sysinfo():
+#     """Make a module scope sysinfo object"""
+#     return sysinfo_scrape(output)
+#
+#
+# def test_sysinfo_scrape_type(sysinfo):
+#     """Test for proper object"""
+#     assert isinstance(sysinfo, dict)
+#
+#
+# def test_sysinfo_scrape_name(sysinfo):
+#     """Test for inclusion of the 'Name' key"""
+#     assert sysinfo["Name"] == "mohh@SERENiTY"
+#
+#
+# def test_sysinfo_scrape_length(sysinfo):
+#     """Test for correct amount of entries"""
+#     assert len(sysinfo) == 16
+#
+#
+# def test_sysinfo_scrape_keys(sysinfo):
+#     """Test for the proper keys"""
+#     expected = [
+#         'Name', 'OS', 'Kernel', 'Uptime', 'Packages', 'Shell',
+#         'Resolution', 'DE', 'WM', 'WM Theme', 'GTK Theme', 'Icon Theme',
+#         'Font', 'CPU', 'GPU', 'RAM'
+#     ]
+#     assert list(sysinfo.keys()) == expected
+#
+#
+# def test_sysinfo_scrape_values(sysinfo):
+#     """Test for the proper values"""
+#     expected = [
+#         'mohh@SERENiTY', 'Mint 19 tara', 'x86_64 Linux 4.15.0-34-generic',
+#         '1d 4m', '2351', 'zsh 5.4.2', '1366x768', 'Cinnamon 3.8.9', 'Muffin',
+#         'Linux Mint (Mint-Y)', 'Mint-Y [GTK2/3]', 'Mint-Y', 'Noto Sans 9',
+#         'AMD A10-7400P Radeon R6, 10 Compute Cores 4C+6G @ 4x 2.5GHz [101.0°C]',
+#         'AMD KAVERI (DRM 2.50.0 / 4.15.0-34-generic, LLVM 6.0.0)',
+#         '1886MiB / 6915MiB'
+#     ]
+#     assert list(sysinfo.values()) == expected
+#
+#
+# def test_sysinfo_scrape_debian():
+#     """Test to see if it works with different distro logos"""
+#     sysinfo = sysinfo_scrape(debian)
+#     assert sysinfo["Resolution"] == "1366x768"
+#
+#
+# def test_sysinfo_scrape_mac():
+#     """Test to see if it works with different distro logos"""
+#     sysinfo = sysinfo_scrape(mac)
+#     assert sysinfo["Name"] == "ejo@BlackOil"
 
 import pytest
+from random import sample, seed
 
-from wc import output, sysinfo_scrape
+from wc import two_sums
 
-debian = """
-         _,met$$$$$gg.           mohh@SERENiTY
-      ,g$$$$$$$$$$$$$$$P.        OS: Mint 19 tara
-    ,g$$P""       ""'Y$$.".      Kernel: x86_64 Linux 4.15.0-34-generic
-   ,$$P'              '$$$.      Uptime: 1d 2h 50m
-  ',$$P       ,ggs.     '$$b:    Packages: 2352
-  'd$$'     ,$P"'   .    $$$     Shell: zsh 5.4.2
-   $$P      d$'     ,    $$P     Resolution: 1366x768
-   $$:      $$.   -    ,d$$'     DE: Cinnamon 3.8.9
-   $$\;      Y$b._   _,d$P'      WM: Muffin
-   Y$$.    '.'"Y$$$$P"'          WM Theme: Linux Mint (Mint-Y)
-   '$$b      "-.__               GTK Theme: Mint-Y [GTK2/3]
-    'Y$$                         Icon Theme: Mint-Y
-     'Y$$.                       Font: Noto Sans 9
-       '$$b.                     CPU: AMD A10-7400P Radeon R6, 10 Compute Cores 4C+6G @ 4x 2.5GHz [101.0°C]
-         'Y$$b.                  GPU: AMD KAVERI (DRM 2.50.0 / 4.15.0-34-generic, LLVM 6.0.0)
-            '"Y$b._              RAM: 2429MiB / 6915MiB
-                '"'""           
-"""
-mac = """
-                -/+:.          ejo@BlackOil
-               :++++.          OS: 64bit Mac OS X 10.13.6 17G65
-              /+++/.           Kernel: x86_64 Darwin 17.7.0
-      .:-::- .+/:-''.::-       Uptime: 1d 49m
-   .:/++++++/::::/++++++/:'    Packages: 236
- .:///////////////////////:'   Shell: bash 4.4.23
- ////////////////////////'     Resolution: 2560x1600
--+++++++++++++++++++++++'      DE: Aqua
-/++++++++++++++++++++++/       WM: Quartz Compositor
-/sssssssssssssssssssssss.      WM Theme: Blue
-:ssssssssssssssssssssssss-     Font: SourceCodePro-Medium
- osssssssssssssssssssssssso/'  CPU: Intel Core i7-4980HQ @ 2.80GHz
- 'syyyyyyyyyyyyyyyyyyyyyyyy+'  GPU: Intel Iris Pro / NVIDIA GeForce GT 750M
-  'ossssssssssssssssssssss/    RAM: 9960MiB / 16384MiB
-    :ooooooooooooooooooo+.    
-     ':+oo+/:-..-:/+o+/-      
-"""
+NUMBERS = [
+    2202, 9326, 1034, 4180, 1932, 8118, 7365, 7738, 6220, 3440, 1538, 7994, 465,
+    6387, 7091, 9953, 35, 7298, 4364, 3749, 9686, 1675, 5201, 502, 366, 417,
+    8871, 151, 6246, 3549, 6916, 476, 8645, 3633, 7175, 8124, 9059, 3819, 5664,
+    3783, 3585, 7531, 4748, 353, 6819, 9117, 1639, 3046, 4857, 1981]
 
 
-@pytest.fixture(scope="module")
-def sysinfo():
-    """Make a module scope sysinfo object"""
-    return sysinfo_scrape(output)
+def test_two_sums():
+    """Test of the example given in the description"""
+    numbers = [3, 10, 14, 8, 15, 5, 16, 13, 9, 2]
+    expected = (2, 6)
+    target = 30
+    result = two_sums(numbers, target)
+    assert result == expected
 
 
-def test_sysinfo_scrape_type(sysinfo):
-    """Test for proper object"""
-    assert isinstance(sysinfo, dict)
+@pytest.mark.parametrize("target, expected", [
+    (10093, (2, 36)),
+    (7067, (27, 30)),
+    (11261, (0, 36)),
+    (11350, (37, 41)),
+    (5224, (31, 42)),
+    (2934785974, None),
+])
+def test_two_sums_param(target, expected):
+    result = two_sums(NUMBERS, target)
+    assert result == expected
 
 
-def test_sysinfo_scrape_name(sysinfo):
-    """Test for inclusion of the 'Name' key"""
-    assert sysinfo["Name"] == "mohh@SERENiTY"
+def test_two_sums_random():
+    seed(1)
+    numbers = sample(range(1, 1_000_000), 1_000)
+    picked = sample(numbers, 2)
+    index1 = numbers.index(picked[0])
+    index2 = numbers.index(picked[1])
+    ordered = sorted([index1, index2])
+    expected = ordered[0], ordered[1]
+    target = sum(picked)
+    result = two_sums(numbers, target)
+    assert result == expected
 
 
-def test_sysinfo_scrape_length(sysinfo):
-    """Test for correct amount of entries"""
-    assert len(sysinfo) == 16
-
-
-def test_sysinfo_scrape_keys(sysinfo):
-    """Test for the proper keys"""
-    expected = [
-        'Name', 'OS', 'Kernel', 'Uptime', 'Packages', 'Shell',
-        'Resolution', 'DE', 'WM', 'WM Theme', 'GTK Theme', 'Icon Theme',
-        'Font', 'CPU', 'GPU', 'RAM'
-    ]
-    assert list(sysinfo.keys()) == expected
-
-
-def test_sysinfo_scrape_values(sysinfo):
-    """Test for the proper values"""
-    expected = [
-        'mohh@SERENiTY', 'Mint 19 tara', 'x86_64 Linux 4.15.0-34-generic',
-        '1d 4m', '2351', 'zsh 5.4.2', '1366x768', 'Cinnamon 3.8.9', 'Muffin',
-        'Linux Mint (Mint-Y)', 'Mint-Y [GTK2/3]', 'Mint-Y', 'Noto Sans 9',
-        'AMD A10-7400P Radeon R6, 10 Compute Cores 4C+6G @ 4x 2.5GHz [101.0°C]',
-        'AMD KAVERI (DRM 2.50.0 / 4.15.0-34-generic, LLVM 6.0.0)',
-        '1886MiB / 6915MiB'
-    ]
-    assert list(sysinfo.values()) == expected
-
-
-def test_sysinfo_scrape_debian():
-    """Test to see if it works with different distro logos"""
-    sysinfo = sysinfo_scrape(debian)
-    assert sysinfo["Resolution"] == "1366x768"
-
-
-def test_sysinfo_scrape_mac():
-    """Test to see if it works with different distro logos"""
-    sysinfo = sysinfo_scrape(mac)
-    assert sysinfo["Name"] == "ejo@BlackOil"
+def test_two_sums_none():
+    result = two_sums(NUMBERS, 7000)
+    assert result is None
