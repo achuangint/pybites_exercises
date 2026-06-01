@@ -15027,54 +15027,225 @@ Inputs are modified to check how the function deals with unknown characters
 #     """Test to see if it works with different distro logos"""
 #     sysinfo = sysinfo_scrape(mac)
 #     assert sysinfo["Name"] == "ejo@BlackOil"
+#
+# import pytest
+# from random import sample, seed
+#
+# from wc import two_sums
+#
+# NUMBERS = [
+#     2202, 9326, 1034, 4180, 1932, 8118, 7365, 7738, 6220, 3440, 1538, 7994, 465,
+#     6387, 7091, 9953, 35, 7298, 4364, 3749, 9686, 1675, 5201, 502, 366, 417,
+#     8871, 151, 6246, 3549, 6916, 476, 8645, 3633, 7175, 8124, 9059, 3819, 5664,
+#     3783, 3585, 7531, 4748, 353, 6819, 9117, 1639, 3046, 4857, 1981]
+#
+#
+# def test_two_sums():
+#     """Test of the example given in the description"""
+#     numbers = [3, 10, 14, 8, 15, 5, 16, 13, 9, 2]
+#     expected = (2, 6)
+#     target = 30
+#     result = two_sums(numbers, target)
+#     assert result == expected
+#
+#
+# @pytest.mark.parametrize("target, expected", [
+#     (10093, (2, 36)),
+#     (7067, (27, 30)),
+#     (11261, (0, 36)),
+#     (11350, (37, 41)),
+#     (5224, (31, 42)),
+#     (2934785974, None),
+# ])
+# def test_two_sums_param(target, expected):
+#     result = two_sums(NUMBERS, target)
+#     assert result == expected
+#
+#
+# def test_two_sums_random():
+#     seed(1)
+#     numbers = sample(range(1, 1_000_000), 1_000)
+#     picked = sample(numbers, 2)
+#     index1 = numbers.index(picked[0])
+#     index2 = numbers.index(picked[1])
+#     ordered = sorted([index1, index2])
+#     expected = ordered[0], ordered[1]
+#     target = sum(picked)
+#     result = two_sums(numbers, target)
+#     assert result == expected
+#
+#
+# def test_two_sums_none():
+#     result = two_sums(NUMBERS, 7000)
+#     assert result is None
 
-import pytest
-from random import sample, seed
+import datetime
 
-from wc import two_sums
-
-NUMBERS = [
-    2202, 9326, 1034, 4180, 1932, 8118, 7365, 7738, 6220, 3440, 1538, 7994, 465,
-    6387, 7091, 9953, 35, 7298, 4364, 3749, 9686, 1675, 5201, 502, 366, 417,
-    8871, 151, 6246, 3549, 6916, 476, 8645, 3633, 7175, 8124, 9059, 3819, 5664,
-    3783, 3585, 7531, 4748, 353, 6819, 9117, 1639, 3046, 4857, 1981]
+from wc import extract_dates, calculate_streak
 
 
-def test_two_sums():
-    """Test of the example given in the description"""
-    numbers = [3, 10, 14, 8, 15, 5, 16, 13, 9, 2]
-    expected = (2, 6)
-    target = 30
-    result = two_sums(numbers, target)
-    assert result == expected
+def test_extract_dates():
+    data = """
+    +------------+------------+---------+
+    | date       | activity   | count   |
+    |------------+------------+---------|
+    | 2018-11-10 | pcc        | 1       |
+    | 2018-11-09 | 100d       | 1       |
+    | 2018-11-07 | 100d       | 2       |
+    | 2018-10-23 | pcc        | 1       |
+    | 2018-10-15 | pcc        | 1       |
+    | 2018-10-05 | bite       | 1       |
+    | 2018-09-21 | bite       | 4       |
+    | 2018-09-18 | bite       | 2       |
+    | 2018-09-18 | bite       | 4       |
+    +------------+------------+---------+
+    """
+    dates = extract_dates(data)
+    assert len(dates) == 8  # one less = deduped 2018-09-18
+    assert datetime.date(2018, 9, 18) in dates
+    assert datetime.date(2018, 10, 23) in dates
+    assert datetime.date(2018, 11, 9) in dates
 
 
-@pytest.mark.parametrize("target, expected", [
-    (10093, (2, 36)),
-    (7067, (27, 30)),
-    (11261, (0, 36)),
-    (11350, (37, 41)),
-    (5224, (31, 42)),
-    (2934785974, None),
-])
-def test_two_sums_param(target, expected):
-    result = two_sums(NUMBERS, target)
-    assert result == expected
+def test_streak_of_0_days():
+    data = """
+    +------------+------------+---------+
+    | date       | activity   | count   |
+    |------------+------------+---------|
+    | 2018-11-10 | pcc        | 1       |
+    | 2018-11-09 | 100d       | 1       |
+    | 2018-11-07 | 100d       | 2       |
+    | 2018-10-23 | pcc        | 1       |
+    | 2018-10-15 | pcc        | 1       |
+    | 2018-10-05 | bite       | 1       |
+    | 2018-09-21 | bite       | 4       |
+    | 2018-09-18 | bite       | 2       |
+    | 2018-09-18 | bite       | 4       |
+    +------------+------------+---------+
+    """
+    dates = extract_dates(data)
+    streak = calculate_streak(dates)
+    assert streak == 0
 
 
-def test_two_sums_random():
-    seed(1)
-    numbers = sample(range(1, 1_000_000), 1_000)
-    picked = sample(numbers, 2)
-    index1 = numbers.index(picked[0])
-    index2 = numbers.index(picked[1])
-    ordered = sorted([index1, index2])
-    expected = ordered[0], ordered[1]
-    target = sum(picked)
-    result = two_sums(numbers, target)
-    assert result == expected
+def test_streak_of_1_day_can_still_make_today():
+    data = """
+    +------------+------------+---------+
+    | date       | activity   | count   |
+    |------------+------------+---------|
+    | 2018-11-11 | pcc        | 1       |
+    | 2018-11-09 | 100d       | 1       |
+    | 2018-11-07 | 100d       | 2       |
+    | 2018-10-23 | pcc        | 1       |
+    | 2018-10-15 | pcc        | 1       |
+    | 2018-10-05 | bite       | 1       |
+    | 2018-09-21 | bite       | 4       |
+    | 2018-09-18 | bite       | 2       |
+    | 2018-09-18 | bite       | 4       |
+    +------------+------------+---------+
+    """
+    dates = extract_dates(data)
+    streak = calculate_streak(dates)
+    assert streak == 1
 
 
-def test_two_sums_none():
-    result = two_sums(NUMBERS, 7000)
-    assert result is None
+def test_streak_of_1_day_thanks_to_todays_progress():
+    data = """
+    +------------+------------+---------+
+    | date       | activity   | count   |
+    |------------+------------+---------|
+    | 2018-11-12 | pcc        | 1       |
+    | 2018-11-09 | 100d       | 1       |
+    | 2018-11-07 | 100d       | 2       |
+    | 2018-10-15 | pcc        | 1       |
+    | 2018-10-15 | pcc        | 1       |
+    | 2018-10-05 | bite       | 1       |
+    | 2018-09-21 | bite       | 4       |
+    | 2018-09-18 | bite       | 2       |
+    | 2018-09-16 | bite       | 4       |
+    +------------+------------+---------+
+    """
+    dates = extract_dates(data)
+    streak = calculate_streak(dates)
+    assert streak == 1
+
+
+def test_streak_of_3_days():
+    data = """
+    +------------+------------+---------+
+    | date       | activity   | count   |
+    |------------+------------+---------|
+    | 2018-11-12 | pcc        | 1       |
+    | 2018-11-11 | 100d       | 1       |
+    | 2018-11-10 | 100d       | 2       |
+    | 2018-10-15 | pcc        | 1       |
+    | 2018-10-15 | pcc        | 1       |
+    | 2018-10-05 | bite       | 1       |
+    | 2018-09-21 | bite       | 4       |
+    | 2018-09-18 | bite       | 2       |
+    | 2018-09-16 | bite       | 4       |
+    +------------+------------+---------+
+    """
+    dates = extract_dates(data)
+    streak = calculate_streak(dates)
+    assert streak == 3
+
+
+def test_streak_of_10_days():
+    data = """
+    +------------+------------+---------+
+    | date       | activity   | count   |
+    |------------+------------+---------|
+    | 2018-11-11 | pcc        | 1       |
+    | 2018-11-10 | 100d       | 1       |
+    | 2018-11-09 | 100d       | 2       |
+    | 2018-11-08 | pcc        | 1       |
+    | 2018-11-07 | pcc        | 1       |
+    | 2018-11-06 | bite       | 1       |
+    | 2018-11-05 | bite       | 4       |
+    | 2018-11-04 | bite       | 2       |
+    | 2018-11-03 | bite       | 4       |
+    | 2018-11-02 | 100d       | 2       |
+    +------------+------------+---------+
+    """
+    dates = extract_dates(data)
+    streak = calculate_streak(dates)
+    assert streak == 10
+
+
+def test_streak_of_almost_10_days_but_gap_so_only_5_days():
+    data = """
+    +------------+------------+---------+
+    | date       | activity   | count   |
+    |------------+------------+---------|
+    | 2018-11-11 | pcc        | 1       |
+    | 2018-11-10 | 100d       | 1       |
+    | 2018-11-09 | 100d       | 2       |
+    | 2018-11-08 | pcc        | 1       |
+    | 2018-11-07 | pcc        | 1       |
+    | 2018-11-05 | bite       | 4       |
+    | 2018-11-04 | bite       | 2       |
+    | 2018-11-03 | bite       | 4       |
+    | 2018-11-02 | 100d       | 2       |
+    +------------+------------+---------+
+    """
+    dates = extract_dates(data)
+    streak = calculate_streak(dates)
+    assert streak == 5
+
+
+def test_streak_of_5_days_dates_out_of_order():
+    data = """
+    +------------+------------+---------+
+    | date       | activity   | count   |
+    |------------+------------+---------|
+    | 2018-11-11 | pcc        | 1       |
+    | 2018-11-07 | pcc        | 1       |
+    | 2018-11-09 | 100d       | 2       |
+    | 2018-11-10 | 100d       | 1       |
+    | 2018-11-08 | pcc        | 1       |
+    +------------+------------+---------+
+    """
+    dates = extract_dates(data)
+    streak = calculate_streak(dates)
+    assert streak == 5

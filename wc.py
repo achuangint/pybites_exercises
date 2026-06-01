@@ -14689,53 +14689,100 @@ enumerate through the text by letter
 #
 #     return sysinfo
 
+#
+# def two_sums(numbers, target):
+#     """Finds the indexes of the two numbers that add up to target.
+#
+#     :param numbers: list - random unique numbers
+#     :param target: int - sum of two values from numbers list
+#     :return: tuple - (index1, index2) or None
+#     """
+#     candidate_list = []
+#     array_len = len(numbers)
+#     for i in range(array_len):
+#         i_num =numbers[i]
+#         j=i+1
+#         while j<array_len:
+#             j_num = numbers[j]
+#             if i_num + j_num == target:
+#                 candidate_list.append((i,j))
+#             j+=1
+#     if len(candidate_list) == 0:
+#         return None
+#     elif len(candidate_list) ==1:
+#         return candidate_list[0]
+#     else:
+#         candidate_list.sort(key=lambda x: numbers[x[0]] )
+#         return candidate_list[0]
+#
+# # Pybite solution:
+# # Slightly different strategy. (Sort first)
+#
+# def two_sums(numbers, target):
+#     """Finds the indexes of the two numbers that add up to target.
+#
+#     :param numbers: list - random unique numbers
+#     :param target: int - sum of two values from numbers list
+#     :return: tuple - (index1, index2) or None
+#     """
+#     nums = sorted(numbers)
+#     i = 0
+#     j = len(numbers) - 1
+#     while i < j:
+#         total = nums[i] + nums[j]
+#         if total < target:
+#             i += 1
+#         elif total > target:
+#             j -= 1
+#         else:
+#             index1 = numbers.index(nums[i])
+#             index2 = numbers.index(nums[j])
+#             return index1, index2
+#     return None
 
-def two_sums(numbers, target):
-    """Finds the indexes of the two numbers that add up to target.
+import re
+from datetime import datetime, timedelta, date
 
-    :param numbers: list - random unique numbers
-    :param target: int - sum of two values from numbers list
-    :return: tuple - (index1, index2) or None
+TODAY = date(2018, 11, 12)
+
+
+def extract_dates(data):
+    """Extract unique dates from DB table representation as shown in Bite"""
+    date_str = re.findall(r'\d{4}-\d{2}-\d{2}', data)
+    return set([datetime.strptime(d, '%Y-%m-%d').date() for d in date_str])
+
+
+def calculate_streak(dates):
+    """Receives sequence (set) of dates and returns number of days
+       on coding streak.
+
+       Note that a coding streak is defined as consecutive days coded
+       since yesterday, because today is not over yet, however if today
+       was coded, it counts too of course.
+
+       So as today is 12th of Nov, having dates 11th/10th/9th of Nov in
+       the table makes for a 3 days coding streak.
+
+       See the tests for more examples that will be used to pass your code.
     """
-    candidate_list = []
-    array_len = len(numbers)
-    for i in range(array_len):
-        i_num =numbers[i]
+    # sort the dates
+    sorted_dates = sorted(dates, reverse=True)
+
+    # go through the date,
+    streak = 0
+    dates_len = len(dates)
+
+    if sorted_dates[0] not in (TODAY, TODAY+timedelta(days=-1)):
+        return 0
+
+    for i in range(dates_len-1):
+        current_date = sorted_dates[i]
+        next_day = current_date + timedelta(days=-1)
         j=i+1
-        while j<array_len:
-            j_num = numbers[j]
-            if i_num + j_num == target:
-                candidate_list.append((i,j))
-            j+=1
-    if len(candidate_list) == 0:
-        return None
-    elif len(candidate_list) ==1:
-        return candidate_list[0]
-    else:
-        candidate_list.sort(key=lambda x: numbers[x[0]] )
-        return candidate_list[0]
-
-# Pybite solution:
-# Slightly different strategy. (Sort first)
-
-def two_sums(numbers, target):
-    """Finds the indexes of the two numbers that add up to target.
-
-    :param numbers: list - random unique numbers
-    :param target: int - sum of two values from numbers list
-    :return: tuple - (index1, index2) or None
-    """
-    nums = sorted(numbers)
-    i = 0
-    j = len(numbers) - 1
-    while i < j:
-        total = nums[i] + nums[j]
-        if total < target:
-            i += 1
-        elif total > target:
-            j -= 1
+        if next_day == sorted_dates[j]:
+            streak+=1
         else:
-            index1 = numbers.index(nums[i])
-            index2 = numbers.index(nums[j])
-            return index1, index2
-    return None
+            break
+    streak+=1
+    return streak
+
