@@ -15005,76 +15005,189 @@ enumerate through the text by letter
 #     record_low_2015 = namedtuple_gen(low_df, "min")
 #
 #     return record_high_2015, record_low_2015
+#
+# from collections import UserList
+# from statistics import mean, median
+# from decimal import Decimal
+#
+# class IntList(UserList):
+#     """A specialized list that only allows integer values and provides mean/median properties."""
+#     def __init__(self, items):
+#         super().__init__()
+#         for item in items:
+#             self.append(item)
+#
+#     def append(self, item):
+#         if type(item) in (str, list, dict):
+#             raise TypeError
+#         else:
+#             if type(item)==Decimal:
+#                 item=float(item)
+#             self.data.append(item)
+#
+#     def __iadd__(self, other):
+#         if type(other)==list:
+#             for item in other:
+#                 if type(item)==str:
+#                     raise TypeError
+#         return super().__iadd__(other)
+#
+#
+#     @property
+#     def mean(self):
+#         return mean(self)
+#
+#     @property
+#     def median(self):
+#         return median(self)
+#
+# # pybite solution
+# from collections import UserList
+# from statistics import mean, median
+#
+#
+# class IntList(UserList):
+#     """A specialized list that only allows integer values and provides mean/median."""
+#
+#     @property
+#     def mean(self):
+#         return mean(self.data)
+#
+#     @property
+#     def median(self):
+#         return median(self.data)
+#
+#     def _check_int(self, num):
+#         """Ensure that only integers (or integer-like numbers) are added."""
+#         try:
+#             if isinstance(num, list):
+#                 return [int(i) for i in num]
+#             return int(num)
+#         except (ValueError, TypeError):
+#             raise TypeError("Only integers or lists of integers are allowed.")
+#
+#     def append(self, num):
+#         num = self._check_int(num)
+#         super().append(num)
+#
+#     def __add__(self, other):
+#         other = self._check_int(other)
+#         return self.__class__(self.data + other)
+#
+#     def __iadd__(self, other):
+#         other = self._check_int(other)
+#         self.data += other
+#         return self
 
-from collections import UserList
-from statistics import mean, median
-from decimal import Decimal
+import csv
+import os
+from urllib.request import urlretrieve
 
-class IntList(UserList):
-    """A specialized list that only allows integer values and provides mean/median properties."""
-    def __init__(self, items):
-        super().__init__()
-        for item in items:
-            self.append(item)
-
-    def append(self, item):
-        if type(item) in (str, list, dict):
-            raise TypeError
-        else:
-            if type(item)==Decimal:
-                item=float(item)
-            self.data.append(item)
-
-    def __iadd__(self, other):
-        if type(other)==list:
-            for item in other:
-                if type(item)==str:
-                    raise TypeError
-        return super().__iadd__(other)
+TMP = os.getenv("TMP", "/tmp")
+DATA = 'battle-table.csv'
+BATTLE_DATA = os.path.join(TMP, DATA)
+if not os.path.isfile(BATTLE_DATA):
+    urlretrieve(
+        f'https://bites-data.s3.us-east-2.amazonaws.com/{DATA}',
+        BATTLE_DATA
+    )
 
 
-    @property
-    def mean(self):
-        return mean(self)
+def _create_defeat_mapping():
+    """Parse battle-table.csv building up a defeat_mapping dict
+       with keys = attackers / values = who they defeat.
+    """
+    with open(BATTLE_DATA, mode="r") as file:
+        reader = csv.DictReader(file)
+        print("Header row:{header}".format(header = reader.fieldnames))
+        defeat_mapping = {}
+        for row in reader:
+            print(row)
+            attacker = row['Attacker']
+            attacker_dict = {}
+            for key, val in row.items():
+                print(f"key:{key}, val:{val}")
+                if key=='Attacker':
+                    continue
+                elif val=='draw':
+                    attacker_dict[key]='Tie'
+                elif val == 'win':
+                    attacker_dict[key] = attacker
+                elif val == 'lose':
+                    attacker_dict[key] = key
+                else:
+                    raise ValueError
+            defeat_mapping[attacker]=attacker_dict
+    return defeat_mapping
 
-    @property
-    def median(self):
-        return median(self)
+def get_winner(player1, player2, defeat_mapping=None):
+    """Given player1 and player2 determine game output returning the
+       appropriate string:
+       Tie
+       Player1
+       Player2
+       (where Player1 and Player2 are the names passed in)
 
-# pybite solution
-from collections import UserList
-from statistics import mean, median
+       Raise a ValueError if invalid player strings are passed in.
+    """
+    defeat_mapping = defeat_mapping or _create_defeat_mapping()
+    players =("Rock Gun Lightning Devil Dragon Water Air Paper Sponge "
+    "Wolf Tree Human Snake Scissors Fire").split()
+    if player1 not in players or player2 not in players:
+        raise ValueError
+    return defeat_mapping[player1][player2]
+
+# Pybite solutions
+import csv
+import os
+from urllib.request import urlretrieve
+
+TMP = os.getenv("TMP", "/tmp")
+DATA = 'battle-table.csv'
+BATTLE_DATA = os.path.join(TMP, DATA)
+if not os.path.isfile(BATTLE_DATA):
+    urlretrieve(
+        f'https://bites-data.s3.us-east-2.amazonaws.com/{DATA}',
+        BATTLE_DATA
+    )
 
 
-class IntList(UserList):
-    """A specialized list that only allows integer values and provides mean/median."""
+def _create_defeat_mapping():
+    """Parse battle-table.csv building up a defeat_mapping dict
+       with keys = attackers / values = who they defeat.
+    """
+    defeat_mapping = {}
+    with open(BATTLE_DATA) as fin:
+        reader = csv.DictReader(fin)
+        for row in reader:
+            attacker = row.pop("Attacker")
+            defeat_mapping[attacker] = set()
+            for player, state in row.items():
+                if player == attacker:
+                    continue
+                if state.lower().strip() == 'win':
+                    defeat_mapping[attacker].add(player)
+    return defeat_mapping
 
-    @property
-    def mean(self):
-        return mean(self.data)
 
-    @property
-    def median(self):
-        return median(self.data)
+def get_winner(player1, player2, defeat_mapping=None):
+    """Given player1 and player2 determine game output returning the
+       appropriate string:
+       Tie
+       Player1
+       Player2
+       (where Player1 and Player2 are the names passed in)
 
-    def _check_int(self, num):
-        """Ensure that only integers (or integer-like numbers) are added."""
-        try:
-            if isinstance(num, list):
-                return [int(i) for i in num]
-            return int(num)
-        except (ValueError, TypeError):
-            raise TypeError("Only integers or lists of integers are allowed.")
+       Raise a ValueError if invalid player strings are passed in.
+    """
+    defeat_mapping = defeat_mapping or _create_defeat_mapping()
 
-    def append(self, num):
-        num = self._check_int(num)
-        super().append(num)
+    if player1 not in defeat_mapping or player2 not in defeat_mapping:
+        raise ValueError
 
-    def __add__(self, other):
-        other = self._check_int(other)
-        return self.__class__(self.data + other)
+    if player1 == player2:
+        return 'Tie'
 
-    def __iadd__(self, other):
-        other = self._check_int(other)
-        self.data += other
-        return self
+    defeated_by_player1 = defeat_mapping[player1]
+
+    return player1 if player2 in defeated_by_player1 else player2
