@@ -15078,116 +15078,186 @@ enumerate through the text by letter
 #         other = self._check_int(other)
 #         self.data += other
 #         return self
+#
+# import csv
+# import os
+# from urllib.request import urlretrieve
+#
+# TMP = os.getenv("TMP", "/tmp")
+# DATA = 'battle-table.csv'
+# BATTLE_DATA = os.path.join(TMP, DATA)
+# if not os.path.isfile(BATTLE_DATA):
+#     urlretrieve(
+#         f'https://bites-data.s3.us-east-2.amazonaws.com/{DATA}',
+#         BATTLE_DATA
+#     )
+#
+#
+# def _create_defeat_mapping():
+#     """Parse battle-table.csv building up a defeat_mapping dict
+#        with keys = attackers / values = who they defeat.
+#     """
+#     with open(BATTLE_DATA, mode="r") as file:
+#         reader = csv.DictReader(file)
+#         print("Header row:{header}".format(header = reader.fieldnames))
+#         defeat_mapping = {}
+#         for row in reader:
+#             print(row)
+#             attacker = row['Attacker']
+#             attacker_dict = {}
+#             for key, val in row.items():
+#                 print(f"key:{key}, val:{val}")
+#                 if key=='Attacker':
+#                     continue
+#                 elif val=='draw':
+#                     attacker_dict[key]='Tie'
+#                 elif val == 'win':
+#                     attacker_dict[key] = attacker
+#                 elif val == 'lose':
+#                     attacker_dict[key] = key
+#                 else:
+#                     raise ValueError
+#             defeat_mapping[attacker]=attacker_dict
+#     return defeat_mapping
+#
+# def get_winner(player1, player2, defeat_mapping=None):
+#     """Given player1 and player2 determine game output returning the
+#        appropriate string:
+#        Tie
+#        Player1
+#        Player2
+#        (where Player1 and Player2 are the names passed in)
+#
+#        Raise a ValueError if invalid player strings are passed in.
+#     """
+#     defeat_mapping = defeat_mapping or _create_defeat_mapping()
+#     players =("Rock Gun Lightning Devil Dragon Water Air Paper Sponge "
+#     "Wolf Tree Human Snake Scissors Fire").split()
+#     if player1 not in players or player2 not in players:
+#         raise ValueError
+#     return defeat_mapping[player1][player2]
+#
+# # Pybite solutions
+# import csv
+# import os
+# from urllib.request import urlretrieve
+#
+# TMP = os.getenv("TMP", "/tmp")
+# DATA = 'battle-table.csv'
+# BATTLE_DATA = os.path.join(TMP, DATA)
+# if not os.path.isfile(BATTLE_DATA):
+#     urlretrieve(
+#         f'https://bites-data.s3.us-east-2.amazonaws.com/{DATA}',
+#         BATTLE_DATA
+#     )
+#
+#
+# def _create_defeat_mapping():
+#     """Parse battle-table.csv building up a defeat_mapping dict
+#        with keys = attackers / values = who they defeat.
+#     """
+#     defeat_mapping = {}
+#     with open(BATTLE_DATA) as fin:
+#         reader = csv.DictReader(fin)
+#         for row in reader:
+#             attacker = row.pop("Attacker")
+#             defeat_mapping[attacker] = set()
+#             for player, state in row.items():
+#                 if player == attacker:
+#                     continue
+#                 if state.lower().strip() == 'win':
+#                     defeat_mapping[attacker].add(player)
+#     return defeat_mapping
+#
+#
+# def get_winner(player1, player2, defeat_mapping=None):
+#     """Given player1 and player2 determine game output returning the
+#        appropriate string:
+#        Tie
+#        Player1
+#        Player2
+#        (where Player1 and Player2 are the names passed in)
+#
+#        Raise a ValueError if invalid player strings are passed in.
+#     """
+#     defeat_mapping = defeat_mapping or _create_defeat_mapping()
+#
+#     if player1 not in defeat_mapping or player2 not in defeat_mapping:
+#         raise ValueError
+#
+#     if player1 == player2:
+#         return 'Tie'
+#
+#     defeated_by_player1 = defeat_mapping[player1]
+#
+#     return player1 if player2 in defeated_by_player1 else player2
 
-import csv
-import os
-from urllib.request import urlretrieve
+import sys
+import re
 
-TMP = os.getenv("TMP", "/tmp")
-DATA = 'battle-table.csv'
-BATTLE_DATA = os.path.join(TMP, DATA)
-if not os.path.isfile(BATTLE_DATA):
-    urlretrieve(
-        f'https://bites-data.s3.us-east-2.amazonaws.com/{DATA}',
-        BATTLE_DATA
-    )
+INTERNAL_LINKS = ('pybit.es', 'codechalleng.es')
 
+def more_than_1_comma(s):
+    return len(s.split(','))>2
 
-def _create_defeat_mapping():
-    """Parse battle-table.csv building up a defeat_mapping dict
-       with keys = attackers / values = who they defeat.
-    """
-    with open(BATTLE_DATA, mode="r") as file:
-        reader = csv.DictReader(file)
-        print("Header row:{header}".format(header = reader.fieldnames))
-        defeat_mapping = {}
-        for row in reader:
-            print(row)
-            attacker = row['Attacker']
-            attacker_dict = {}
-            for key, val in row.items():
-                print(f"key:{key}, val:{val}")
-                if key=='Attacker':
-                    continue
-                elif val=='draw':
-                    attacker_dict[key]='Tie'
-                elif val == 'win':
-                    attacker_dict[key] = attacker
-                elif val == 'lose':
-                    attacker_dict[key] = key
-                else:
-                    raise ValueError
-            defeat_mapping[attacker]=attacker_dict
-    return defeat_mapping
+def ignore_line(s):
+    func_list = [more_than_1_comma, not_contain_http]
+    return any([f(s) for f in func_list])
 
-def get_winner(player1, player2, defeat_mapping=None):
-    """Given player1 and player2 determine game output returning the
-       appropriate string:
-       Tie
-       Player1
-       Player2
-       (where Player1 and Player2 are the names passed in)
+def not_contain_http(s):
+    return re.search(r'https?:', s) is None
 
-       Raise a ValueError if invalid player strings are passed in.
-    """
-    defeat_mapping = defeat_mapping or _create_defeat_mapping()
-    players =("Rock Gun Lightning Devil Dragon Water Air Paper Sponge "
-    "Wolf Tree Human Snake Scissors Fire").split()
-    if player1 not in players or player2 not in players:
-        raise ValueError
-    return defeat_mapping[player1][player2]
-
-# Pybite solutions
-import csv
-import os
-from urllib.request import urlretrieve
-
-TMP = os.getenv("TMP", "/tmp")
-DATA = 'battle-table.csv'
-BATTLE_DATA = os.path.join(TMP, DATA)
-if not os.path.isfile(BATTLE_DATA):
-    urlretrieve(
-        f'https://bites-data.s3.us-east-2.amazonaws.com/{DATA}',
-        BATTLE_DATA
-    )
+def parse_link(s):
+    # s = "https://www.python.org, Python Homepage"
+    link, desc = s.split(',')
+    is_internal=False
+    for l in INTERNAL_LINKS:
+        if l in link:
+            is_internal=True
+            break
+    target_str = '' if is_internal else ' target="_blank"'
+    url = f'<a href="{link.strip()}"{target_str}>{desc.strip()}</a>'
+    return url
 
 
-def _create_defeat_mapping():
-    """Parse battle-table.csv building up a defeat_mapping dict
-       with keys = attackers / values = who they defeat.
-    """
-    defeat_mapping = {}
-    with open(BATTLE_DATA) as fin:
-        reader = csv.DictReader(fin)
-        for row in reader:
-            attacker = row.pop("Attacker")
-            defeat_mapping[attacker] = set()
-            for player, state in row.items():
-                if player == attacker:
-                    continue
-                if state.lower().strip() == 'win':
-                    defeat_mapping[attacker].add(player)
-    return defeat_mapping
+def make_html_links():
+    for line in sys.stdin:
+        new_line = line.strip()
+        if not ignore_line(new_line):
+            print(parse_link(new_line))
 
 
-def get_winner(player1, player2, defeat_mapping=None):
-    """Given player1 and player2 determine game output returning the
-       appropriate string:
-       Tie
-       Player1
-       Player2
-       (where Player1 and Player2 are the names passed in)
 
-       Raise a ValueError if invalid player strings are passed in.
-    """
-    defeat_mapping = defeat_mapping or _create_defeat_mapping()
+if __name__ == '__main__':
+    make_html_links()
 
-    if player1 not in defeat_mapping or player2 not in defeat_mapping:
-        raise ValueError
+# Pybite solution:
+import sys
 
-    if player1 == player2:
-        return 'Tie'
+INTERNAL_LINKS = ('pybit.es', 'codechalleng.es')
+LINK_HTML = '<a href="{href}"{external}>{name}</a>'
 
-    defeated_by_player1 = defeat_mapping[player1]
 
-    return player1 if player2 in defeated_by_player1 else player2
+def make_html_links():
+    for line in sys.stdin:
+        line = line.strip()
+
+        if 'http' not in line:
+            continue
+
+        try:
+            href, name = line.split(',')
+        except ValueError:
+            continue
+
+        external = ' target="_blank"'
+        if any(il in href for il in INTERNAL_LINKS):
+            external = ''
+
+        print(LINK_HTML.format(href=href.strip(),
+                               external=external,
+                               name=name.strip()))
+
+
+if __name__ == '__main__':
+    make_html_links()
