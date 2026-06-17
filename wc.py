@@ -3597,6 +3597,8 @@
 """
 Pairs wines and cheeses by similarity of wine name and cheese name.
 """
+import heapq
+
 #
 # from collections import Counter
 # import operator
@@ -15191,73 +15193,255 @@ enumerate through the text by letter
 #     defeated_by_player1 = defeat_mapping[player1]
 #
 #     return player1 if player2 in defeated_by_player1 else player2
+#
+# import sys
+# import re
+#
+# INTERNAL_LINKS = ('pybit.es', 'codechalleng.es')
+#
+# def more_than_1_comma(s):
+#     return len(s.split(','))>2
+#
+# def ignore_line(s):
+#     func_list = [more_than_1_comma, not_contain_http]
+#     return any([f(s) for f in func_list])
+#
+# def not_contain_http(s):
+#     return re.search(r'https?:', s) is None
+#
+# def parse_link(s):
+#     # s = "https://www.python.org, Python Homepage"
+#     link, desc = s.split(',')
+#     is_internal=False
+#     for l in INTERNAL_LINKS:
+#         if l in link:
+#             is_internal=True
+#             break
+#     target_str = '' if is_internal else ' target="_blank"'
+#     url = f'<a href="{link.strip()}"{target_str}>{desc.strip()}</a>'
+#     return url
+#
+#
+# def make_html_links():
+#     for line in sys.stdin:
+#         new_line = line.strip()
+#         if not ignore_line(new_line):
+#             print(parse_link(new_line))
+#
+#
+#
+# if __name__ == '__main__':
+#     make_html_links()
+#
+# # Pybite solution:
+# import sys
+#
+# INTERNAL_LINKS = ('pybit.es', 'codechalleng.es')
+# LINK_HTML = '<a href="{href}"{external}>{name}</a>'
+#
+#
+# def make_html_links():
+#     for line in sys.stdin:
+#         line = line.strip()
+#
+#         if 'http' not in line:
+#             continue
+#
+#         try:
+#             href, name = line.split(',')
+#         except ValueError:
+#             continue
+#
+#         external = ' target="_blank"'
+#         if any(il in href for il in INTERNAL_LINKS):
+#             external = ''
+#
+#         print(LINK_HTML.format(href=href.strip(),
+#                                external=external,
+#                                name=name.strip()))
+#
+#
+# if __name__ == '__main__':
+#     make_html_links()
 
-import sys
-import re
-
-INTERNAL_LINKS = ('pybit.es', 'codechalleng.es')
-
-def more_than_1_comma(s):
-    return len(s.split(','))>2
-
-def ignore_line(s):
-    func_list = [more_than_1_comma, not_contain_http]
-    return any([f(s) for f in func_list])
-
-def not_contain_http(s):
-    return re.search(r'https?:', s) is None
-
-def parse_link(s):
-    # s = "https://www.python.org, Python Homepage"
-    link, desc = s.split(',')
-    is_internal=False
-    for l in INTERNAL_LINKS:
-        if l in link:
-            is_internal=True
-            break
-    target_str = '' if is_internal else ' target="_blank"'
-    url = f'<a href="{link.strip()}"{target_str}>{desc.strip()}</a>'
-    return url
 
 
-def make_html_links():
-    for line in sys.stdin:
-        new_line = line.strip()
-        if not ignore_line(new_line):
-            print(parse_link(new_line))
+from dataclasses import dataclass
+from typing import List, Tuple
+from functools import total_ordering
+
+bites: List[int] = [283, 282, 281, 263, 255, 230, 216, 204, 197, 196, 195]
+names: List[str] = [
+    "snow",
+    "natalia",
+    "alex",
+    "maquina",
+    "maria",
+    "tim",
+    "kenneth",
+    "fred",
+    "james",
+    "sara",
+    "sam",
+]
+
+@total_ordering
+@dataclass
+class Ninja:
+    """
+    The Ninja class will have the following features:
+
+    string: name
+    integer: bites
+    support <, >, and ==, based on bites
+    print out in the following format: [469] bob
+    """
+    name: str
+    bites: int
+
+    def __str__(self):
+        return f"[{self.bites}] {self.name}"
+
+    def __eq__(self, other):
+        # Type checking ensures safe comparisons with other types
+        if not isinstance(other, Ninja):
+            return NotImplemented
+        return self.bites == other.bites
+
+    def __lt__(self, other):
+        if not isinstance(other, Ninja):
+            return NotImplemented
+        return self.bites < other.bites
+    
+@dataclass
+class Rankings:
+    """
+    The Rankings class will have the following features:
+
+    method: add() that adds a Ninja object to the rankings
+    method: dump() that removes/dumps the lowest ranking Ninja from Rankings
+    method: highest() returns the highest ranking Ninja, but it takes an optional
+            count parameter indicating how many of the highest ranking Ninjas to return
+    method: lowest(), the same as highest but returns the lowest ranking Ninjas, also
+            supports an optional count parameter
+    returns how many Ninjas are in Rankings when len() is called on it
+    method: pair_up(), pairs up study partners, takes an optional count
+            parameter indicating how many Ninjas to pair up
+    returns List containing tuples of the paired up Ninja objects
+    """
+    def __init__(self):
+        self.ranking=[]
+
+    # implements a sorted list
+    def add(self, ninja:Ninja):
+        self.ranking.append(ninja)
+        self.ranking=sorted(self.ranking,key=lambda x:x.bites, reverse=True)
+
+    def dump(self):
+        return self.ranking.pop()
+
+    def highest(self, count=1):
+        items = self.ranking[0:count]
+        self.ranking=self.ranking[count:]
+        return items
+
+    def lowest(self, count=1):
+        items = self.ranking[-count:]
+        self.ranking=self.ranking[:len(self.ranking)-count]
+        items.reverse()
+        return items
+
+    def pair_up(self, default=3):
+        return [ item for i, item in  enumerate(zip(self.ranking, reversed(self.ranking)),start=1) if i <=default]
+
+
+    def __len__(self):
+        return len(self.ranking)
+
+
+# pybite solution
+from dataclasses import dataclass, field
+from functools import total_ordering
+from typing import List, Tuple
+
+bites: List[int] = [283, 282, 281, 263, 255, 230, 216, 204, 197, 196, 195]
+names: List[str] = [
+    "snow",
+    "natalia",
+    "alex",
+    "maquina",
+    "maria",
+    "tim",
+    "kenneth",
+    "fred",
+    "james",
+    "sara",
+    "sam",
+]
+
+
+@dataclass
+@total_ordering
+class Ninja:
+    """Ninja class object"""
+
+    name: str
+    bites: int
+
+    def __eq__(self, other) -> bool:
+        return (self.bites, self.name) == (other.bites, other.name)
+
+    def __gt__(self, other) -> bool:
+        return (self.bites, self.name) > (other.bites, other.name)
+
+    def __lt__(self, other) -> bool:
+        return (self.bites, self.name) < (other.bites, other.name)
+
+    def __str__(self) -> str:
+        return f"[{self.bites}] {self.name}"
+
+
+@dataclass
+class Rankings:
+    """Rankings class object"""
+
+    _ninjas: List[Ninja] = field(default_factory=list)
+
+    def __post_init__(self):
+        heapq.heapify(self._ninjas)
+
+    def __len__(self) -> int:
+        return len(self._ninjas)
+
+    def add(self, ninja: Ninja):
+        """Adds a new Ninja"""
+        heapq.heappush(self._ninjas, ninja)
+
+    def dump(self) -> Ninja:
+        """Removes the lowest ranking Ninja"""
+        return heapq.heappop(self._ninjas)
+
+    def highest(self, count: int = 1) -> List[Ninja]:
+        """Returns the highest ranking Ninja"""
+        return heapq.nlargest(count, self._ninjas)
+
+    def lowest(self, count: int = 1) -> List[Ninja]:
+        """Returns the lowest ranking Ninja
+
+        :param count: Integer that indicates how many Ninjas return
+        :return: List of Ninjas
+        """
+        return heapq.nsmallest(count, self._ninjas)
+
+    def pair_up(self, count: int = 3) -> List[Tuple[Ninja, Ninja]]:
+        """Pairs up study partners
+
+        :param count: Integer that indicates how many Ninjas to pair up
+        :return: List containing tuples of the paired up Ninjas
+        """
+        return list(zip(self.highest(count), self.lowest(count)))
 
 
 
-if __name__ == '__main__':
-    make_html_links()
-
-# Pybite solution:
-import sys
-
-INTERNAL_LINKS = ('pybit.es', 'codechalleng.es')
-LINK_HTML = '<a href="{href}"{external}>{name}</a>'
 
 
-def make_html_links():
-    for line in sys.stdin:
-        line = line.strip()
-
-        if 'http' not in line:
-            continue
-
-        try:
-            href, name = line.split(',')
-        except ValueError:
-            continue
-
-        external = ' target="_blank"'
-        if any(il in href for il in INTERNAL_LINKS):
-            external = ''
-
-        print(LINK_HTML.format(href=href.strip(),
-                               external=external,
-                               name=name.strip()))
-
-
-if __name__ == '__main__':
-    make_html_links()

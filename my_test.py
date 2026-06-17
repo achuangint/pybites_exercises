@@ -15687,71 +15687,238 @@ Inputs are modified to check how the function deals with unknown characters
 # @pytest.mark.parametrize("player", ['Snake', 'Human', 'Wolf'])
 # def test_gun_shoots_snake_human_and_wolf(player):
 #     assert get_winner('Gun', player) == 'Gun'
-
-import os
-import sys
-from pathlib import Path
-import subprocess
+#
+# import os
+# import sys
+# from pathlib import Path
+# import subprocess
+#
+# import pytest
+#
+# # no need to import make_html_links as we call links.py from CLI!
+#
+# TMP = Path(os.getenv("TMP", "/tmp"))
+# SCRIPT = 'links.py'
+# MY_CODE = Path(__file__).parent / SCRIPT
+#
+#
+# # https://docs.pytest.org/en/latest/tmpdir.html#the-tmpdir-factory-fixture
+#
+# @pytest.fixture
+# def my_file(tmp_path):
+#     f = tmp_path / "some_file.txt"
+#     return f
+#
+#
+# def _create_and_verify_links(my_file, lines, expected_links):
+#     my_file.write_bytes(b'\n'.join(lines))
+#     cmd = [sys.executable, str(MY_CODE)]
+#     with my_file.open('rb') as f:
+#         output = subprocess.check_output(cmd, stdin=f).splitlines()
+#     assert all(link in output for link in expected_links)
+#
+#
+# def test_make_html_links_first_data_set(my_file):
+#     lines = [b"https://www.python.org, Python Homepage",
+#              b"bad data,blabla,123",
+#              (b"https://pybit.es/generators.html , "
+#               b"Generators are Awesome "),
+#              b"more bad data"]
+#
+#     expected_links = [(b'<a href="https://www.python.org" target="_blank">'
+#                        b'Python Homepage</a>'),
+#                       (b'<a href="https://pybit.es/generators.html">'
+#                        b'Generators are Awesome</a>')]
+#
+#     _create_and_verify_links(my_file, lines, expected_links)
+#
+#
+# def test_make_html_links_second_data_set(my_file):
+#     lines = [b"bogus data, again",
+#              b"https://codechalleng.es/bites/ , Bites of Py",
+#              (b"https://stackoverflow.com/a/12927564,How to capture"
+#               b" subprocess.call stdout"),
+#              b"https://pybit.es/,Our labor of love",
+#              b"https://pybit.es/pages/about.html, About Us",
+#              b"https://nu.nl, Dutch news site",
+#              b"And some more bad data !!"]
+#
+#     expected_links = [(b'<a href="https://codechalleng.es/bites/">'
+#                        b'Bites of Py</a>'),
+#                       (b'<a href="https://stackoverflow.com/a/12927564" '
+#                        b'target="_blank">How to capture subprocess.call '
+#                        b'stdout</a>'),
+#                       b'<a href="https://pybit.es/">Our labor of love</a>',
+#                       (b'<a href="https://pybit.es/pages/about.html">'
+#                        b'About Us</a>'),
+#                       (b'<a href="https://nu.nl" target="_blank">'
+#                        b'Dutch news site</a>')]
+#
+#     _create_and_verify_links(my_file, lines, expected_links)
 
 import pytest
 
-# no need to import make_html_links as we call links.py from CLI!
+from wc import Ninja, Rankings, bites, names
 
-TMP = Path(os.getenv("TMP", "/tmp"))
-SCRIPT = 'links.py'
-MY_CODE = Path(__file__).parent / SCRIPT
+more_names = [
+    ("rey", 287),
+    ("bob", 293),
+    ("dan", 296),
+    ("darren", 298),
+    ("david", 313),
+    ("sebastian", 323),
+    ("ed", 368),
+    ("veronica", 410),
+    ("valentine", 441),
+    ("tyler", 450),
+    ("steve", 468),
+    ("doug", 469),
+    ("noah", 470),
+]
+FIRST_NINJAS = [Ninja(*ninja) for ninja in zip(names, bites)]
+SECOND_NINJAS = [Ninja(*ninja) for ninja in more_names]
 
 
-# https://docs.pytest.org/en/latest/tmpdir.html#the-tmpdir-factory-fixture
+def _create_ranks(ninjas=None):
+    ranking = Rankings()
+    if ninjas is None:
+        return ranking
+
+    for ninja in ninjas:
+        ranking.add(ninja)
+    return ranking
+
 
 @pytest.fixture
-def my_file(tmp_path):
-    f = tmp_path / "some_file.txt"
-    return f
+def first_ninjas():
+    return FIRST_NINJAS
 
 
-def _create_and_verify_links(my_file, lines, expected_links):
-    my_file.write_bytes(b'\n'.join(lines))
-    cmd = [sys.executable, str(MY_CODE)]
-    with my_file.open('rb') as f:
-        output = subprocess.check_output(cmd, stdin=f).splitlines()
-    assert all(link in output for link in expected_links)
+@pytest.fixture
+def second_ninjas():
+    return SECOND_NINJAS
 
 
-def test_make_html_links_first_data_set(my_file):
-    lines = [b"https://www.python.org, Python Homepage",
-             b"bad data,blabla,123",
-             (b"https://pybit.es/generators.html , "
-              b"Generators are Awesome "),
-             b"more bad data"]
-
-    expected_links = [(b'<a href="https://www.python.org" target="_blank">'
-                       b'Python Homepage</a>'),
-                      (b'<a href="https://pybit.es/generators.html">'
-                       b'Generators are Awesome</a>')]
-
-    _create_and_verify_links(my_file, lines, expected_links)
+@pytest.fixture()
+def ninja_ranks():
+    ranking = Rankings()
+    for ninja in FIRST_NINJAS:
+        ranking.add(ninja)
+    return ranking
 
 
-def test_make_html_links_second_data_set(my_file):
-    lines = [b"bogus data, again",
-             b"https://codechalleng.es/bites/ , Bites of Py",
-             (b"https://stackoverflow.com/a/12927564,How to capture"
-              b" subprocess.call stdout"),
-             b"https://pybit.es/,Our labor of love",
-             b"https://pybit.es/pages/about.html, About Us",
-             b"https://nu.nl, Dutch news site",
-             b"And some more bad data !!"]
+def test_ninja_class_empty_init_raises_exception():
+    with pytest.raises(TypeError):
+        Ninja()
 
-    expected_links = [(b'<a href="https://codechalleng.es/bites/">'
-                       b'Bites of Py</a>'),
-                      (b'<a href="https://stackoverflow.com/a/12927564" '
-                       b'target="_blank">How to capture subprocess.call '
-                       b'stdout</a>'),
-                      b'<a href="https://pybit.es/">Our labor of love</a>',
-                      (b'<a href="https://pybit.es/pages/about.html">'
-                       b'About Us</a>'),
-                      (b'<a href="https://nu.nl" target="_blank">'
-                       b'Dutch news site</a>')]
 
-    _create_and_verify_links(my_file, lines, expected_links)
+# required class behavior
+
+
+def test_ninja_class_and_membership(first_ninjas):
+    ninja1 = Ninja("snow", 283)
+    ninja2 = Ninja("natalia", 282)
+    ninja3 = Ninja("okken", 70)
+    assert ninja1 in first_ninjas
+    assert ninja2 in first_ninjas
+    assert ninja3 not in first_ninjas
+
+
+def test_ninja_str_output(first_ninjas, capfd):
+    print(first_ninjas[1])
+    output = capfd.readouterr()[0].strip()
+    assert output == "[282] natalia"
+    print(first_ninjas[3])
+    output = capfd.readouterr()[0].strip()
+    assert output == "[263] maquina"
+
+
+# starting len of ninja rankings
+
+
+def test_first_ninja_ranks_in_object(ninja_ranks):
+    assert len(ninja_ranks) == 11
+
+
+def test_dumping_lowest_ranking_fist_ninjas(ninja_ranks):
+    actual = ninja_ranks.dump()
+    expected = Ninja(name="sam", bites=195)
+    assert actual == expected
+    assert len(ninja_ranks) == 10
+
+
+# highest / lowest ninjas in rankings
+
+
+def test_highest_ranking_no_arg(ninja_ranks):
+    actual = ninja_ranks.highest()
+    expected = [Ninja(name="snow", bites=283)]
+    assert actual == expected
+
+
+def test_lowest_ranking_no_arg(ninja_ranks):
+    actual = ninja_ranks.lowest()
+    expected = [Ninja(name="sam", bites=195)]
+    assert actual == expected
+
+
+def test_lowest_ranking_with_arg(ninja_ranks):
+    actual = ninja_ranks.lowest(3)
+    expected = [
+        Ninja(name="sam", bites=195),
+        Ninja(name="sara", bites=196),
+        Ninja(name="james", bites=197),
+    ]
+    assert actual == expected
+
+
+def test_adding_a_ninja(ninja_ranks):
+    ninja_ranks.add(Ninja(name="sam", bites=195))
+    assert len(ninja_ranks) == 12
+
+
+def test_lowest_ranking_after_adding_more_ninjas(ninja_ranks):
+    actual = ninja_ranks.lowest(3)
+    expected = [
+        Ninja(name="sam", bites=195),
+        Ninja(name="sara", bites=196),
+        Ninja(name="james", bites=197),
+    ]
+    assert actual == expected
+
+    # now add the ninjas of first_ninja_ranks
+    for ninja in SECOND_NINJAS:
+        ninja_ranks.add(ninja)
+
+    # check highest, they should have been added
+    actual = ninja_ranks.highest(3)
+    expected = [
+        Ninja(name="noah", bites=470),
+        Ninja(name="doug", bites=469),
+        Ninja(name="steve", bites=468),
+    ]
+    assert actual == expected
+
+
+# pairing of ninjas
+
+
+def test_pairing_with_no_arg(ninja_ranks):
+    actual = ninja_ranks.pair_up()
+    assert len(actual) == 3
+
+    expected = (Ninja(name="natalia", bites=282), Ninja(name="sara", bites=196))
+    assert actual[1] == expected
+
+
+def test_pairing_with_count_arg(ninja_ranks):
+    actual = ninja_ranks.pair_up(5)
+    assert len(actual) == 5
+
+    expected = (Ninja(name="snow", bites=283),
+                Ninja(name="sam", bites=195))
+    assert actual[0] == expected
+
+    expected = (Ninja(name="maria", bites=255),
+                Ninja(name="kenneth", bites=216))
+    assert actual[-1] == expected
