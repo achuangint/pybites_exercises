@@ -3599,6 +3599,8 @@ Pairs wines and cheeses by similarity of wine name and cheese name.
 """
 import heapq
 
+from pygments.lexers import wren
+
 #
 # from collections import Counter
 # import operator
@@ -15265,183 +15267,439 @@ enumerate through the text by letter
 #     make_html_links()
 
 
+#
+# from dataclasses import dataclass
+# from typing import List, Tuple
+# from functools import total_ordering
+#
+# bites: List[int] = [283, 282, 281, 263, 255, 230, 216, 204, 197, 196, 195]
+# names: List[str] = [
+#     "snow",
+#     "natalia",
+#     "alex",
+#     "maquina",
+#     "maria",
+#     "tim",
+#     "kenneth",
+#     "fred",
+#     "james",
+#     "sara",
+#     "sam",
+# ]
+#
+# @total_ordering
+# @dataclass
+# class Ninja:
+#     """
+#     The Ninja class will have the following features:
+#
+#     string: name
+#     integer: bites
+#     support <, >, and ==, based on bites
+#     print out in the following format: [469] bob
+#     """
+#     name: str
+#     bites: int
+#
+#     def __str__(self):
+#         return f"[{self.bites}] {self.name}"
+#
+#     def __eq__(self, other):
+#         # Type checking ensures safe comparisons with other types
+#         if not isinstance(other, Ninja):
+#             return NotImplemented
+#         return self.bites == other.bites
+#
+#     def __lt__(self, other):
+#         if not isinstance(other, Ninja):
+#             return NotImplemented
+#         return self.bites < other.bites
+#
+# @dataclass
+# class Rankings:
+#     """
+#     The Rankings class will have the following features:
+#
+#     method: add() that adds a Ninja object to the rankings
+#     method: dump() that removes/dumps the lowest ranking Ninja from Rankings
+#     method: highest() returns the highest ranking Ninja, but it takes an optional
+#             count parameter indicating how many of the highest ranking Ninjas to return
+#     method: lowest(), the same as highest but returns the lowest ranking Ninjas, also
+#             supports an optional count parameter
+#     returns how many Ninjas are in Rankings when len() is called on it
+#     method: pair_up(), pairs up study partners, takes an optional count
+#             parameter indicating how many Ninjas to pair up
+#     returns List containing tuples of the paired up Ninja objects
+#     """
+#     def __init__(self):
+#         self.ranking=[]
+#
+#     # implements a sorted list
+#     def add(self, ninja:Ninja):
+#         self.ranking.append(ninja)
+#         self.ranking=sorted(self.ranking,key=lambda x:x.bites, reverse=True)
+#
+#     def dump(self):
+#         return self.ranking.pop()
+#
+#     def highest(self, count=1):
+#         items = self.ranking[0:count]
+#         self.ranking=self.ranking[count:]
+#         return items
+#
+#     def lowest(self, count=1):
+#         items = self.ranking[-count:]
+#         self.ranking=self.ranking[:len(self.ranking)-count]
+#         items.reverse()
+#         return items
+#
+#     def pair_up(self, default=3):
+#         return [ item for i, item in  enumerate(zip(self.ranking, reversed(self.ranking)),start=1) if i <=default]
+#
+#
+#     def __len__(self):
+#         return len(self.ranking)
+#
+#
+# # pybite solution
+# from dataclasses import dataclass, field
+# from functools import total_ordering
+# from typing import List, Tuple
+#
+# bites: List[int] = [283, 282, 281, 263, 255, 230, 216, 204, 197, 196, 195]
+# names: List[str] = [
+#     "snow",
+#     "natalia",
+#     "alex",
+#     "maquina",
+#     "maria",
+#     "tim",
+#     "kenneth",
+#     "fred",
+#     "james",
+#     "sara",
+#     "sam",
+# ]
+#
+#
+# @dataclass
+# @total_ordering
+# class Ninja:
+#     """Ninja class object"""
+#
+#     name: str
+#     bites: int
+#
+#     def __eq__(self, other) -> bool:
+#         return (self.bites, self.name) == (other.bites, other.name)
+#
+#     def __gt__(self, other) -> bool:
+#         return (self.bites, self.name) > (other.bites, other.name)
+#
+#     def __lt__(self, other) -> bool:
+#         return (self.bites, self.name) < (other.bites, other.name)
+#
+#     def __str__(self) -> str:
+#         return f"[{self.bites}] {self.name}"
+#
+#
+# @dataclass
+# class Rankings:
+#     """Rankings class object"""
+#
+#     _ninjas: List[Ninja] = field(default_factory=list)
+#
+#     def __post_init__(self):
+#         heapq.heapify(self._ninjas)
+#
+#     def __len__(self) -> int:
+#         return len(self._ninjas)
+#
+#     def add(self, ninja: Ninja):
+#         """Adds a new Ninja"""
+#         heapq.heappush(self._ninjas, ninja)
+#
+#     def dump(self) -> Ninja:
+#         """Removes the lowest ranking Ninja"""
+#         return heapq.heappop(self._ninjas)
+#
+#     def highest(self, count: int = 1) -> List[Ninja]:
+#         """Returns the highest ranking Ninja"""
+#         return heapq.nlargest(count, self._ninjas)
+#
+#     def lowest(self, count: int = 1) -> List[Ninja]:
+#         """Returns the lowest ranking Ninja
+#
+#         :param count: Integer that indicates how many Ninjas return
+#         :return: List of Ninjas
+#         """
+#         return heapq.nsmallest(count, self._ninjas)
+#
+#     def pair_up(self, count: int = 3) -> List[Tuple[Ninja, Ninja]]:
+#         """Pairs up study partners
+#
+#         :param count: Integer that indicates how many Ninjas to pair up
+#         :return: List containing tuples of the paired up Ninjas
+#         """
+#         return list(zip(self.highest(count), self.lowest(count)))
+#
+#
+#
+#
+#
 
-from dataclasses import dataclass
-from typing import List, Tuple
-from functools import total_ordering
-
-bites: List[int] = [283, 282, 281, 263, 255, 230, 216, 204, 197, 196, 195]
-names: List[str] = [
-    "snow",
-    "natalia",
-    "alex",
-    "maquina",
-    "maria",
-    "tim",
-    "kenneth",
-    "fred",
-    "james",
-    "sara",
-    "sam",
-]
-
-@total_ordering
-@dataclass
-class Ninja:
-    """
-    The Ninja class will have the following features:
-
-    string: name
-    integer: bites
-    support <, >, and ==, based on bites
-    print out in the following format: [469] bob
-    """
-    name: str
-    bites: int
-
-    def __str__(self):
-        return f"[{self.bites}] {self.name}"
-
-    def __eq__(self, other):
-        # Type checking ensures safe comparisons with other types
-        if not isinstance(other, Ninja):
-            return NotImplemented
-        return self.bites == other.bites
-
-    def __lt__(self, other):
-        if not isinstance(other, Ninja):
-            return NotImplemented
-        return self.bites < other.bites
-    
-@dataclass
-class Rankings:
-    """
-    The Rankings class will have the following features:
-
-    method: add() that adds a Ninja object to the rankings
-    method: dump() that removes/dumps the lowest ranking Ninja from Rankings
-    method: highest() returns the highest ranking Ninja, but it takes an optional
-            count parameter indicating how many of the highest ranking Ninjas to return
-    method: lowest(), the same as highest but returns the lowest ranking Ninjas, also
-            supports an optional count parameter
-    returns how many Ninjas are in Rankings when len() is called on it
-    method: pair_up(), pairs up study partners, takes an optional count
-            parameter indicating how many Ninjas to pair up
-    returns List containing tuples of the paired up Ninja objects
-    """
-    def __init__(self):
-        self.ranking=[]
-
-    # implements a sorted list
-    def add(self, ninja:Ninja):
-        self.ranking.append(ninja)
-        self.ranking=sorted(self.ranking,key=lambda x:x.bites, reverse=True)
-
-    def dump(self):
-        return self.ranking.pop()
-
-    def highest(self, count=1):
-        items = self.ranking[0:count]
-        self.ranking=self.ranking[count:]
-        return items
-
-    def lowest(self, count=1):
-        items = self.ranking[-count:]
-        self.ranking=self.ranking[:len(self.ranking)-count]
-        items.reverse()
-        return items
-
-    def pair_up(self, default=3):
-        return [ item for i, item in  enumerate(zip(self.ranking, reversed(self.ranking)),start=1) if i <=default]
-
-
-    def __len__(self):
-        return len(self.ranking)
-
-
-# pybite solution
 from dataclasses import dataclass, field
-from functools import total_ordering
-from typing import List, Tuple
+from typing import List, Set, Tuple
+import string
+from collections import Counter
 
-bites: List[int] = [283, 282, 281, 263, 255, 230, 216, 204, 197, 196, 195]
-names: List[str] = [
-    "snow",
-    "natalia",
-    "alex",
-    "maquina",
-    "maria",
-    "tim",
-    "kenneth",
-    "fred",
-    "james",
-    "sara",
-    "sam",
-]
+STOPWORDS: set = {
+    "she's", "wasn", "through", "won", "that'll", "his", "once", "this",
+    "you", "ll", "has", "because", "m", "ours", "doing", "any", "aren't",
+    "they", "shouldn't", "being", "out", "is", "our", "it", "don", "had",
+    "nor", "your", "she", "you've", "themselves", "or", "y", "needn", "on",
+    "to", "at", "it's", "ve", "s", "too", "up", "didn't", "during", "haven",
+    "can", "haven't", "each", "couldn", "isn't", "not", "against", "where",
+    "was", "aren", "all", "by", "why", "hers", "theirs", "have", "as",
+    "yourself", "their", "very", "who", "yourselves", "over", "and",
+    "again", "do", "weren't", "which", "ma", "in", "such", "herself",
+    "yours", "doesn", "if", "my", "after", "into", "just", "now", "isn",
+    "itself", "between", "will", "other", "its", "these", "should", "re",
+    "below", "having", "am", "both", "d", "you'll", "but", "should've",
+    "won't", "himself", "shan't", "the", "me", "weren", "further", "until",
+    "here", "myself", "whom", "were", "hasn", "don't", "wouldn't", "been",
+    "before", "above", "he", "than", "most", "shan", "them", "mustn't",
+    "couldn't", "you'd", "for", "of", "her", "those", "needn't", "you're",
+    "t", "hadn't", "down", "o", "did", "about", "from", "does", "wouldn",
+    "off", "then", "ain", "few", "hasn't", "some", "i", "ourselves", "an",
+    "when", "are", "under", "more", "with", "hadn", "what", "while", "didn",
+    "doesn't", "only", "him", "mightn", "be", "mightn't", "a", "how", "no",
+    "there", "that", "so", "we", "same", "mustn", "wasn't", "shouldn", "own",
+}
+GETTYSBURG: str = """Four score and seven years ago our fathers brought forth on this continent, a new nation, conceived in Liberty, and dedicated to the proposition that all men are created equal.
 
+Now we are engaged in a great civil war, testing whether that nation, or any nation so conceived and so dedicated, can long endure. We are met on a great battlefield of that war. We have come to dedicate a portion of that field, as a final resting place for those who here gave their lives that that nation might live. It is altogether fitting and proper that we should do this.
 
-@dataclass
-@total_ordering
-class Ninja:
-    """Ninja class object"""
-
-    name: str
-    bites: int
-
-    def __eq__(self, other) -> bool:
-        return (self.bites, self.name) == (other.bites, other.name)
-
-    def __gt__(self, other) -> bool:
-        return (self.bites, self.name) > (other.bites, other.name)
-
-    def __lt__(self, other) -> bool:
-        return (self.bites, self.name) < (other.bites, other.name)
-
-    def __str__(self) -> str:
-        return f"[{self.bites}] {self.name}"
+But, in a larger sense, we cannot dedicate—we cannot consecrate—we cannot hallow—this ground. The brave men, living and dead, who struggled here, have consecrated it, far above our poor power to add or detract. The world will little note, nor long remember what we say here, but it can never forget what they did here. It is for us the living, rather, to be dedicated here to the unfinished work which they who fought here have thus far so nobly advanced. It is rather for us to be here dedicated to the great task remaining before us—that from these honored dead we take increased devotion to that cause for which they gave the last full measure of devotion—that we here highly resolve that these dead shall not have died in vain—that this nation, under God, shall have a new birth of freedom— and that government of the people, by the people, for the people, shall not perish from the earth."""  # noqa E501
 
 
 @dataclass
-class Rankings:
-    """Rankings class object"""
+class Corpora:
+    """Add the initial variables along with creating any methods that
+    will get this working as described in the bite's description.
 
-    _ninjas: List[Ninja] = field(default_factory=list)
+    * txt
+    * count
+    * tag
+    * extra
+    * stopwords
+    """
+    txt: str
+    count: int = 5
+    _extra: list[str] = field(default_factory=list)
+    tag: str = '#'
+
+    @property
+    def extra(self):
+        return self._extra
+
+    @extra.setter
+    def extra(self, word_list):
+        self._extra=word_list
+
+    @property
+    def cleaned(self) -> str:
+        """Takes a corpus and cleans it up.
+
+        * All text is made lowercase
+        * All punctuation is removed
+        * If a list of extra characters were given, remove those too
+
+        :param txt: Corpus of text
+        :return: cleaned up corpus
+        """
+        txt=self.txt.strip()
+        # lower case
+        #txt=GETTYSBURG
+        txt = txt.lower()
+        # remove punctuation
+        translation_table = str.maketrans('—',' ',string.punctuation)
+        txt = txt.translate(translation_table)
+        txt = txt.replace('\n',' ') + ' '
+        for l in self._extra:
+            txt = txt.replace(l, ' ')
+        self.txt =  txt
+        return txt
+
+    @property
+    def metrics(self) -> List[Tuple[str, int]]:
+        """Generates word count metrics.
+
+        * Using the cleaned up corpus, count up how many times each word is used
+        * Exclude stop words using STOPWORDS
+        * Use count to return the requested amount of the top words, defaults to 5
+
+        :return: List of tuples, i.e. ("word", count)
+        """
+        txt = self.cleaned
+        words = txt.split()
+        wcounter = Counter(words)
+        new_list = STOPWORDS | set(self.extra)
+        for word in new_list:
+            if word in wcounter:
+                del wcounter[word]
+        return wcounter.most_common(self.count)
+
+
+    @property
+    def graph(self) -> None:
+        """Generates a textual graph of the words
+
+        * Prints out the words along with a "tag" bar graph, defaults to using
+          the # character
+        * The word is right-aligned and takes up 10 character spaces
+        * The tag is repeated the number of counts of the word
+
+        For example, the top 10 words in the Gettysburg address would be
+        displayed in this manner:
+
+            nation #####
+         dedicated ####
+             great ###
+            cannot ###
+              dead ###
+                us ###
+             shall ###
+            people ###
+               new ##
+         conceived ##
+
+        :param metrics: List of tuples with word counts
+        :return: None
+        """
+        word_freq = self.metrics
+        for w, count  in word_freq:
+            print(f"{w:>10} {self.tag*count}")
+
+
+# Pybite solution
+import string
+from collections import Counter
+from dataclasses import dataclass, field
+from typing import List, Set, Tuple
+
+STOPWORDS: set = {
+    "she's", "wasn", "through", "won", "that'll", "his", "once", "this",
+    "you", "ll", "has", "because", "m", "ours", "doing", "any", "aren't",
+    "they", "shouldn't", "being", "out", "is", "our", "it", "don", "had",
+    "nor", "your", "she", "you've", "themselves", "or", "y", "needn", "on",
+    "to", "at", "it's", "ve", "s", "too", "up", "didn't", "during", "haven",
+    "can", "haven't", "each", "couldn", "isn't", "not", "against", "where",
+    "was", "aren", "all", "by", "why", "hers", "theirs", "have", "as",
+    "yourself", "their", "very", "who", "yourselves", "over", "and",
+    "again", "do", "weren't", "which", "ma", "in", "such", "herself",
+    "yours", "doesn", "if", "my", "after", "into", "just", "now", "isn",
+    "itself", "between", "will", "other", "its", "these", "should", "re",
+    "below", "having", "am", "both", "d", "you'll", "but", "should've",
+    "won't", "himself", "shan't", "the", "me", "weren", "further", "until",
+    "here", "myself", "whom", "were", "hasn", "don't", "wouldn't", "been",
+    "before", "above", "he", "than", "most", "shan", "them", "mustn't",
+    "couldn't", "you'd", "for", "of", "her", "those", "needn't", "you're",
+    "t", "hadn't", "down", "o", "did", "about", "from", "does", "wouldn",
+    "off", "then", "ain", "few", "hasn't", "some", "i", "ourselves", "an",
+    "when", "are", "under", "more", "with", "hadn", "what", "while", "didn",
+    "doesn't", "only", "him", "mightn", "be", "mightn't", "a", "how", "no",
+    "there", "that", "so", "we", "same", "mustn", "wasn't", "shouldn", "own",
+}
+GETTYSBURG: str = """Four score and seven years ago our fathers brought forth on this continent, a new nation, conceived in Liberty, and dedicated to the proposition that all men are created equal.
+
+Now we are engaged in a great civil war, testing whether that nation, or any nation so conceived and so dedicated, can long endure. We are met on a great battlefield of that war. We have come to dedicate a portion of that field, as a final resting place for those who here gave their lives that that nation might live. It is altogether fitting and proper that we should do this.
+
+But, in a larger sense, we cannot dedicate—we cannot consecrate—we cannot hallow—this ground. The brave men, living and dead, who struggled here, have consecrated it, far above our poor power to add or detract. The world will little note, nor long remember what we say here, but it can never forget what they did here. It is for us the living, rather, to be dedicated here to the unfinished work which they who fought here have thus far so nobly advanced. It is rather for us to be here dedicated to the great task remaining before us—that from these honored dead we take increased devotion to that cause for which they gave the last full measure of devotion—that we here highly resolve that these dead shall not have died in vain—that this nation, under God, shall have a new birth of freedom— and that government of the people, by the people, for the people, shall not perish from the earth."""
+
+
+@dataclass
+class Corpora:
+    """Add the inital variables along with creating any methods that
+    will get this working as described in the bite's description.
+
+    * txt
+    * count
+    * tag
+    * extra
+    * stopwords
+    """
+    txt: str
+    count: int = 5
+    tag: str = "#"
+    extra: List[str] = field(default_factory=list)
+    stopwords: Set[str] = field(default_factory=set)
 
     def __post_init__(self):
-        heapq.heapify(self._ninjas)
+        self.extra = self.extra if self.extra else []
+        self.stopwords = STOPWORDS
 
-    def __len__(self) -> int:
-        return len(self._ninjas)
+    @property
+    def cleaned(self) -> str:
+        """Takes a corpus and cleans it up.
 
-    def add(self, ninja: Ninja):
-        """Adds a new Ninja"""
-        heapq.heappush(self._ninjas, ninja)
+        * All text is made lowercase
+        * All punctuations are removed
+        * If a list of extract objects were given, remove those too
 
-    def dump(self) -> Ninja:
-        """Removes the lowest ranking Ninja"""
-        return heapq.heappop(self._ninjas)
-
-    def highest(self, count: int = 1) -> List[Ninja]:
-        """Returns the highest ranking Ninja"""
-        return heapq.nlargest(count, self._ninjas)
-
-    def lowest(self, count: int = 1) -> List[Ninja]:
-        """Returns the lowest ranking Ninja
-
-        :param count: Integer that indicates how many Ninjas return
-        :return: List of Ninjas
+        :param txt: Corpus of text
+        :return: cleaned up corpus
         """
-        return heapq.nsmallest(count, self._ninjas)
+        trans = str.maketrans("", "", string.punctuation)
+        c_txt = ""
+        for line in self.txt.lower().splitlines():
+            c_txt += line.translate(trans) + " "
 
-    def pair_up(self, count: int = 3) -> List[Tuple[Ninja, Ninja]]:
-        """Pairs up study partners
+        if self.extra:
+            for char in self.extra:
+                c_txt = c_txt.replace(char, " ")
 
-        :param count: Integer that indicates how many Ninjas to pair up
-        :return: List containing tuples of the paired up Ninjas
+        return c_txt
+
+    @property
+    def metrics(self) -> List[Tuple[str, int]]:
+        """Generates word count metrics.
+
+        * Using the cleaned up corpus, count up how many times each word is used
+        * Exclude stop words using STOPWORDS
+        * Use count to return the requested amount of the top words, defaults to 5
+
+        :return: List of tuples, i.e. ("word", count)
         """
-        return list(zip(self.highest(count), self.lowest(count)))
+        txt_lst = [w for w in self.cleaned.strip().split() if w not in self.stopwords]
+        return Counter(txt_lst).most_common(self.count)
 
+    @property
+    def graph(self) -> None:
+        """Generates a textual graph of the words
 
+        * Prints out the words along with a "tag" bar graph, defaults to using
+          the # character
+        * The word is right-aligned and takes up 10 character spaces
+        * The tag is repeated the number of counts of the word
 
+        For example, the top 10 words in the Gettysburgh address would be
+        displayed in this manner:
 
+            nation #####
+         dedicated ####
+             great ###
+            cannot ###
+              dead ###
+                us ###
+             shall ###
+            people ###
+               new ##
+         conceived ##
 
+        :param metrics: List of tuples with word counts
+        :return: None
+        """
+        for metric in self.metrics:
+            word, value = metric
+            print(f"{word:>10} {self.tag * value}")
