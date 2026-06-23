@@ -15703,73 +15703,130 @@ enumerate through the text by letter
 #         for metric in self.metrics:
 #             word, value = metric
 #             print(f"{word:>10} {self.tag * value}")
+#
+# import pandas as pd
+#
+#
+# data = "https://s3.us-east-2.amazonaws.com/bites-data/menu.csv"
+# # load the data in once, functions will use this module object
+# df = pd.read_csv(data)
+#
+# pd.options.mode.chained_assignment = None  # ignore warnings
+#
+#
+# def get_food_most_calories(df=df):
+#     """Return the food "Item" string with most calories"""
+#     return df.loc[df['Calories'].idxmax()]['Item']
+#
+#
+# def get_bodybuilder_friendly_foods(df=df, excl_drinks=False):
+#     """Calulate the Protein/Calories ratio of foods and return the
+#        5 foods with the best ratio.
+#
+#        This function has a excl_drinks switch which, when turned on,
+#        should exclude 'Coffee & Tea' and 'Beverages' from this top 5.
+#
+#        You will probably need to filter out foods with 0 calories to get the
+#        right results.
+#
+#        Return a list of the top 5 foot Item stings."""
+#     df = df[df['Calories']!=0]
+#     df['bodybuilder_ratio'] = df['Protein'] / df['Calories']
+#
+#     if excl_drinks:
+#         df = df[~ ((df['Category'] == 'Coffee & Tea') | (df['Category'] == 'Beverages'))]
+#     sorted_df = df.sort_values(by='bodybuilder_ratio', ascending=False)
+#     return sorted_df[0:5]['Item']
+#
+# ## Pybite solution
+# import pandas as pd
+#
+# data = "https://s3.us-east-2.amazonaws.com/bites-data/menu.csv"
+# # load the data in once, functions will use this module object
+# df = pd.read_csv(data)
+#
+# pd.options.mode.chained_assignment = None  # ignore warnings
+#
+#
+# def get_food_most_calories(df=df):
+#     """Return the food "Item" string with most calories"""
+#     return df.iloc[df['Calories'].idxmax()]['Item']
+#
+#
+# def get_bodybuilder_friendly_foods(df=df, excl_drinks=False):
+#     """Calulate the Protein/Calories ratio of foods and return the
+#        5 foods with the best ratio.
+#
+#        This function has a excl_drinks switch which, when turned on,
+#        should exclude 'Coffee & Tea' and 'Beverages' from this top 5.
+#
+#        You will probably need to filter out foods with 0 calories to get the
+#        right results.
+#
+#        Return a list of the top 5 foot Item stings."""
+#     df = df[df['Calories'] > 0]
+#     df['prot_per_calorie'] = df['Protein'] / df['Calories']
+#
+#     if excl_drinks:
+#         df = df[~df['Category'].isin(['Coffee & Tea', 'Beverages'])]
+#
+#     # for an nlargest() variant see https://codechalleng.es/inbox/16367/#387773
+#     return df.sort_values(by="prot_per_calorie",
+#                           ascending=False).head(5)['Item'].values
 
-import pandas as pd
+from itertools import cycle
+from time import perf_counter, sleep
+
+SPINNER_STATES = ['-', '\\', '|', '/']  # had to escape \
+STATE_TRANSITION_TIME = 0.1
 
 
-data = "https://s3.us-east-2.amazonaws.com/bites-data/menu.csv"
-# load the data in once, functions will use this module object
-df = pd.read_csv(data)
+def spinner(seconds):
+    """Make a terminal loader/spinner animation using the imports above.
+       Takes seconds argument = time for the spinner to run.
+       Does not return anything, only prints to stdout."""
+    spin_cycle = cycle(SPINNER_STATES)
 
-pd.options.mode.chained_assignment = None  # ignore warnings
-
-
-def get_food_most_calories(df=df):
-    """Return the food "Item" string with most calories"""
-    return df.loc[df['Calories'].idxmax()]['Item']
-
-
-def get_bodybuilder_friendly_foods(df=df, excl_drinks=False):
-    """Calulate the Protein/Calories ratio of foods and return the
-       5 foods with the best ratio.
-
-       This function has a excl_drinks switch which, when turned on,
-       should exclude 'Coffee & Tea' and 'Beverages' from this top 5.
-
-       You will probably need to filter out foods with 0 calories to get the
-       right results.
-
-       Return a list of the top 5 foot Item stings."""
-    df = df[df['Calories']!=0]
-    df['bodybuilder_ratio'] = df['Protein'] / df['Calories']
-
-    if excl_drinks:
-        df = df[~ ((df['Category'] == 'Coffee & Tea') | (df['Category'] == 'Beverages'))]
-    sorted_df = df.sort_values(by='bodybuilder_ratio', ascending=False)
-    return sorted_df[0:5]['Item']
-
-## Pybite solution
-import pandas as pd
-
-data = "https://s3.us-east-2.amazonaws.com/bites-data/menu.csv"
-# load the data in once, functions will use this module object
-df = pd.read_csv(data)
-
-pd.options.mode.chained_assignment = None  # ignore warnings
+    # Start the timer
+    start_time = perf_counter()
+    current_time = perf_counter()
+    while (current_time - start_time) < seconds:
+        print(next(spin_cycle), end="\r", flush=True)
+        sleep(STATE_TRANSITION_TIME)
+        current_time = perf_counter()
 
 
-def get_food_most_calories(df=df):
-    """Return the food "Item" string with most calories"""
-    return df.iloc[df['Calories'].idxmax()]['Item']
+
+if __name__ == '__main__':
+    spinner(2)
 
 
-def get_bodybuilder_friendly_foods(df=df, excl_drinks=False):
-    """Calulate the Protein/Calories ratio of foods and return the
-       5 foods with the best ratio.
+# Pybite solution
+from itertools import cycle
+import sys
+from time import time, sleep
 
-       This function has a excl_drinks switch which, when turned on,
-       should exclude 'Coffee & Tea' and 'Beverages' from this top 5.
+SPINNER_STATES = ['-', '\\', '|', '/']  # had to escape \
+STATE_TRANSITION_TIME = 0.1
 
-       You will probably need to filter out foods with 0 calories to get the
-       right results.
 
-       Return a list of the top 5 foot Item stings."""
-    df = df[df['Calories'] > 0]
-    df['prot_per_calorie'] = df['Protein'] / df['Calories']
+def spinner(seconds):
+    """Make a terminal loader/spinner animation using the imports above.
+       Takes seconds argument = time for the spinner to run.
+       Does not return anything, only prints to stdout.
 
-    if excl_drinks:
-        df = df[~df['Category'].isin(['Coffee & Tea', 'Beverages'])]
+       Idea/code from Víctor Terrón:
+       https://github.com/vterron/EuroPython-2016/blob/master/kung-fu-itertools.ipynb
+    """
+    symbols = cycle(SPINNER_STATES)
+    end_time = time() + seconds
+    while time() < end_time:
+        # '\r' is needed to return cursor to start of the line
+        sys.stdout.write('\r' + next(symbols))  # no newline
+        sys.stdout.flush()
+        sleep(STATE_TRANSITION_TIME)
+    print()  # newline here
 
-    # for an nlargest() variant see https://codechalleng.es/inbox/16367/#387773
-    return df.sort_values(by="prot_per_calorie",
-                          ascending=False).head(5)['Item'].values
+
+if __name__ == '__main__':
+    spinner(2)
