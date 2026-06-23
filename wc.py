@@ -15447,259 +15447,329 @@ enumerate through the text by letter
 #
 #
 #
+#
+# from dataclasses import dataclass, field
+# from typing import List, Set, Tuple
+# import string
+# from collections import Counter
+#
+# STOPWORDS: set = {
+#     "she's", "wasn", "through", "won", "that'll", "his", "once", "this",
+#     "you", "ll", "has", "because", "m", "ours", "doing", "any", "aren't",
+#     "they", "shouldn't", "being", "out", "is", "our", "it", "don", "had",
+#     "nor", "your", "she", "you've", "themselves", "or", "y", "needn", "on",
+#     "to", "at", "it's", "ve", "s", "too", "up", "didn't", "during", "haven",
+#     "can", "haven't", "each", "couldn", "isn't", "not", "against", "where",
+#     "was", "aren", "all", "by", "why", "hers", "theirs", "have", "as",
+#     "yourself", "their", "very", "who", "yourselves", "over", "and",
+#     "again", "do", "weren't", "which", "ma", "in", "such", "herself",
+#     "yours", "doesn", "if", "my", "after", "into", "just", "now", "isn",
+#     "itself", "between", "will", "other", "its", "these", "should", "re",
+#     "below", "having", "am", "both", "d", "you'll", "but", "should've",
+#     "won't", "himself", "shan't", "the", "me", "weren", "further", "until",
+#     "here", "myself", "whom", "were", "hasn", "don't", "wouldn't", "been",
+#     "before", "above", "he", "than", "most", "shan", "them", "mustn't",
+#     "couldn't", "you'd", "for", "of", "her", "those", "needn't", "you're",
+#     "t", "hadn't", "down", "o", "did", "about", "from", "does", "wouldn",
+#     "off", "then", "ain", "few", "hasn't", "some", "i", "ourselves", "an",
+#     "when", "are", "under", "more", "with", "hadn", "what", "while", "didn",
+#     "doesn't", "only", "him", "mightn", "be", "mightn't", "a", "how", "no",
+#     "there", "that", "so", "we", "same", "mustn", "wasn't", "shouldn", "own",
+# }
+# GETTYSBURG: str = """Four score and seven years ago our fathers brought forth on this continent, a new nation, conceived in Liberty, and dedicated to the proposition that all men are created equal.
+#
+# Now we are engaged in a great civil war, testing whether that nation, or any nation so conceived and so dedicated, can long endure. We are met on a great battlefield of that war. We have come to dedicate a portion of that field, as a final resting place for those who here gave their lives that that nation might live. It is altogether fitting and proper that we should do this.
+#
+# But, in a larger sense, we cannot dedicate—we cannot consecrate—we cannot hallow—this ground. The brave men, living and dead, who struggled here, have consecrated it, far above our poor power to add or detract. The world will little note, nor long remember what we say here, but it can never forget what they did here. It is for us the living, rather, to be dedicated here to the unfinished work which they who fought here have thus far so nobly advanced. It is rather for us to be here dedicated to the great task remaining before us—that from these honored dead we take increased devotion to that cause for which they gave the last full measure of devotion—that we here highly resolve that these dead shall not have died in vain—that this nation, under God, shall have a new birth of freedom— and that government of the people, by the people, for the people, shall not perish from the earth."""  # noqa E501
+#
+#
+# @dataclass
+# class Corpora:
+#     """Add the initial variables along with creating any methods that
+#     will get this working as described in the bite's description.
+#
+#     * txt
+#     * count
+#     * tag
+#     * extra
+#     * stopwords
+#     """
+#     txt: str
+#     count: int = 5
+#     _extra: list[str] = field(default_factory=list)
+#     tag: str = '#'
+#
+#     @property
+#     def extra(self):
+#         return self._extra
+#
+#     @extra.setter
+#     def extra(self, word_list):
+#         self._extra=word_list
+#
+#     @property
+#     def cleaned(self) -> str:
+#         """Takes a corpus and cleans it up.
+#
+#         * All text is made lowercase
+#         * All punctuation is removed
+#         * If a list of extra characters were given, remove those too
+#
+#         :param txt: Corpus of text
+#         :return: cleaned up corpus
+#         """
+#         txt=self.txt.strip()
+#         # lower case
+#         #txt=GETTYSBURG
+#         txt = txt.lower()
+#         # remove punctuation
+#         translation_table = str.maketrans('—',' ',string.punctuation)
+#         txt = txt.translate(translation_table)
+#         txt = txt.replace('\n',' ') + ' '
+#         for l in self._extra:
+#             txt = txt.replace(l, ' ')
+#         self.txt =  txt
+#         return txt
+#
+#     @property
+#     def metrics(self) -> List[Tuple[str, int]]:
+#         """Generates word count metrics.
+#
+#         * Using the cleaned up corpus, count up how many times each word is used
+#         * Exclude stop words using STOPWORDS
+#         * Use count to return the requested amount of the top words, defaults to 5
+#
+#         :return: List of tuples, i.e. ("word", count)
+#         """
+#         txt = self.cleaned
+#         words = txt.split()
+#         wcounter = Counter(words)
+#         new_list = STOPWORDS | set(self.extra)
+#         for word in new_list:
+#             if word in wcounter:
+#                 del wcounter[word]
+#         return wcounter.most_common(self.count)
+#
+#
+#     @property
+#     def graph(self) -> None:
+#         """Generates a textual graph of the words
+#
+#         * Prints out the words along with a "tag" bar graph, defaults to using
+#           the # character
+#         * The word is right-aligned and takes up 10 character spaces
+#         * The tag is repeated the number of counts of the word
+#
+#         For example, the top 10 words in the Gettysburg address would be
+#         displayed in this manner:
+#
+#             nation #####
+#          dedicated ####
+#              great ###
+#             cannot ###
+#               dead ###
+#                 us ###
+#              shall ###
+#             people ###
+#                new ##
+#          conceived ##
+#
+#         :param metrics: List of tuples with word counts
+#         :return: None
+#         """
+#         word_freq = self.metrics
+#         for w, count  in word_freq:
+#             print(f"{w:>10} {self.tag*count}")
+#
+#
+# # Pybite solution
+# import string
+# from collections import Counter
+# from dataclasses import dataclass, field
+# from typing import List, Set, Tuple
+#
+# STOPWORDS: set = {
+#     "she's", "wasn", "through", "won", "that'll", "his", "once", "this",
+#     "you", "ll", "has", "because", "m", "ours", "doing", "any", "aren't",
+#     "they", "shouldn't", "being", "out", "is", "our", "it", "don", "had",
+#     "nor", "your", "she", "you've", "themselves", "or", "y", "needn", "on",
+#     "to", "at", "it's", "ve", "s", "too", "up", "didn't", "during", "haven",
+#     "can", "haven't", "each", "couldn", "isn't", "not", "against", "where",
+#     "was", "aren", "all", "by", "why", "hers", "theirs", "have", "as",
+#     "yourself", "their", "very", "who", "yourselves", "over", "and",
+#     "again", "do", "weren't", "which", "ma", "in", "such", "herself",
+#     "yours", "doesn", "if", "my", "after", "into", "just", "now", "isn",
+#     "itself", "between", "will", "other", "its", "these", "should", "re",
+#     "below", "having", "am", "both", "d", "you'll", "but", "should've",
+#     "won't", "himself", "shan't", "the", "me", "weren", "further", "until",
+#     "here", "myself", "whom", "were", "hasn", "don't", "wouldn't", "been",
+#     "before", "above", "he", "than", "most", "shan", "them", "mustn't",
+#     "couldn't", "you'd", "for", "of", "her", "those", "needn't", "you're",
+#     "t", "hadn't", "down", "o", "did", "about", "from", "does", "wouldn",
+#     "off", "then", "ain", "few", "hasn't", "some", "i", "ourselves", "an",
+#     "when", "are", "under", "more", "with", "hadn", "what", "while", "didn",
+#     "doesn't", "only", "him", "mightn", "be", "mightn't", "a", "how", "no",
+#     "there", "that", "so", "we", "same", "mustn", "wasn't", "shouldn", "own",
+# }
+# GETTYSBURG: str = """Four score and seven years ago our fathers brought forth on this continent, a new nation, conceived in Liberty, and dedicated to the proposition that all men are created equal.
+#
+# Now we are engaged in a great civil war, testing whether that nation, or any nation so conceived and so dedicated, can long endure. We are met on a great battlefield of that war. We have come to dedicate a portion of that field, as a final resting place for those who here gave their lives that that nation might live. It is altogether fitting and proper that we should do this.
+#
+# But, in a larger sense, we cannot dedicate—we cannot consecrate—we cannot hallow—this ground. The brave men, living and dead, who struggled here, have consecrated it, far above our poor power to add or detract. The world will little note, nor long remember what we say here, but it can never forget what they did here. It is for us the living, rather, to be dedicated here to the unfinished work which they who fought here have thus far so nobly advanced. It is rather for us to be here dedicated to the great task remaining before us—that from these honored dead we take increased devotion to that cause for which they gave the last full measure of devotion—that we here highly resolve that these dead shall not have died in vain—that this nation, under God, shall have a new birth of freedom— and that government of the people, by the people, for the people, shall not perish from the earth."""
+#
+#
+# @dataclass
+# class Corpora:
+#     """Add the inital variables along with creating any methods that
+#     will get this working as described in the bite's description.
+#
+#     * txt
+#     * count
+#     * tag
+#     * extra
+#     * stopwords
+#     """
+#     txt: str
+#     count: int = 5
+#     tag: str = "#"
+#     extra: List[str] = field(default_factory=list)
+#     stopwords: Set[str] = field(default_factory=set)
+#
+#     def __post_init__(self):
+#         self.extra = self.extra if self.extra else []
+#         self.stopwords = STOPWORDS
+#
+#     @property
+#     def cleaned(self) -> str:
+#         """Takes a corpus and cleans it up.
+#
+#         * All text is made lowercase
+#         * All punctuations are removed
+#         * If a list of extract objects were given, remove those too
+#
+#         :param txt: Corpus of text
+#         :return: cleaned up corpus
+#         """
+#         trans = str.maketrans("", "", string.punctuation)
+#         c_txt = ""
+#         for line in self.txt.lower().splitlines():
+#             c_txt += line.translate(trans) + " "
+#
+#         if self.extra:
+#             for char in self.extra:
+#                 c_txt = c_txt.replace(char, " ")
+#
+#         return c_txt
+#
+#     @property
+#     def metrics(self) -> List[Tuple[str, int]]:
+#         """Generates word count metrics.
+#
+#         * Using the cleaned up corpus, count up how many times each word is used
+#         * Exclude stop words using STOPWORDS
+#         * Use count to return the requested amount of the top words, defaults to 5
+#
+#         :return: List of tuples, i.e. ("word", count)
+#         """
+#         txt_lst = [w for w in self.cleaned.strip().split() if w not in self.stopwords]
+#         return Counter(txt_lst).most_common(self.count)
+#
+#     @property
+#     def graph(self) -> None:
+#         """Generates a textual graph of the words
+#
+#         * Prints out the words along with a "tag" bar graph, defaults to using
+#           the # character
+#         * The word is right-aligned and takes up 10 character spaces
+#         * The tag is repeated the number of counts of the word
+#
+#         For example, the top 10 words in the Gettysburgh address would be
+#         displayed in this manner:
+#
+#             nation #####
+#          dedicated ####
+#              great ###
+#             cannot ###
+#               dead ###
+#                 us ###
+#              shall ###
+#             people ###
+#                new ##
+#          conceived ##
+#
+#         :param metrics: List of tuples with word counts
+#         :return: None
+#         """
+#         for metric in self.metrics:
+#             word, value = metric
+#             print(f"{word:>10} {self.tag * value}")
 
-from dataclasses import dataclass, field
-from typing import List, Set, Tuple
-import string
-from collections import Counter
-
-STOPWORDS: set = {
-    "she's", "wasn", "through", "won", "that'll", "his", "once", "this",
-    "you", "ll", "has", "because", "m", "ours", "doing", "any", "aren't",
-    "they", "shouldn't", "being", "out", "is", "our", "it", "don", "had",
-    "nor", "your", "she", "you've", "themselves", "or", "y", "needn", "on",
-    "to", "at", "it's", "ve", "s", "too", "up", "didn't", "during", "haven",
-    "can", "haven't", "each", "couldn", "isn't", "not", "against", "where",
-    "was", "aren", "all", "by", "why", "hers", "theirs", "have", "as",
-    "yourself", "their", "very", "who", "yourselves", "over", "and",
-    "again", "do", "weren't", "which", "ma", "in", "such", "herself",
-    "yours", "doesn", "if", "my", "after", "into", "just", "now", "isn",
-    "itself", "between", "will", "other", "its", "these", "should", "re",
-    "below", "having", "am", "both", "d", "you'll", "but", "should've",
-    "won't", "himself", "shan't", "the", "me", "weren", "further", "until",
-    "here", "myself", "whom", "were", "hasn", "don't", "wouldn't", "been",
-    "before", "above", "he", "than", "most", "shan", "them", "mustn't",
-    "couldn't", "you'd", "for", "of", "her", "those", "needn't", "you're",
-    "t", "hadn't", "down", "o", "did", "about", "from", "does", "wouldn",
-    "off", "then", "ain", "few", "hasn't", "some", "i", "ourselves", "an",
-    "when", "are", "under", "more", "with", "hadn", "what", "while", "didn",
-    "doesn't", "only", "him", "mightn", "be", "mightn't", "a", "how", "no",
-    "there", "that", "so", "we", "same", "mustn", "wasn't", "shouldn", "own",
-}
-GETTYSBURG: str = """Four score and seven years ago our fathers brought forth on this continent, a new nation, conceived in Liberty, and dedicated to the proposition that all men are created equal.
-
-Now we are engaged in a great civil war, testing whether that nation, or any nation so conceived and so dedicated, can long endure. We are met on a great battlefield of that war. We have come to dedicate a portion of that field, as a final resting place for those who here gave their lives that that nation might live. It is altogether fitting and proper that we should do this.
-
-But, in a larger sense, we cannot dedicate—we cannot consecrate—we cannot hallow—this ground. The brave men, living and dead, who struggled here, have consecrated it, far above our poor power to add or detract. The world will little note, nor long remember what we say here, but it can never forget what they did here. It is for us the living, rather, to be dedicated here to the unfinished work which they who fought here have thus far so nobly advanced. It is rather for us to be here dedicated to the great task remaining before us—that from these honored dead we take increased devotion to that cause for which they gave the last full measure of devotion—that we here highly resolve that these dead shall not have died in vain—that this nation, under God, shall have a new birth of freedom— and that government of the people, by the people, for the people, shall not perish from the earth."""  # noqa E501
+import pandas as pd
 
 
-@dataclass
-class Corpora:
-    """Add the initial variables along with creating any methods that
-    will get this working as described in the bite's description.
+data = "https://s3.us-east-2.amazonaws.com/bites-data/menu.csv"
+# load the data in once, functions will use this module object
+df = pd.read_csv(data)
 
-    * txt
-    * count
-    * tag
-    * extra
-    * stopwords
-    """
-    txt: str
-    count: int = 5
-    _extra: list[str] = field(default_factory=list)
-    tag: str = '#'
-
-    @property
-    def extra(self):
-        return self._extra
-
-    @extra.setter
-    def extra(self, word_list):
-        self._extra=word_list
-
-    @property
-    def cleaned(self) -> str:
-        """Takes a corpus and cleans it up.
-
-        * All text is made lowercase
-        * All punctuation is removed
-        * If a list of extra characters were given, remove those too
-
-        :param txt: Corpus of text
-        :return: cleaned up corpus
-        """
-        txt=self.txt.strip()
-        # lower case
-        #txt=GETTYSBURG
-        txt = txt.lower()
-        # remove punctuation
-        translation_table = str.maketrans('—',' ',string.punctuation)
-        txt = txt.translate(translation_table)
-        txt = txt.replace('\n',' ') + ' '
-        for l in self._extra:
-            txt = txt.replace(l, ' ')
-        self.txt =  txt
-        return txt
-
-    @property
-    def metrics(self) -> List[Tuple[str, int]]:
-        """Generates word count metrics.
-
-        * Using the cleaned up corpus, count up how many times each word is used
-        * Exclude stop words using STOPWORDS
-        * Use count to return the requested amount of the top words, defaults to 5
-
-        :return: List of tuples, i.e. ("word", count)
-        """
-        txt = self.cleaned
-        words = txt.split()
-        wcounter = Counter(words)
-        new_list = STOPWORDS | set(self.extra)
-        for word in new_list:
-            if word in wcounter:
-                del wcounter[word]
-        return wcounter.most_common(self.count)
+pd.options.mode.chained_assignment = None  # ignore warnings
 
 
-    @property
-    def graph(self) -> None:
-        """Generates a textual graph of the words
-
-        * Prints out the words along with a "tag" bar graph, defaults to using
-          the # character
-        * The word is right-aligned and takes up 10 character spaces
-        * The tag is repeated the number of counts of the word
-
-        For example, the top 10 words in the Gettysburg address would be
-        displayed in this manner:
-
-            nation #####
-         dedicated ####
-             great ###
-            cannot ###
-              dead ###
-                us ###
-             shall ###
-            people ###
-               new ##
-         conceived ##
-
-        :param metrics: List of tuples with word counts
-        :return: None
-        """
-        word_freq = self.metrics
-        for w, count  in word_freq:
-            print(f"{w:>10} {self.tag*count}")
+def get_food_most_calories(df=df):
+    """Return the food "Item" string with most calories"""
+    return df.loc[df['Calories'].idxmax()]['Item']
 
 
-# Pybite solution
-import string
-from collections import Counter
-from dataclasses import dataclass, field
-from typing import List, Set, Tuple
+def get_bodybuilder_friendly_foods(df=df, excl_drinks=False):
+    """Calulate the Protein/Calories ratio of foods and return the
+       5 foods with the best ratio.
 
-STOPWORDS: set = {
-    "she's", "wasn", "through", "won", "that'll", "his", "once", "this",
-    "you", "ll", "has", "because", "m", "ours", "doing", "any", "aren't",
-    "they", "shouldn't", "being", "out", "is", "our", "it", "don", "had",
-    "nor", "your", "she", "you've", "themselves", "or", "y", "needn", "on",
-    "to", "at", "it's", "ve", "s", "too", "up", "didn't", "during", "haven",
-    "can", "haven't", "each", "couldn", "isn't", "not", "against", "where",
-    "was", "aren", "all", "by", "why", "hers", "theirs", "have", "as",
-    "yourself", "their", "very", "who", "yourselves", "over", "and",
-    "again", "do", "weren't", "which", "ma", "in", "such", "herself",
-    "yours", "doesn", "if", "my", "after", "into", "just", "now", "isn",
-    "itself", "between", "will", "other", "its", "these", "should", "re",
-    "below", "having", "am", "both", "d", "you'll", "but", "should've",
-    "won't", "himself", "shan't", "the", "me", "weren", "further", "until",
-    "here", "myself", "whom", "were", "hasn", "don't", "wouldn't", "been",
-    "before", "above", "he", "than", "most", "shan", "them", "mustn't",
-    "couldn't", "you'd", "for", "of", "her", "those", "needn't", "you're",
-    "t", "hadn't", "down", "o", "did", "about", "from", "does", "wouldn",
-    "off", "then", "ain", "few", "hasn't", "some", "i", "ourselves", "an",
-    "when", "are", "under", "more", "with", "hadn", "what", "while", "didn",
-    "doesn't", "only", "him", "mightn", "be", "mightn't", "a", "how", "no",
-    "there", "that", "so", "we", "same", "mustn", "wasn't", "shouldn", "own",
-}
-GETTYSBURG: str = """Four score and seven years ago our fathers brought forth on this continent, a new nation, conceived in Liberty, and dedicated to the proposition that all men are created equal.
+       This function has a excl_drinks switch which, when turned on,
+       should exclude 'Coffee & Tea' and 'Beverages' from this top 5.
 
-Now we are engaged in a great civil war, testing whether that nation, or any nation so conceived and so dedicated, can long endure. We are met on a great battlefield of that war. We have come to dedicate a portion of that field, as a final resting place for those who here gave their lives that that nation might live. It is altogether fitting and proper that we should do this.
+       You will probably need to filter out foods with 0 calories to get the
+       right results.
 
-But, in a larger sense, we cannot dedicate—we cannot consecrate—we cannot hallow—this ground. The brave men, living and dead, who struggled here, have consecrated it, far above our poor power to add or detract. The world will little note, nor long remember what we say here, but it can never forget what they did here. It is for us the living, rather, to be dedicated here to the unfinished work which they who fought here have thus far so nobly advanced. It is rather for us to be here dedicated to the great task remaining before us—that from these honored dead we take increased devotion to that cause for which they gave the last full measure of devotion—that we here highly resolve that these dead shall not have died in vain—that this nation, under God, shall have a new birth of freedom— and that government of the people, by the people, for the people, shall not perish from the earth."""
+       Return a list of the top 5 foot Item stings."""
+    df = df[df['Calories']!=0]
+    df['bodybuilder_ratio'] = df['Protein'] / df['Calories']
+
+    if excl_drinks:
+        df = df[~ ((df['Category'] == 'Coffee & Tea') | (df['Category'] == 'Beverages'))]
+    sorted_df = df.sort_values(by='bodybuilder_ratio', ascending=False)
+    return sorted_df[0:5]['Item']
+
+## Pybite solution
+import pandas as pd
+
+data = "https://s3.us-east-2.amazonaws.com/bites-data/menu.csv"
+# load the data in once, functions will use this module object
+df = pd.read_csv(data)
+
+pd.options.mode.chained_assignment = None  # ignore warnings
 
 
-@dataclass
-class Corpora:
-    """Add the inital variables along with creating any methods that
-    will get this working as described in the bite's description.
+def get_food_most_calories(df=df):
+    """Return the food "Item" string with most calories"""
+    return df.iloc[df['Calories'].idxmax()]['Item']
 
-    * txt
-    * count
-    * tag
-    * extra
-    * stopwords
-    """
-    txt: str
-    count: int = 5
-    tag: str = "#"
-    extra: List[str] = field(default_factory=list)
-    stopwords: Set[str] = field(default_factory=set)
 
-    def __post_init__(self):
-        self.extra = self.extra if self.extra else []
-        self.stopwords = STOPWORDS
+def get_bodybuilder_friendly_foods(df=df, excl_drinks=False):
+    """Calulate the Protein/Calories ratio of foods and return the
+       5 foods with the best ratio.
 
-    @property
-    def cleaned(self) -> str:
-        """Takes a corpus and cleans it up.
+       This function has a excl_drinks switch which, when turned on,
+       should exclude 'Coffee & Tea' and 'Beverages' from this top 5.
 
-        * All text is made lowercase
-        * All punctuations are removed
-        * If a list of extract objects were given, remove those too
+       You will probably need to filter out foods with 0 calories to get the
+       right results.
 
-        :param txt: Corpus of text
-        :return: cleaned up corpus
-        """
-        trans = str.maketrans("", "", string.punctuation)
-        c_txt = ""
-        for line in self.txt.lower().splitlines():
-            c_txt += line.translate(trans) + " "
+       Return a list of the top 5 foot Item stings."""
+    df = df[df['Calories'] > 0]
+    df['prot_per_calorie'] = df['Protein'] / df['Calories']
 
-        if self.extra:
-            for char in self.extra:
-                c_txt = c_txt.replace(char, " ")
+    if excl_drinks:
+        df = df[~df['Category'].isin(['Coffee & Tea', 'Beverages'])]
 
-        return c_txt
-
-    @property
-    def metrics(self) -> List[Tuple[str, int]]:
-        """Generates word count metrics.
-
-        * Using the cleaned up corpus, count up how many times each word is used
-        * Exclude stop words using STOPWORDS
-        * Use count to return the requested amount of the top words, defaults to 5
-
-        :return: List of tuples, i.e. ("word", count)
-        """
-        txt_lst = [w for w in self.cleaned.strip().split() if w not in self.stopwords]
-        return Counter(txt_lst).most_common(self.count)
-
-    @property
-    def graph(self) -> None:
-        """Generates a textual graph of the words
-
-        * Prints out the words along with a "tag" bar graph, defaults to using
-          the # character
-        * The word is right-aligned and takes up 10 character spaces
-        * The tag is repeated the number of counts of the word
-
-        For example, the top 10 words in the Gettysburgh address would be
-        displayed in this manner:
-
-            nation #####
-         dedicated ####
-             great ###
-            cannot ###
-              dead ###
-                us ###
-             shall ###
-            people ###
-               new ##
-         conceived ##
-
-        :param metrics: List of tuples with word counts
-        :return: None
-        """
-        for metric in self.metrics:
-            word, value = metric
-            print(f"{word:>10} {self.tag * value}")
+    # for an nlargest() variant see https://codechalleng.es/inbox/16367/#387773
+    return df.sort_values(by="prot_per_calorie",
+                          ascending=False).head(5)['Item'].values
