@@ -16120,22 +16120,50 @@ Inputs are modified to check how the function deals with unknown characters
 #                 'Premium Grilled Chicken Ranch BLT Sandwich',
 #                 'Premium Grilled Chicken Club Sandwich']
 #     assert all(food in actual_wo_drinks for food in expected), ASSERT_ERROR
+#
+# import pytest
+#
+# from wc import spinner, SPINNER_STATES as states
+#
+#
+# @pytest.mark.parametrize("seconds, rounds, slice_", [
+#     (0.2, 0, 2),
+#     (0.4, 1, 0),
+#     (1, 2, 2),
+#     (1.2, 3, 0),
+# ])
+# def test_spinner(monkeypatch, capfd, seconds, rounds, slice_):
+#     spinner(seconds)
+#     actual = capfd.readouterr()[0].strip().split('\r')
+#     expected = states * rounds
+#     if slice_:
+#         expected += states[:slice_]
+#     assert actual == expected
 
+from pandas.core.frame import DataFrame
 import pytest
 
-from wc import spinner, SPINNER_STATES as states
+from wc import group_by_genre
 
 
-@pytest.mark.parametrize("seconds, rounds, slice_", [
-    (0.2, 0, 2),
-    (0.4, 1, 0),
-    (1, 2, 2),
-    (1.2, 3, 0),
-])
-def test_spinner(monkeypatch, capfd, seconds, rounds, slice_):
-    spinner(seconds)
-    actual = capfd.readouterr()[0].strip().split('\r')
-    expected = states * rounds
-    if slice_:
-        expected += states[:slice_]
-    assert actual == expected
+@pytest.fixture(scope="module")
+def df():
+    return group_by_genre()
+
+
+def test_df_type(df):
+    assert type(df) == DataFrame
+
+
+def test_df_shape(df):
+    assert df.shape == (19, 1)
+
+
+def test_first_genre_and_count(df):
+    assert df.index[0] == 'Drama'
+    assert df.iloc[0].movie == 485
+
+
+def test_last_genre_and_count(df):
+    assert df.index[-1] == 'IMAX'
+    assert df.iloc[-1].movie == 9

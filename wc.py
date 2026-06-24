@@ -15773,60 +15773,172 @@ enumerate through the text by letter
 #     # for an nlargest() variant see https://codechalleng.es/inbox/16367/#387773
 #     return df.sort_values(by="prot_per_calorie",
 #                           ascending=False).head(5)['Item'].values
+#
+# from itertools import cycle
+# from time import perf_counter, sleep
+#
+# SPINNER_STATES = ['-', '\\', '|', '/']  # had to escape \
+# STATE_TRANSITION_TIME = 0.1
+#
+#
+# def spinner(seconds):
+#     """Make a terminal loader/spinner animation using the imports above.
+#        Takes seconds argument = time for the spinner to run.
+#        Does not return anything, only prints to stdout."""
+#     spin_cycle = cycle(SPINNER_STATES)
+#
+#     # Start the timer
+#     start_time = perf_counter()
+#     current_time = perf_counter()
+#     while (current_time - start_time) < seconds:
+#         print(next(spin_cycle), end="\r", flush=True)
+#         sleep(STATE_TRANSITION_TIME)
+#         current_time = perf_counter()
+#
+#
+#
+# if __name__ == '__main__':
+#     spinner(2)
+#
+#
+# # Pybite solution
+# from itertools import cycle
+# import sys
+# from time import time, sleep
+#
+# SPINNER_STATES = ['-', '\\', '|', '/']  # had to escape \
+# STATE_TRANSITION_TIME = 0.1
+#
+#
+# def spinner(seconds):
+#     """Make a terminal loader/spinner animation using the imports above.
+#        Takes seconds argument = time for the spinner to run.
+#        Does not return anything, only prints to stdout.
+#
+#        Idea/code from Víctor Terrón:
+#        https://github.com/vterron/EuroPython-2016/blob/master/kung-fu-itertools.ipynb
+#     """
+#     symbols = cycle(SPINNER_STATES)
+#     end_time = time() + seconds
+#     while time() < end_time:
+#         # '\r' is needed to return cursor to start of the line
+#         sys.stdout.write('\r' + next(symbols))  # no newline
+#         sys.stdout.flush()
+#         sleep(STATE_TRANSITION_TIME)
+#     print()  # newline here
+#
+#
+# if __name__ == '__main__':
+#     spinner(2)
+import pandas as pd
+import numpy as np
 
-from itertools import cycle
-from time import perf_counter, sleep
-
-SPINNER_STATES = ['-', '\\', '|', '/']  # had to escape \
-STATE_TRANSITION_TIME = 0.1
+movie_excel_file = "https://bites-data.s3.us-east-2.amazonaws.com/movies.xlsx"
 
 
-def spinner(seconds):
-    """Make a terminal loader/spinner animation using the imports above.
-       Takes seconds argument = time for the spinner to run.
-       Does not return anything, only prints to stdout."""
-    spin_cycle = cycle(SPINNER_STATES)
-
-    # Start the timer
-    start_time = perf_counter()
-    current_time = perf_counter()
-    while (current_time - start_time) < seconds:
-        print(next(spin_cycle), end="\r", flush=True)
-        sleep(STATE_TRANSITION_TIME)
-        current_time = perf_counter()
-
-
-
-if __name__ == '__main__':
-    spinner(2)
-
-
-# Pybite solution
-from itertools import cycle
-import sys
-from time import time, sleep
-
-SPINNER_STATES = ['-', '\\', '|', '/']  # had to escape \
-STATE_TRANSITION_TIME = 0.1
-
-
-def spinner(seconds):
-    """Make a terminal loader/spinner animation using the imports above.
-       Takes seconds argument = time for the spinner to run.
-       Does not return anything, only prints to stdout.
-
-       Idea/code from Víctor Terrón:
-       https://github.com/vterron/EuroPython-2016/blob/master/kung-fu-itertools.ipynb
+def explode(df, lst_cols, fill_value='', preserve_index=False):
+    """Helper found on SO to split pipe (|) separted genres into
+       multiple rows so it becomes easier to group the data -
+       https://stackoverflow.com/a/40449726
     """
-    symbols = cycle(SPINNER_STATES)
-    end_time = time() + seconds
-    while time() < end_time:
-        # '\r' is needed to return cursor to start of the line
-        sys.stdout.write('\r' + next(symbols))  # no newline
-        sys.stdout.flush()
-        sleep(STATE_TRANSITION_TIME)
-    print()  # newline here
+    if(lst_cols is not None and len(lst_cols) > 0 and not
+       isinstance(lst_cols, (list, tuple, np.ndarray, pd.Series))):
+        lst_cols = [lst_cols]
+    idx_cols = df.columns.difference(lst_cols)
+    lens = df[lst_cols[0]].str.len()
+    idx = np.repeat(df.index.values, lens)
+    res = (pd.DataFrame({
+                col:np.repeat(df[col].values, lens)
+                for col in idx_cols},
+                index=idx)
+             .assign(**{col:np.concatenate(df.loc[lens>0, col].values)
+                            for col in lst_cols}))
+    if (lens == 0).any():
+        res = (res.append(df.loc[lens==0, idx_cols], sort=False)
+                  .fillna(fill_value))
+    res = res.sort_index()
+    if not preserve_index:
+        res = res.reset_index(drop=True)
+    return res
 
 
-if __name__ == '__main__':
-    spinner(2)
+def group_by_genre(data=movie_excel_file):
+    """Takes movies data excel file (movie_excel_file) and loads it
+       into a DataFrame (df).
+
+       Explode genre1|genre2|genre3 into separte rows using the provided
+       "explode" function we found here: https://bit.ly/2Udfkdt
+
+       Filters out '(no genres listed)' and groups the df by genre
+       counting the movies in each genre.
+
+       Return the new df of shape (rows, cols) = (19, 1)
+       sorted by movie count descending.
+    """
+    df = pd.read_excel(movie_excel_file, skiprows=4, usecols="C,D", header=3)
+    df.genres = df.genres.str.split('|')
+    df = explode(df, ['genres'])
+    df_filtered = df[df['genres']!='(no genres listed)']
+    grp_series = df_filtered.groupby('genres').size().sort_values(ascending=False)
+    grp_df = grp_series.to_frame()
+    grp_df.columns = ['movie']
+    return grp_df
+
+# Pybites solution
+import pandas as pd
+import numpy as np
+
+movie_excel_file = "https://bites-data.s3.us-east-2.amazonaws.com/movies.xlsx"
+
+
+def explode(df, lst_cols, fill_value='', preserve_index=False):
+    """Helper found on SO to split pipe (|) separted genres into
+       multiple rows so it becomes easier to group the data -
+       https://stackoverflow.com/a/40449726
+    """
+    if(lst_cols is not None and len(lst_cols) > 0 and not
+       isinstance(lst_cols, (list, tuple, np.ndarray, pd.Series))):
+        lst_cols = [lst_cols]
+    idx_cols = df.columns.difference(lst_cols)
+    lens = df[lst_cols[0]].str.len()
+    idx = np.repeat(df.index.values, lens)
+    res = (pd.DataFrame({
+                col:np.repeat(df[col].values, lens)
+                for col in idx_cols},
+                index=idx)
+             .assign(**{col:np.concatenate(df.loc[lens>0, col].values)
+                            for col in lst_cols}))
+    if (lens == 0).any():
+        res = (res.append(df.loc[lens==0, idx_cols], sort=False)
+                  .fillna(fill_value))
+    res = res.sort_index()
+    if not preserve_index:
+        res = res.reset_index(drop=True)
+    return res
+
+
+def group_by_genre(data=movie_excel_file):
+    """Takes movies data excel file (movie_excel_file) and loads it
+       into a DataFrame (df).
+
+       Explode genre1|genre2|genre3 into separte rows using the provided
+       "explode" function we found here: https://bit.ly/2Udfkdt
+
+       Filters out '(no genres listed)' and groups the df by genre
+       counting the movies in each genre.
+
+       Return the new df of shape (rows, cols) = (19, 1)
+       sorted by movie count descending.
+    """
+    movies = pd.read_excel(movie_excel_file, skiprows=7, usecols=[2, 3])
+    movies.genres = movies.genres.str.split('|')
+    movies = explode(movies, ['genres'])
+    movies = movies[movies['genres'] != '(no genres listed)']
+    grouped = movies.groupby(['genres']).count().sort_values(by="movie")
+    return grouped.sort_values('movie', ascending=False)
+
+### Alternative explode function
+def easier_explode(df: pd.DataFrame):
+    df_separated_genres = df.apply(lambda serie: [dict(genres=genre, movie=serie.movie) for genre in serie.genres.split('|')], axis=1)
+    flattened_list = [row for rows in df_separated_genres for row in rows]
+    return pd.DataFrame(flattened_list)
