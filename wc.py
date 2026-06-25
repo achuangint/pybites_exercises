@@ -15830,115 +15830,201 @@ enumerate through the text by letter
 #
 # if __name__ == '__main__':
 #     spinner(2)
-import pandas as pd
-import numpy as np
+# import pandas as pd
+# import numpy as np
+#
+# movie_excel_file = "https://bites-data.s3.us-east-2.amazonaws.com/movies.xlsx"
+#
+#
+# def explode(df, lst_cols, fill_value='', preserve_index=False):
+#     """Helper found on SO to split pipe (|) separted genres into
+#        multiple rows so it becomes easier to group the data -
+#        https://stackoverflow.com/a/40449726
+#     """
+#     if(lst_cols is not None and len(lst_cols) > 0 and not
+#        isinstance(lst_cols, (list, tuple, np.ndarray, pd.Series))):
+#         lst_cols = [lst_cols]
+#     idx_cols = df.columns.difference(lst_cols)
+#     lens = df[lst_cols[0]].str.len()
+#     idx = np.repeat(df.index.values, lens)
+#     res = (pd.DataFrame({
+#                 col:np.repeat(df[col].values, lens)
+#                 for col in idx_cols},
+#                 index=idx)
+#              .assign(**{col:np.concatenate(df.loc[lens>0, col].values)
+#                             for col in lst_cols}))
+#     if (lens == 0).any():
+#         res = (res.append(df.loc[lens==0, idx_cols], sort=False)
+#                   .fillna(fill_value))
+#     res = res.sort_index()
+#     if not preserve_index:
+#         res = res.reset_index(drop=True)
+#     return res
+#
+#
+# def group_by_genre(data=movie_excel_file):
+#     """Takes movies data excel file (movie_excel_file) and loads it
+#        into a DataFrame (df).
+#
+#        Explode genre1|genre2|genre3 into separte rows using the provided
+#        "explode" function we found here: https://bit.ly/2Udfkdt
+#
+#        Filters out '(no genres listed)' and groups the df by genre
+#        counting the movies in each genre.
+#
+#        Return the new df of shape (rows, cols) = (19, 1)
+#        sorted by movie count descending.
+#     """
+#     df = pd.read_excel(movie_excel_file, skiprows=4, usecols="C,D", header=3)
+#     df.genres = df.genres.str.split('|')
+#     df = explode(df, ['genres'])
+#     df_filtered = df[df['genres']!='(no genres listed)']
+#     grp_series = df_filtered.groupby('genres').size().sort_values(ascending=False)
+#     grp_df = grp_series.to_frame()
+#     grp_df.columns = ['movie']
+#     return grp_df
+#
+# # Pybites solution
+# import pandas as pd
+# import numpy as np
+#
+# movie_excel_file = "https://bites-data.s3.us-east-2.amazonaws.com/movies.xlsx"
+#
+#
+# def explode(df, lst_cols, fill_value='', preserve_index=False):
+#     """Helper found on SO to split pipe (|) separted genres into
+#        multiple rows so it becomes easier to group the data -
+#        https://stackoverflow.com/a/40449726
+#     """
+#     if(lst_cols is not None and len(lst_cols) > 0 and not
+#        isinstance(lst_cols, (list, tuple, np.ndarray, pd.Series))):
+#         lst_cols = [lst_cols]
+#     idx_cols = df.columns.difference(lst_cols)
+#     lens = df[lst_cols[0]].str.len()
+#     idx = np.repeat(df.index.values, lens)
+#     res = (pd.DataFrame({
+#                 col:np.repeat(df[col].values, lens)
+#                 for col in idx_cols},
+#                 index=idx)
+#              .assign(**{col:np.concatenate(df.loc[lens>0, col].values)
+#                             for col in lst_cols}))
+#     if (lens == 0).any():
+#         res = (res.append(df.loc[lens==0, idx_cols], sort=False)
+#                   .fillna(fill_value))
+#     res = res.sort_index()
+#     if not preserve_index:
+#         res = res.reset_index(drop=True)
+#     return res
+#
+#
+# def group_by_genre(data=movie_excel_file):
+#     """Takes movies data excel file (movie_excel_file) and loads it
+#        into a DataFrame (df).
+#
+#        Explode genre1|genre2|genre3 into separte rows using the provided
+#        "explode" function we found here: https://bit.ly/2Udfkdt
+#
+#        Filters out '(no genres listed)' and groups the df by genre
+#        counting the movies in each genre.
+#
+#        Return the new df of shape (rows, cols) = (19, 1)
+#        sorted by movie count descending.
+#     """
+#     movies = pd.read_excel(movie_excel_file, skiprows=7, usecols=[2, 3])
+#     movies.genres = movies.genres.str.split('|')
+#     movies = explode(movies, ['genres'])
+#     movies = movies[movies['genres'] != '(no genres listed)']
+#     grouped = movies.groupby(['genres']).count().sort_values(by="movie")
+#     return grouped.sort_values('movie', ascending=False)
+#
+# ### Alternative explode function
+# def easier_explode(df: pd.DataFrame):
+#     df_separated_genres = df.apply(lambda serie: [dict(genres=genre, movie=serie.movie) for genre in serie.genres.split('|')], axis=1)
+#     flattened_list = [row for rows in df_separated_genres for row in rows]
+#     return pd.DataFrame(flattened_list)
 
-movie_excel_file = "https://bites-data.s3.us-east-2.amazonaws.com/movies.xlsx"
+import re
 
+def is_single_line_doc_string(l):
+    pattern = r'""".+"""'
+    return bool(re.search(pattern,l))
 
-def explode(df, lst_cols, fill_value='', preserve_index=False):
-    """Helper found on SO to split pipe (|) separted genres into
-       multiple rows so it becomes easier to group the data -
-       https://stackoverflow.com/a/40449726
+def has_triple_quote(l):
+    pattern = r'"""'
+    return bool(re.search(pattern,l))
+
+def has_starting_hash(l):
+    pattern = r'^#.*'
+    return bool(re.search(pattern,l))
+
+def has_hash_in_quote(l):
+    pattern = r"'.*#.*'"
+    return bool(re.search(pattern, l))
+
+def strip_comments(code):
     """
-    if(lst_cols is not None and len(lst_cols) > 0 and not
-       isinstance(lst_cols, (list, tuple, np.ndarray, pd.Series))):
-        lst_cols = [lst_cols]
-    idx_cols = df.columns.difference(lst_cols)
-    lens = df[lst_cols[0]].str.len()
-    idx = np.repeat(df.index.values, lens)
-    res = (pd.DataFrame({
-                col:np.repeat(df[col].values, lens)
-                for col in idx_cols},
-                index=idx)
-             .assign(**{col:np.concatenate(df.loc[lens>0, col].values)
-                            for col in lst_cols}))
-    if (lens == 0).any():
-        res = (res.append(df.loc[lens==0, idx_cols], sort=False)
-                  .fillna(fill_value))
-    res = res.sort_index()
-    if not preserve_index:
-        res = res.reset_index(drop=True)
-    return res
-
-
-def group_by_genre(data=movie_excel_file):
-    """Takes movies data excel file (movie_excel_file) and loads it
-       into a DataFrame (df).
-
-       Explode genre1|genre2|genre3 into separte rows using the provided
-       "explode" function we found here: https://bit.ly/2Udfkdt
-
-       Filters out '(no genres listed)' and groups the df by genre
-       counting the movies in each genre.
-
-       Return the new df of shape (rows, cols) = (19, 1)
-       sorted by movie count descending.
+    Cases:
+    1) Single line starts with #
+        # Remove the whole line
+    2) False positive  '# '   
+    3) Single line docstring """   """
+    4) multi-line docstring 
     """
-    df = pd.read_excel(movie_excel_file, skiprows=4, usecols="C,D", header=3)
-    df.genres = df.genres.str.split('|')
-    df = explode(df, ['genres'])
-    df_filtered = df[df['genres']!='(no genres listed)']
-    grp_series = df_filtered.groupby('genres').size().sort_values(ascending=False)
-    grp_df = grp_series.to_frame()
-    grp_df.columns = ['movie']
-    return grp_df
-
-# Pybites solution
-import pandas as pd
-import numpy as np
-
-movie_excel_file = "https://bites-data.s3.us-east-2.amazonaws.com/movies.xlsx"
-
-
-def explode(df, lst_cols, fill_value='', preserve_index=False):
-    """Helper found on SO to split pipe (|) separted genres into
-       multiple rows so it becomes easier to group the data -
-       https://stackoverflow.com/a/40449726
-    """
-    if(lst_cols is not None and len(lst_cols) > 0 and not
-       isinstance(lst_cols, (list, tuple, np.ndarray, pd.Series))):
-        lst_cols = [lst_cols]
-    idx_cols = df.columns.difference(lst_cols)
-    lens = df[lst_cols[0]].str.len()
-    idx = np.repeat(df.index.values, lens)
-    res = (pd.DataFrame({
-                col:np.repeat(df[col].values, lens)
-                for col in idx_cols},
-                index=idx)
-             .assign(**{col:np.concatenate(df.loc[lens>0, col].values)
-                            for col in lst_cols}))
-    if (lens == 0).any():
-        res = (res.append(df.loc[lens==0, idx_cols], sort=False)
-                  .fillna(fill_value))
-    res = res.sort_index()
-    if not preserve_index:
-        res = res.reset_index(drop=True)
-    return res
+    s1=''
+    in_doc_string = False
+    for line in code.split('\n'):
+        l = line.strip()
+        if is_single_line_doc_string(l):
+            continue
+        if in_doc_string:
+            if has_triple_quote(l):
+                in_doc_string = False
+            continue
+        if has_triple_quote(l):
+            in_doc_string = True
+            continue
+        if has_starting_hash(l):
+            continue
+        if '#' in l:
+            if not has_hash_in_quote(l):
+                parts=line.split("#")
+                s1+=parts[0]
+                continue
+        s1+=line+"\n"
+    return s1
 
 
-def group_by_genre(data=movie_excel_file):
-    """Takes movies data excel file (movie_excel_file) and loads it
-       into a DataFrame (df).
+# Pybite solution
+import re
 
-       Explode genre1|genre2|genre3 into separte rows using the provided
-       "explode" function we found here: https://bit.ly/2Udfkdt
+def strip_comments(code):
+    # [\s\S]*? to rm docstring -> https://stackoverflow.com/a/44532145
+    # \s* = 0 or more spaces
+    # ?: is non-capturing (not needed but best practice)
+    # *? is not being 'greedy' (match shortest possible pattern)
+    # carrying over the newline to fix indenting issue
+    return re.sub(r'(?:\s*#\s.*|\s{2}#\s.*|\s*"""[\s\S]*?""")(\n)',
+                  r'\1', code, re.MULTILINE)
 
-       Filters out '(no genres listed)' and groups the df by genre
-       counting the movies in each genre.
+# Another solution
+import re
+def strip_comments(code):
+    # see Bite description
+    patterns = [re.compile(r'(?<=\n)\s*"""(?s:.*?)"""\n'),
+                re.compile(r'(?<=\n)\s*#\s.*\n'),
+                re.compile(r'\s\s#\s.*')]
+    for pattern in patterns:
+        code = pattern.sub('', code)
+    return code
 
-       Return the new df of shape (rows, cols) = (19, 1)
-       sorted by movie count descending.
-    """
-    movies = pd.read_excel(movie_excel_file, skiprows=7, usecols=[2, 3])
-    movies.genres = movies.genres.str.split('|')
-    movies = explode(movies, ['genres'])
-    movies = movies[movies['genres'] != '(no genres listed)']
-    grouped = movies.groupby(['genres']).count().sort_values(by="movie")
-    return grouped.sort_values('movie', ascending=False)
-
-### Alternative explode function
-def easier_explode(df: pd.DataFrame):
-    df_separated_genres = df.apply(lambda serie: [dict(genres=genre, movie=serie.movie) for genre in serie.genres.split('|')], axis=1)
-    flattened_list = [row for rows in df_separated_genres for row in rows]
-    return pd.DataFrame(flattened_list)
+# Another solution
+import re
+def strip_comments(code):
+    # see Bite description
+    if re.search("#",code):
+        code = re.sub("[ ]*#.+[^)]\n","",code)
+    if re.search('"""',code):
+        code = re.sub('[ ]*"""[\w\W]*?"""\n',"",code)
+    if code[-1] != '\n':
+        code += '\n'
+    return code
