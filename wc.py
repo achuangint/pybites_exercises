@@ -16028,96 +16028,150 @@ enumerate through the text by letter
 #     if code[-1] != '\n':
 #         code += '\n'
 #     return code
+#
+# import os
+# from urllib.request import urlretrieve
+#
+# import pandas as pd
+#
+# TMP = os.getenv("TMP", "/tmp")
+# EXCEL = os.path.join(TMP, 'order_data.xlsx')
+# if not os.path.isfile(EXCEL):
+#     urlretrieve(
+#         'https://bites-data.s3.us-east-2.amazonaws.com/order_data.xlsx',
+#         EXCEL
+#     )
+#
+#
+# def load_excel_into_dataframe(excel=EXCEL):
+#     """Load the SalesOrders sheet of the excel book (EXCEL variable)
+#        into a Pandas DataFrame and return it to the caller"""
+#     df = pd.read_excel(EXCEL,sheet_name='SalesOrders')
+#     return df
+#
+# def get_year_region_breakdown(df):
+#     """Group the DataFrame by year and region, summing the Total
+#        column. You probably need to make an extra column for
+#        year, return the new df as shown in the Bite description"""
+#     df['Year'] = df['OrderDate'].dt.strftime('%Y').astype(int)
+#     result_df = df.groupby(['Year', 'Region'], as_index=True)['Total'].sum().round(2)
+#     return result_df
+#
+# def get_best_sales_rep(df):
+#     """Return a tuple of the name of the sales rep and
+#        the total of his/her sales"""
+#     sales_df = df.groupby(['Rep'], as_index=False)['Total'].sum().round(2)
+#     max_row_index = sales_df['Total'].idxmax()
+#     max_row = sales_df.loc[max_row_index]
+#     return (max_row['Rep'], max_row['Total'])
+#
+# def get_most_sold_item(df):
+#     """Return a tuple of the name of the most sold item
+#        and the number of units sold"""
+#     units_df = df.groupby(['Item'], as_index=False)['Units'].sum().round(2)
+#     max_row_index = units_df['Units'].idxmax()
+#     max_row = units_df.loc[max_row_index]
+#     return (max_row['Item'], max_row['Units'])
+#
+# # Pybite solution
+# import os
+# from urllib.request import urlretrieve
+#
+# import pandas as pd
+#
+# TMP = os.getenv("TMP", "/tmp")
+# EXCEL = os.path.join(TMP, "order_data.xlsx")
+# if not os.path.isfile(EXCEL):
+#     urlretrieve("https://bites-data.s3.us-east-2.amazonaws.com/order_data.xlsx", EXCEL)
+#
+#
+# def load_excel_into_dataframe(excel=EXCEL):
+#     """Load the SalesOrders sheet of the excel book (EXCEL variable)
+#     into a Pandas DataFrame and return it to the caller"""
+#     return pd.read_excel(excel, "SalesOrders")
+#
+#
+# def get_year_region_breakdown(df):
+#     """Group the DataFrame by year and region, summing the Total
+#     column. You probably need to make an extra column for
+#     year, return the new df as shown in the Bite description"""
+#     df["Year"] = df["OrderDate"].map(lambda x: x.year)
+#     return df.groupby(["Year", "Region"]).agg({"Total": "sum"})
+#
+#
+# def get_best_sales_rep(df):
+#     """Return a tuple of the name of the sales rep and
+#     the total of his/her sales"""
+#     ret = (
+#         df.groupby(["Rep"])
+#         .agg({"Total": "sum"})
+#         .sort_values(by=["Total"], ascending=False)
+#         .iloc[0]
+#     )
+#     return (ret.name, ret.Total)
+#
+#
+# def get_most_sold_item(df):
+#     """Return a tuple of the name of the most sold item
+#     and the number of units sold"""
+#     ret = (
+#         df.groupby(["Item"])
+#         .agg({"Units": "sum"})
+#         .sort_values(by=["Units"], ascending=False)
+#         .iloc[0]
+#     )
+#     return (ret.name, ret.Units)
 
-import os
-from urllib.request import urlretrieve
+from collections import UserDict
 
-import pandas as pd
+class JsObject(UserDict):
+    """A Python dictionary that provides attribute-style access
+       just like a JS object:
 
-TMP = os.getenv("TMP", "/tmp")
-EXCEL = os.path.join(TMP, 'order_data.xlsx')
-if not os.path.isfile(EXCEL):
-    urlretrieve(
-        'https://bites-data.s3.us-east-2.amazonaws.com/order_data.xlsx',
-        EXCEL
-    )
+       obj = JsObject()
+       obj.cool = True
+       obj.foo = 'bar'
 
+       Try this on a regular dict and you get
+       AttributeError: 'dict' object has no attribute 'foo'
+    """
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        for key, value in kwargs.items():
+                 setattr(self, key, value)
 
-def load_excel_into_dataframe(excel=EXCEL):
-    """Load the SalesOrders sheet of the excel book (EXCEL variable)
-       into a Pandas DataFrame and return it to the caller"""
-    df = pd.read_excel(EXCEL,sheet_name='SalesOrders')
-    return df
+    def __getattr__(self, key):
+        if key in self.data:
+            return self.data[key]
+        raise AttributeError(f"'JsObject' object has no attribute '{key}'")
 
-def get_year_region_breakdown(df):
-    """Group the DataFrame by year and region, summing the Total
-       column. You probably need to make an extra column for
-       year, return the new df as shown in the Bite description"""
-    df['Year'] = df['OrderDate'].dt.strftime('%Y').astype(int)
-    result_df = df.groupby(['Year', 'Region'], as_index=True)['Total'].sum().round(2)
-    return result_df
+    def __setattr__(self, key, value):
+        # 2. FIX: If Python is setting up 'data', bypass custom logic
+        if key == 'data':
+            super().__setattr__(key, value)
+        else:
+            # All other attributes go directly into the dictionary storage
+            self.data[key] = value
 
-def get_best_sales_rep(df):
-    """Return a tuple of the name of the sales rep and
-       the total of his/her sales"""
-    sales_df = df.groupby(['Rep'], as_index=False)['Total'].sum().round(2)
-    max_row_index = sales_df['Total'].idxmax()
-    max_row = sales_df.loc[max_row_index]
-    return (max_row['Rep'], max_row['Total'])
-
-def get_most_sold_item(df):
-    """Return a tuple of the name of the most sold item
-       and the number of units sold"""
-    units_df = df.groupby(['Item'], as_index=False)['Units'].sum().round(2)
-    max_row_index = units_df['Units'].idxmax()
-    max_row = units_df.loc[max_row_index]
-    return (max_row['Item'], max_row['Units'])
-
-# Pybite solution
-import os
-from urllib.request import urlretrieve
-
-import pandas as pd
-
-TMP = os.getenv("TMP", "/tmp")
-EXCEL = os.path.join(TMP, "order_data.xlsx")
-if not os.path.isfile(EXCEL):
-    urlretrieve("https://bites-data.s3.us-east-2.amazonaws.com/order_data.xlsx", EXCEL)
+    def __delattr__(self, key):
+        if key in self.data:
+            del self.data[key]
+        else:
+            super().__delattr__(key)
 
 
-def load_excel_into_dataframe(excel=EXCEL):
-    """Load the SalesOrders sheet of the excel book (EXCEL variable)
-    into a Pandas DataFrame and return it to the caller"""
-    return pd.read_excel(excel, "SalesOrders")
+# pybite solution
+class JsObject(dict):
+    """Create a Python dictionary object that provides
+       attribute-style access just like a JS object:
 
+       obj = JsObject()
+       obj.cool = True
+       obj.foo = 'bar'
 
-def get_year_region_breakdown(df):
-    """Group the DataFrame by year and region, summing the Total
-    column. You probably need to make an extra column for
-    year, return the new df as shown in the Bite description"""
-    df["Year"] = df["OrderDate"].map(lambda x: x.year)
-    return df.groupby(["Year", "Region"]).agg({"Total": "sum"})
-
-
-def get_best_sales_rep(df):
-    """Return a tuple of the name of the sales rep and
-    the total of his/her sales"""
-    ret = (
-        df.groupby(["Rep"])
-        .agg({"Total": "sum"})
-        .sort_values(by=["Total"], ascending=False)
-        .iloc[0]
-    )
-    return (ret.name, ret.Total)
-
-
-def get_most_sold_item(df):
-    """Return a tuple of the name of the most sold item
-    and the number of units sold"""
-    ret = (
-        df.groupby(["Item"])
-        .agg({"Units": "sum"})
-        .sort_values(by=["Units"], ascending=False)
-        .iloc[0]
-    )
-    return (ret.name, ret.Units)
+       Try this on a regular dict and you get
+       AttributeError: 'dict' object has no attribute 'foo'
+    """
+    def __init__(self, *args, **kwargs):
+        super().__init__(self, *args, **kwargs)
+        self.__dict__ = self

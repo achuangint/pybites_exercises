@@ -16337,47 +16337,93 @@ import pytest
 # ])
 # def test_strip_comments(arg, expected):
 #     assert strip_comments(arg).strip() == expected.strip()
+# import pytest
+# from pandas.core.frame import DataFrame
+#
+# from wc import (load_excel_into_dataframe,
+#                     get_year_region_breakdown,
+#                     get_best_sales_rep,
+#                     get_most_sold_item)
+#
+#
+# @pytest.fixture(scope="module")
+# def df():
+#     return load_excel_into_dataframe()
+#
+#
+# def test_load_excel_into_dataframe(df):
+#     assert type(df) == DataFrame
+#     assert df.shape == (43, 7)
+#
+#
+# def test_get_year_region_breakdown(df):
+#     ret = get_year_region_breakdown(df)
+#
+#     assert ret.index.levels[0][0] == 2018
+#     assert ret.index.levels[0][1] == 2019
+#
+#     assert ret.index.names[0] == 'Year'
+#     assert ret.index.names[1] == 'Region'
+#
+#     actual = [round(float(val), 2) for val in ret.values]
+#     expected = [3833.51, 5193.71, 231.12, 7305.56,
+#                 808.38, 2255.6]
+#     assert actual == expected
+#
+#
+# def test_get_best_sales_rep(df):
+#     best_rep = get_best_sales_rep(df)
+#     assert best_rep[0] == 'Kivell'
+#     assert best_rep[1] == 3109.44
+#
+#
+# def test_get_most_sold_item(df):
+#     most_sold = get_most_sold_item(df)
+#     assert most_sold[0] == 'Binder'
+#     assert int(most_sold[1]) == 722
+
 import pytest
-from pandas.core.frame import DataFrame
 
-from wc import (load_excel_into_dataframe,
-                    get_year_region_breakdown,
-                    get_best_sales_rep,
-                    get_most_sold_item)
+from wc import JsObject as JS
 
 
-@pytest.fixture(scope="module")
-def df():
-    return load_excel_into_dataframe()
+@pytest.fixture
+def D():
+    """Create a JsObject object"""
+    return JS(a=1, b=2, c=3)
 
 
-def test_load_excel_into_dataframe(df):
-    assert type(df) == DataFrame
-    assert df.shape == (43, 7)
+def test_object_type(D):
+    assert type(D) == JS
 
 
-def test_get_year_region_breakdown(df):
-    ret = get_year_region_breakdown(df)
-
-    assert ret.index.levels[0][0] == 2018
-    assert ret.index.levels[0][1] == 2019
-
-    assert ret.index.names[0] == 'Year'
-    assert ret.index.names[1] == 'Region'
-
-    actual = [round(float(val), 2) for val in ret.values]
-    expected = [3833.51, 5193.71, 231.12, 7305.56,
-                808.38, 2255.6]
-    assert actual == expected
+def test_assert_regular_dict_behavior(D):
+    assert D['a'] == 1
+    assert D['b'] == 2
+    assert D['c'] == 3
+    D['d'] = 4
+    assert len(D) == 4
+    del D['b']
+    assert 'b' not in D
+    assert len(D) == 3
+    assert list(D.keys()) == ['a', 'c', 'd']
+    assert list(D.values()) == [1, 3, 4]
 
 
-def test_get_best_sales_rep(df):
-    best_rep = get_best_sales_rep(df)
-    assert best_rep[0] == 'Kivell'
-    assert best_rep[1] == 3109.44
+def test_assert_js_behavior(D):
+    assert D.a == 1
+    assert D.b == 2
+    assert D.c == 3
+    D.d = 4
+    assert len(D) == 4
+    del D.b
+    D.update(dict(e=5))
+    assert D.e == 5
 
 
-def test_get_most_sold_item(df):
-    most_sold = get_most_sold_item(df)
-    assert most_sold[0] == 'Binder'
-    assert int(most_sold[1]) == 722
+def test_supports_nesting(D):
+    D.d = JS(e=5)
+    assert D.d.e == 5
+    D.d.e = JS(f=6)
+    assert D.d.e.f == 6
+
