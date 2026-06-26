@@ -15942,89 +15942,182 @@ enumerate through the text by letter
 #     df_separated_genres = df.apply(lambda serie: [dict(genres=genre, movie=serie.movie) for genre in serie.genres.split('|')], axis=1)
 #     flattened_list = [row for rows in df_separated_genres for row in rows]
 #     return pd.DataFrame(flattened_list)
+#
+# import re
+#
+# def is_single_line_doc_string(l):
+#     pattern = r'""".+"""'
+#     return bool(re.search(pattern,l))
+#
+# def has_triple_quote(l):
+#     pattern = r'"""'
+#     return bool(re.search(pattern,l))
+#
+# def has_starting_hash(l):
+#     pattern = r'^#.*'
+#     return bool(re.search(pattern,l))
+#
+# def has_hash_in_quote(l):
+#     pattern = r"'.*#.*'"
+#     return bool(re.search(pattern, l))
+#
+# def strip_comments(code):
+#     """
+#     Cases:
+#     1) Single line starts with #
+#         # Remove the whole line
+#     2) False positive  '# '
+#     3) Single line docstring """   """
+#     4) multi-line docstring
+#     """
+#     s1=''
+#     in_doc_string = False
+#     for line in code.split('\n'):
+#         l = line.strip()
+#         if is_single_line_doc_string(l):
+#             continue
+#         if in_doc_string:
+#             if has_triple_quote(l):
+#                 in_doc_string = False
+#             continue
+#         if has_triple_quote(l):
+#             in_doc_string = True
+#             continue
+#         if has_starting_hash(l):
+#             continue
+#         if '#' in l:
+#             if not has_hash_in_quote(l):
+#                 parts=line.split("#")
+#                 s1+=parts[0]
+#                 continue
+#         s1+=line+"\n"
+#     return s1
+#
+#
+# # Pybite solution
+# import re
+#
+# def strip_comments(code):
+#     # [\s\S]*? to rm docstring -> https://stackoverflow.com/a/44532145
+#     # \s* = 0 or more spaces
+#     # ?: is non-capturing (not needed but best practice)
+#     # *? is not being 'greedy' (match shortest possible pattern)
+#     # carrying over the newline to fix indenting issue
+#     return re.sub(r'(?:\s*#\s.*|\s{2}#\s.*|\s*"""[\s\S]*?""")(\n)',
+#                   r'\1', code, re.MULTILINE)
+#
+# # Another solution
+# import re
+# def strip_comments(code):
+#     # see Bite description
+#     patterns = [re.compile(r'(?<=\n)\s*"""(?s:.*?)"""\n'),
+#                 re.compile(r'(?<=\n)\s*#\s.*\n'),
+#                 re.compile(r'\s\s#\s.*')]
+#     for pattern in patterns:
+#         code = pattern.sub('', code)
+#     return code
+#
+# # Another solution
+# import re
+# def strip_comments(code):
+#     # see Bite description
+#     if re.search("#",code):
+#         code = re.sub("[ ]*#.+[^)]\n","",code)
+#     if re.search('"""',code):
+#         code = re.sub('[ ]*"""[\w\W]*?"""\n',"",code)
+#     if code[-1] != '\n':
+#         code += '\n'
+#     return code
 
-import re
+import os
+from urllib.request import urlretrieve
 
-def is_single_line_doc_string(l):
-    pattern = r'""".+"""'
-    return bool(re.search(pattern,l))
+import pandas as pd
 
-def has_triple_quote(l):
-    pattern = r'"""'
-    return bool(re.search(pattern,l))
+TMP = os.getenv("TMP", "/tmp")
+EXCEL = os.path.join(TMP, 'order_data.xlsx')
+if not os.path.isfile(EXCEL):
+    urlretrieve(
+        'https://bites-data.s3.us-east-2.amazonaws.com/order_data.xlsx',
+        EXCEL
+    )
 
-def has_starting_hash(l):
-    pattern = r'^#.*'
-    return bool(re.search(pattern,l))
 
-def has_hash_in_quote(l):
-    pattern = r"'.*#.*'"
-    return bool(re.search(pattern, l))
+def load_excel_into_dataframe(excel=EXCEL):
+    """Load the SalesOrders sheet of the excel book (EXCEL variable)
+       into a Pandas DataFrame and return it to the caller"""
+    df = pd.read_excel(EXCEL,sheet_name='SalesOrders')
+    return df
 
-def strip_comments(code):
-    """
-    Cases:
-    1) Single line starts with #
-        # Remove the whole line
-    2) False positive  '# '   
-    3) Single line docstring """   """
-    4) multi-line docstring 
-    """
-    s1=''
-    in_doc_string = False
-    for line in code.split('\n'):
-        l = line.strip()
-        if is_single_line_doc_string(l):
-            continue
-        if in_doc_string:
-            if has_triple_quote(l):
-                in_doc_string = False
-            continue
-        if has_triple_quote(l):
-            in_doc_string = True
-            continue
-        if has_starting_hash(l):
-            continue
-        if '#' in l:
-            if not has_hash_in_quote(l):
-                parts=line.split("#")
-                s1+=parts[0]
-                continue
-        s1+=line+"\n"
-    return s1
+def get_year_region_breakdown(df):
+    """Group the DataFrame by year and region, summing the Total
+       column. You probably need to make an extra column for
+       year, return the new df as shown in the Bite description"""
+    df['Year'] = df['OrderDate'].dt.strftime('%Y').astype(int)
+    result_df = df.groupby(['Year', 'Region'], as_index=True)['Total'].sum().round(2)
+    return result_df
 
+def get_best_sales_rep(df):
+    """Return a tuple of the name of the sales rep and
+       the total of his/her sales"""
+    sales_df = df.groupby(['Rep'], as_index=False)['Total'].sum().round(2)
+    max_row_index = sales_df['Total'].idxmax()
+    max_row = sales_df.loc[max_row_index]
+    return (max_row['Rep'], max_row['Total'])
+
+def get_most_sold_item(df):
+    """Return a tuple of the name of the most sold item
+       and the number of units sold"""
+    units_df = df.groupby(['Item'], as_index=False)['Units'].sum().round(2)
+    max_row_index = units_df['Units'].idxmax()
+    max_row = units_df.loc[max_row_index]
+    return (max_row['Item'], max_row['Units'])
 
 # Pybite solution
-import re
+import os
+from urllib.request import urlretrieve
 
-def strip_comments(code):
-    # [\s\S]*? to rm docstring -> https://stackoverflow.com/a/44532145
-    # \s* = 0 or more spaces
-    # ?: is non-capturing (not needed but best practice)
-    # *? is not being 'greedy' (match shortest possible pattern)
-    # carrying over the newline to fix indenting issue
-    return re.sub(r'(?:\s*#\s.*|\s{2}#\s.*|\s*"""[\s\S]*?""")(\n)',
-                  r'\1', code, re.MULTILINE)
+import pandas as pd
 
-# Another solution
-import re
-def strip_comments(code):
-    # see Bite description
-    patterns = [re.compile(r'(?<=\n)\s*"""(?s:.*?)"""\n'),
-                re.compile(r'(?<=\n)\s*#\s.*\n'),
-                re.compile(r'\s\s#\s.*')]
-    for pattern in patterns:
-        code = pattern.sub('', code)
-    return code
+TMP = os.getenv("TMP", "/tmp")
+EXCEL = os.path.join(TMP, "order_data.xlsx")
+if not os.path.isfile(EXCEL):
+    urlretrieve("https://bites-data.s3.us-east-2.amazonaws.com/order_data.xlsx", EXCEL)
 
-# Another solution
-import re
-def strip_comments(code):
-    # see Bite description
-    if re.search("#",code):
-        code = re.sub("[ ]*#.+[^)]\n","",code)
-    if re.search('"""',code):
-        code = re.sub('[ ]*"""[\w\W]*?"""\n',"",code)
-    if code[-1] != '\n':
-        code += '\n'
-    return code
+
+def load_excel_into_dataframe(excel=EXCEL):
+    """Load the SalesOrders sheet of the excel book (EXCEL variable)
+    into a Pandas DataFrame and return it to the caller"""
+    return pd.read_excel(excel, "SalesOrders")
+
+
+def get_year_region_breakdown(df):
+    """Group the DataFrame by year and region, summing the Total
+    column. You probably need to make an extra column for
+    year, return the new df as shown in the Bite description"""
+    df["Year"] = df["OrderDate"].map(lambda x: x.year)
+    return df.groupby(["Year", "Region"]).agg({"Total": "sum"})
+
+
+def get_best_sales_rep(df):
+    """Return a tuple of the name of the sales rep and
+    the total of his/her sales"""
+    ret = (
+        df.groupby(["Rep"])
+        .agg({"Total": "sum"})
+        .sort_values(by=["Total"], ascending=False)
+        .iloc[0]
+    )
+    return (ret.name, ret.Total)
+
+
+def get_most_sold_item(df):
+    """Return a tuple of the name of the most sold item
+    and the number of units sold"""
+    ret = (
+        df.groupby(["Item"])
+        .agg({"Units": "sum"})
+        .sort_values(by=["Units"], ascending=False)
+        .iloc[0]
+    )
+    return (ret.name, ret.Units)

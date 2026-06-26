@@ -16208,132 +16208,176 @@ import pytest
 
 
 
+#
+#
+# from wc import strip_comments
+#
+# # comment code snippets from:
+# # https://realpython.com/documenting-python-code/
+#
+# single_comment = '''
+# def hello_world():
+#     # A simple comment preceding a simple print statement
+#     print("Hello World")
+# '''
+# single_comment_after_strip = '''
+# def hello_world():
+#     print("Hello World")
+# '''
+#
+# single_docstring = '''
+# def say_hello(name):
+#     """A simple function that says hello... Richie style"""
+#     print(f"Hello {name}, is it me you're looking for?")
+# '''
+# single_docstring_after_strip = '''
+# def say_hello(name):
+#     print(f"Hello {name}, is it me you're looking for?")
+# '''
+#
+# class_with_method = '''
+# class SimpleClass:
+#     """Class docstrings go here."""
+#
+#     def say_hello(self, name: str):
+#         """Class method docstrings go here."""
+#         print(f'Hello {name}')
+# '''
+# class_with_method_after_strip = '''
+# class SimpleClass:
+#
+#     def say_hello(self, name: str):
+#         print(f'Hello {name}')
+# '''
+#
+# multiline_docstring = '''
+# def __init__(self, name, sound, num_legs):
+#     """
+#     Parameters
+#     ----------
+#     name : str
+#         The name of the animal
+#     sound : str
+#         The sound the animal makes
+#     num_legs : int, optional
+#         The number of legs the animal (default is 4)
+#     """
+#     self.name = name
+#     self.sound = sound
+#     self.num_legs = num_legs
+# '''
+# multiline_docstring_after_strip = '''
+# def __init__(self, name, sound, num_legs):
+#     self.name = name
+#     self.sound = sound
+#     self.num_legs = num_legs
+# '''
+#
+# code_bite_description = '''
+# """this is
+# my awesome script
+# """
+# # importing modules
+# import re
+#
+# def hello(name):
+#     """my function docstring"""
+#     return f'hello {name}'  # my inline comment
+# '''
+# code_bite_description_after_strip = '''
+# import re
+#
+# def hello(name):
+#     return f'hello {name}'
+# '''
+#
+# class_three_indents = '''
+# class SimpleClass:
+#     """Class docstrings go here."""
+#
+#     def say_hello(self, name: str):
+#         """Class method docstrings go here."""
+#         print(f'Hello {name}')
+#
+#         def func_in_method(self):
+#             """Docstring with 3 indents and multiline
+#                should also be stripped
+#             """
+#             pass
+# '''
+# class_three_indents_after_strip = '''
+# class SimpleClass:
+#
+#     def say_hello(self, name: str):
+#         print(f'Hello {name}')
+#
+#         def func_in_method(self):
+#             pass
+# '''
+#
+# false_positive = '''
+# def foo():
+#     # this is a comment
+#     print('this is not a #comment')
+# '''
+# false_positive_after_strip = '''
+# def foo():
+#     print('this is not a #comment')
+# '''
+#
+#
+# @pytest.mark.parametrize('arg, expected', [
+#     (single_comment, single_comment_after_strip),
+#     (single_docstring, single_docstring_after_strip),
+#     (class_with_method, class_with_method_after_strip),
+#     (multiline_docstring, multiline_docstring_after_strip),
+#     (code_bite_description, code_bite_description_after_strip),
+#     (class_three_indents, class_three_indents_after_strip),
+#     (false_positive, false_positive_after_strip),
+# ])
+# def test_strip_comments(arg, expected):
+#     assert strip_comments(arg).strip() == expected.strip()
+import pytest
+from pandas.core.frame import DataFrame
+
+from wc import (load_excel_into_dataframe,
+                    get_year_region_breakdown,
+                    get_best_sales_rep,
+                    get_most_sold_item)
 
 
-from wc import strip_comments
-
-# comment code snippets from:
-# https://realpython.com/documenting-python-code/
-
-single_comment = '''
-def hello_world():
-    # A simple comment preceding a simple print statement
-    print("Hello World")
-'''
-single_comment_after_strip = '''
-def hello_world():
-    print("Hello World")
-'''
-
-single_docstring = '''
-def say_hello(name):
-    """A simple function that says hello... Richie style"""
-    print(f"Hello {name}, is it me you're looking for?")
-'''
-single_docstring_after_strip = '''
-def say_hello(name):
-    print(f"Hello {name}, is it me you're looking for?")
-'''
-
-class_with_method = '''
-class SimpleClass:
-    """Class docstrings go here."""
-
-    def say_hello(self, name: str):
-        """Class method docstrings go here."""
-        print(f'Hello {name}')
-'''
-class_with_method_after_strip = '''
-class SimpleClass:
-
-    def say_hello(self, name: str):
-        print(f'Hello {name}')
-'''
-
-multiline_docstring = '''
-def __init__(self, name, sound, num_legs):
-    """
-    Parameters
-    ----------
-    name : str
-        The name of the animal
-    sound : str
-        The sound the animal makes
-    num_legs : int, optional
-        The number of legs the animal (default is 4)
-    """
-    self.name = name
-    self.sound = sound
-    self.num_legs = num_legs
-'''
-multiline_docstring_after_strip = '''
-def __init__(self, name, sound, num_legs):
-    self.name = name
-    self.sound = sound
-    self.num_legs = num_legs
-'''
-
-code_bite_description = '''
-"""this is
-my awesome script
-"""
-# importing modules
-import re
-
-def hello(name):
-    """my function docstring"""
-    return f'hello {name}'  # my inline comment
-'''
-code_bite_description_after_strip = '''
-import re
-
-def hello(name):
-    return f'hello {name}'
-'''
-
-class_three_indents = '''
-class SimpleClass:
-    """Class docstrings go here."""
-
-    def say_hello(self, name: str):
-        """Class method docstrings go here."""
-        print(f'Hello {name}')
-
-        def func_in_method(self):
-            """Docstring with 3 indents and multiline
-               should also be stripped
-            """
-            pass
-'''
-class_three_indents_after_strip = '''
-class SimpleClass:
-
-    def say_hello(self, name: str):
-        print(f'Hello {name}')
-
-        def func_in_method(self):
-            pass
-'''
-
-false_positive = '''
-def foo():
-    # this is a comment
-    print('this is not a #comment')
-'''
-false_positive_after_strip = '''
-def foo():
-    print('this is not a #comment')
-'''
+@pytest.fixture(scope="module")
+def df():
+    return load_excel_into_dataframe()
 
 
-@pytest.mark.parametrize('arg, expected', [
-    (single_comment, single_comment_after_strip),
-    (single_docstring, single_docstring_after_strip),
-    (class_with_method, class_with_method_after_strip),
-    (multiline_docstring, multiline_docstring_after_strip),
-    (code_bite_description, code_bite_description_after_strip),
-    (class_three_indents, class_three_indents_after_strip),
-    (false_positive, false_positive_after_strip),
-])
-def test_strip_comments(arg, expected):
-    assert strip_comments(arg).strip() == expected.strip()
+def test_load_excel_into_dataframe(df):
+    assert type(df) == DataFrame
+    assert df.shape == (43, 7)
+
+
+def test_get_year_region_breakdown(df):
+    ret = get_year_region_breakdown(df)
+
+    assert ret.index.levels[0][0] == 2018
+    assert ret.index.levels[0][1] == 2019
+
+    assert ret.index.names[0] == 'Year'
+    assert ret.index.names[1] == 'Region'
+
+    actual = [round(float(val), 2) for val in ret.values]
+    expected = [3833.51, 5193.71, 231.12, 7305.56,
+                808.38, 2255.6]
+    assert actual == expected
+
+
+def test_get_best_sales_rep(df):
+    best_rep = get_best_sales_rep(df)
+    assert best_rep[0] == 'Kivell'
+    assert best_rep[1] == 3109.44
+
+
+def test_get_most_sold_item(df):
+    most_sold = get_most_sold_item(df)
+    assert most_sold[0] == 'Binder'
+    assert int(most_sold[1]) == 722
