@@ -3600,6 +3600,7 @@ Pairs wines and cheeses by similarity of wine name and cheese name.
 import heapq
 
 from pygments.lexers import wren
+from sqlalchemy import DateTime
 
 #
 # from collections import Counter
@@ -16121,57 +16122,164 @@ enumerate through the text by letter
 #         .iloc[0]
 #     )
 #     return (ret.name, ret.Units)
+#
+# from collections import UserDict
+#
+# class JsObject(UserDict):
+#     """A Python dictionary that provides attribute-style access
+#        just like a JS object:
+#
+#        obj = JsObject()
+#        obj.cool = True
+#        obj.foo = 'bar'
+#
+#        Try this on a regular dict and you get
+#        AttributeError: 'dict' object has no attribute 'foo'
+#     """
+#     def __init__(self, *args, **kwargs):
+#         super().__init__(*args, **kwargs)
+#         for key, value in kwargs.items():
+#                  setattr(self, key, value)
+#
+#     def __getattr__(self, key):
+#         if key in self.data:
+#             return self.data[key]
+#         raise AttributeError(f"'JsObject' object has no attribute '{key}'")
+#
+#     def __setattr__(self, key, value):
+#         # 2. FIX: If Python is setting up 'data', bypass custom logic
+#         if key == 'data':
+#             super().__setattr__(key, value)
+#         else:
+#             # All other attributes go directly into the dictionary storage
+#             self.data[key] = value
+#
+#     def __delattr__(self, key):
+#         if key in self.data:
+#             del self.data[key]
+#         else:
+#             super().__delattr__(key)
+#
+#
+# # pybite solution
+# class JsObject(dict):
+#     """Create a Python dictionary object that provides
+#        attribute-style access just like a JS object:
+#
+#        obj = JsObject()
+#        obj.cool = True
+#        obj.foo = 'bar'
+#
+#        Try this on a regular dict and you get
+#        AttributeError: 'dict' object has no attribute 'foo'
+#     """
+#     def __init__(self, *args, **kwargs):
+#         super().__init__(self, *args, **kwargs)
+#         self.__dict__ = self
 
-from collections import UserDict
 
-class JsObject(UserDict):
-    """A Python dictionary that provides attribute-style access
-       just like a JS object:
+from dateutil.parser import parse
+from datetime import date, datetime
 
-       obj = JsObject()
-       obj.cool = True
-       obj.foo = 'bar'
 
-       Try this on a regular dict and you get
-       AttributeError: 'dict' object has no attribute 'foo'
+MAC1 = """
+reboot    ~                         Wed Apr 10 22:39
+reboot    ~                         Wed Mar 27 16:24
+reboot    ~                         Wed Mar 27 15:01
+reboot    ~                         Sun Mar  3 14:51
+reboot    ~                         Sun Feb 17 11:36
+reboot    ~                         Thu Jan 17 21:54
+reboot    ~                         Mon Jan 14 09:25
+"""
+
+def parse_date(line: str) -> datetime:
+    date_Str = line.split('~')[1].strip()
+    THIS_YEAR = date.today().year
+    d_str = f"{THIS_YEAR} {date_Str}"
+    return parse(d_str)
+
+# calculate the difference between datetimes
+def find_time_diff(previous_time: datetime, latter_time: datetime )-> tuple[int, str]:
+    return (latter_time - previous_time).days, latter_time.strftime("%Y-%m-%d")
+
+def calc_max_uptime(reboots):
+    """Parse the passed in reboots output,
+       extracting the datetimes.
+
+       Calculate the highest uptime between reboots =
+       highest diff between extracted reboot datetimes.
+
+       Return a tuple of this max uptime in days (int) and the
+       date (str) this record was hit.
+
+       For the output above it would be (30, '2019-02-17'),
+       but we use different outputs in the tests as well ...
     """
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        for key, value in kwargs.items():
-                 setattr(self, key, value)
-
-    def __getattr__(self, key):
-        if key in self.data:
-            return self.data[key]
-        raise AttributeError(f"'JsObject' object has no attribute '{key}'")
-
-    def __setattr__(self, key, value):
-        # 2. FIX: If Python is setting up 'data', bypass custom logic
-        if key == 'data':
-            super().__setattr__(key, value)
-        else:
-            # All other attributes go directly into the dictionary storage
-            self.data[key] = value
-
-    def __delattr__(self, key):
-        if key in self.data:
-            del self.data[key]
-        else:
-            super().__delattr__(key)
-
-
-# pybite solution
-class JsObject(dict):
-    """Create a Python dictionary object that provides
-       attribute-style access just like a JS object:
-
-       obj = JsObject()
-       obj.cool = True
-       obj.foo = 'bar'
-
-       Try this on a regular dict and you get
-       AttributeError: 'dict' object has no attribute 'foo'
     """
-    def __init__(self, *args, **kwargs):
-        super().__init__(self, *args, **kwargs)
-        self.__dict__ = self
+    steps:
+    # parse each line: 
+    # calculate the difference between log offs's and return a tuple of 
+    # create a list to store 
+    # find max
+    """
+    dates = [parse_date(line.strip()) for line in reboots.split("\n") if line]
+    dates.reverse()
+    date_diffs = [find_time_diff(dates[n],dates[n+1]) for n in range(len(dates)-1)]
+    return max(date_diffs, key=lambda x: x[0])
+
+#
+# import pytest
+#
+#
+#
+# @pytest.mark.parametrize('arg, expected',[
+#     ((datetime(2026, 4, 10, 11, 36),datetime(2026, 4, 10, 22, 39)),
+#     (0,'2026-04-10'))
+# ])
+# def test_time_diff(arg, expected):
+#     assert find_time_diff(arg[0],arg[1])==expected
+
+#
+# @pytest.mark.parametrize('arg, expected', [
+#     ('reboot    ~                         Wed Apr 10 22:39', datetime(2026, 4, 10, 22, 39)),
+#     ('reboot    ~                         Sun Feb 17 11:36', datetime(2026, 2, 17, 11, 36))
+# ])
+# def test_parse_date(arg, expected):
+#     assert expected== parse_date(arg)
+
+from dateutil.parser import parse
+
+MAC1 = """
+reboot    ~                         Wed Apr 10 22:39
+reboot    ~                         Wed Mar 27 16:24
+reboot    ~                         Wed Mar 27 15:01
+reboot    ~                         Sun Mar  3 14:51
+reboot    ~                         Sun Feb 17 11:36
+reboot    ~                         Thu Jan 17 21:54
+reboot    ~                         Mon Jan 14 09:25
+"""
+
+# Pybite solutions
+def calc_max_uptime(reboots):
+    """Parse the passed in reboots output,
+       extracting the datetimes.
+
+       Calculate the highest uptime between reboots =
+       highest diff between extracted reboot datetimes.
+
+       Return a tuple of this max uptime in days (int) and the
+       date (str) this record was hit.
+
+       For the output above it would be (30, '2019-02-17'),
+       but we use different outputs in the tests as well ...
+    """
+    tstamps = [parse(line.split('~')[1].strip())
+               for line in
+               reversed(reboots.strip().splitlines())]
+
+    diffs = {}
+    for i, j in zip(tstamps, tstamps[1:]):
+        diffs[j - i] = j
+        max_uptime = max(diffs)
+
+    return max_uptime.days, str(diffs[max_uptime].date())
