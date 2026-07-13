@@ -3598,7 +3598,9 @@
 Pairs wines and cheeses by similarity of wine name and cheese name.
 """
 import heapq
+from collections import defaultdict
 
+from httpx._transports import default
 from pygments.lexers import wren
 from sqlalchemy import DateTime
 
@@ -16246,40 +16248,487 @@ def calc_max_uptime(reboots):
 # ])
 # def test_parse_date(arg, expected):
 #     assert expected== parse_date(arg)
+#
+# from dateutil.parser import parse
+#
+# MAC1 = """
+# reboot    ~                         Wed Apr 10 22:39
+# reboot    ~                         Wed Mar 27 16:24
+# reboot    ~                         Wed Mar 27 15:01
+# reboot    ~                         Sun Mar  3 14:51
+# reboot    ~                         Sun Feb 17 11:36
+# reboot    ~                         Thu Jan 17 21:54
+# reboot    ~                         Mon Jan 14 09:25
+# """
+#
+# # Pybite solutions
+# def calc_max_uptime(reboots):
+#     """Parse the passed in reboots output,
+#        extracting the datetimes.
+#
+#        Calculate the highest uptime between reboots =
+#        highest diff between extracted reboot datetimes.
+#
+#        Return a tuple of this max uptime in days (int) and the
+#        date (str) this record was hit.
+#
+#        For the output above it would be (30, '2019-02-17'),
+#        but we use different outputs in the tests as well ...
+#     """
+#     tstamps = [parse(line.split('~')[1].strip())
+#                for line in
+#                reversed(reboots.strip().splitlines())]
+#
+#     diffs = {}
+#     for i, j in zip(tstamps, tstamps[1:]):
+#         diffs[j - i] = j
+#         max_uptime = max(diffs)
+#
+#     return max_uptime.days, str(diffs[max_uptime].date())
+#
+# import os
+# from pathlib import Path
+# from urllib.request import urlretrieve
+# import re
+# from bs4 import BeautifulSoup as Soup
+#
+# TMP = Path(os.getenv("TMP", "/tmp"))
+# HTML_FILE = TMP / "enchantment_list_pc.html"
+#
+# # source:
+# # https://www.digminecraft.com/lists/enchantment_list_pc.php
+# URL = ("https://bites-data.s3.us-east-2.amazonaws.com/"
+#        "minecraft-enchantment.html")
+#
+# """
+# Strategy, ideas, create test cases as you go.
+#
+# Current understanding:
+# 1) Scrape a page
+# 2) Create a dictionary of enchantments
+# 3) Create enchantable items (classes) dynamically
+# 4) Sort items and print it out
+# """
+# class Enchantment:
+#     """Minecraft enchantment class
+#
+#     Implements the following:
+#         id_name, name, max_level, description, items
+#     """
+#     def __init__(self, id_name, name, max_level, description, items=[]):
+#         self.id_name = id_name
+#         self.name = name
+#         self.max_level = max_level
+#         self.description = description
+#         self.items = items
+#
+#     def __str__(self):
+#         return f"{self.name} ({self.max_level}): {self.description}"
+#
+#
+# class Item:
+#     """Minecraft enchantable item class
+#
+#     Implements the following:
+#         name, enchantments
+#     """
+#     def __init__(self, name):
+#         self.name = name
+#         self.enchantments=[]
+#
+#     def __str__(self):
+#         name =  f"{self.name.title()}"
+#         name = name.replace('_',' ')
+#         s_name=sorted(self.enchantments, key=lambda x:x.id_name )
+#         enchantments = '\n'.join([f'  [{enchantment.max_level}] {enchantment.id_name}' for enchantment in s_name])
+#         return f"{name}: \n{enchantments}"
+#
+#
+# def generate_enchantments(soup)->dict:
+#     """Generates a dictionary of Enchantment objects
+#
+#     With the key being the id_name of the enchantment.
+#     """
+#     def convert_roman(roman_letter):
+#         convert_dict = {'I': 1,
+#                         'II': 2,
+#                         'III': 3,
+#                         'IV': 4,
+#                         'V': 5
+#                         }
+#         return convert_dict[roman_letter]
+#
+#     def get_items(it_raw):
+#         it=it_raw.replace('fishing_rod','fishing*rod')
+#         it_list = [i for i in it.split('/')[-1].split('.')[0].split('_') if i not in ('enchanted', 'iron', 'sm')]
+#         return ['fishing_rod' if i=='fishing*rod' else i for i in it_list]
+#
+#     table = soup.find('table',id='minecraft_items')
+#     # Parse the table into a list of enchantment dictionary
+#
+#     enchantment_dict = {}
+#     pattern = r'\(((?P<id_name>\w+))\)'
+#
+#     for i, row in enumerate(table.find_all('tr')):
+#         if i == 0:
+#             continue
+#         else:
+#             enchantment={}
+#             for j, el in enumerate(row.find_all('td')):
+#                 match j:
+#                     case 0:
+#                         whole_name = el.text.strip()
+#                         match = re.search(pattern, whole_name)
+#                         if match:
+#                             key = match.group('id_name')
+#                             enchantment['id_name']=key
+#                         enchantment['name']=whole_name.split('(')[0]
+#                     case 1:
+#                         enchantment['max_level'] = convert_roman(el.text.strip())
+#                     case 2:
+#                         enchantment['description'] = el.text.strip()
+#                     case 4:
+#                         if el.find('img').get('data-src'):
+#                             enchantment['items'] = get_items(el.find('img').get('data-src'))
+#
+#         enchantment_dict[enchantment['id_name']] = Enchantment(**enchantment)
+#     return enchantment_dict
+#     #return dict(sorted(enchantment_dict.items()))
+#
+# # Map out the relationship between
+# # item and enchantment & the data structure to support conversions
+#
+#
+# def generate_items(data:dict[str, Enchantment]) -> dict[str,Item]:
+#     """Generates a dictionary of Item objects
+#     With the key being the item name.
+#     """
+#     items = {}
+#     # make mapping to go from item to enchantment
+#     # data is a dictionary of Enchantments
+#     for enchantment_id, enchantment in data.items():
+#         for item_name in enchantment.items:
+#             if item_name not in items:
+#                 items[item_name]=Item(item_name)
+#                 items[item_name].enchantments=[]
+#             items[item_name].enchantments.append(enchantment)
+#
+#     return items
+#     #return dict(sorted(items.items()))
+#
+#
+#
+#
+#
+# def get_soup(file=HTML_FILE):
+#     """Retrieves/takes source HTML and returns a BeautifulSoup object"""
+#     if isinstance(file, Path):
+#         if not file.is_file():
+#             urlretrieve(URL, file)
+#
+#         with file.open() as html_source:
+#             soup = Soup(html_source, "html.parser")
+#     else:
+#         soup = Soup(file, "html.parser")
+#
+#     return soup
+#
+#
+# def main():
+#     """This function is here to help you test your final code.
+#
+#     Once complete, the print out should match what's at the bottom of this file"""
+#     soup = get_soup()
+#     enchantment_data = generate_enchantments(soup)
+#     minecraft_items = generate_items(enchantment_data)
+#     for item in minecraft_items:
+#         print(minecraft_items[item], "\n")
+#
+#
+# if __name__ == "__main__":
+#     main()
+#
+# """
+# Armor:
+#   [1] binding_curse
+#   [4] blast_protection
+#   [4] fire_protection
+#   [4] projectile_protection
+#   [4] protection
+#   [3] thorns
+#
+# Axe:
+#   [5] bane_of_arthropods
+#   [5] efficiency
+#   [3] fortune
+#   [5] sharpness
+#   [1] silk_touch
+#   [5] smite
+#
+# Boots:
+#   [3] depth_strider
+#   [4] feather_falling
+#   [2] frost_walker
+#
+# Bow:
+#   [1] flame
+#   [1] infinity
+#   [5] power
+#   [2] punch
+#
+# Chestplate:
+#   [1] mending
+#   [3] unbreaking
+#   [1] vanishing_curse
+#
+# Crossbow:
+#   [1] multishot
+#   [4] piercing
+#   [3] quick_charge
+#
+# Fishing Rod:
+#   [3] luck_of_the_sea
+#   [3] lure
+#   [1] mending
+#   [3] unbreaking
+#   [1] vanishing_curse
+#
+# Helmet:
+#   [1] aqua_affinity
+#   [3] respiration
+#
+# Pickaxe:
+#   [5] efficiency
+#   [3] fortune
+#   [1] mending
+#   [1] silk_touch
+#   [3] unbreaking
+#   [1] vanishing_curse
+#
+# Shovel:
+#   [5] efficiency
+#   [3] fortune
+#   [1] silk_touch
+#
+# Sword:
+#   [5] bane_of_arthropods
+#   [2] fire_aspect
+#   [2] knockback
+#   [3] looting
+#   [1] mending
+#   [5] sharpness
+#   [5] smite
+#   [3] sweeping
+#   [3] unbreaking
+#   [1] vanishing_curse
+#
+# Trident:
+#   [1] channeling
+#   [5] impaling
+#   [3] loyalty
+#   [3] riptide
+# """
+#
+# # Pybite solution
+# from collections import defaultdict
+# from dataclasses import dataclass, field
+# from functools import total_ordering
+# import os
+# from pathlib import Path
+# from re import compile, search
+# from typing import Any, DefaultDict, List
+# from urllib.request import urlretrieve
+#
+# from bs4 import BeautifulSoup as Soup
+#
+# TMP = Path(os.getenv("TMP", "/tmp"))
+# HTML_FILE = TMP / "enchantment_list_pc.html"
+#
+# # source:
+# # https://www.digminecraft.com/lists/enchantment_list_pc.php
+# URL = ("https://bites-data.s3.us-east-2.amazonaws.com/"
+#        "minecraft-enchantment.html")
+#
+# ROMAN = {"I": 1, "II": 2, "III": 3, "IV": 4, "V": 5}
+#
+#
+# @dataclass
+# @total_ordering
+# class Enchantment:
+#     """Minecraft enchantment"""
+#
+#     id_name: str
+#     name: str
+#     max_level: int
+#     description: str
+#     items: List[str] = field(default_factory=list)
+#
+#     def __str__(self):
+#         return f"{self.name} ({self.max_level}): {self.description}"
+#
+#     def __lt__(self, other):
+#         return self.id_name < other.id_name
+#
+#
+# @dataclass
+# class Item:
+#     """Minecraft enchantable item"""
+#
+#     name: str
+#     enchantments: List[Enchantment] = field(default_factory=list)
+#
+#     def __str__(self):
+#         enchants = sorted(self.enchantments)
+#         enc_list = [f"\n  [{enc.max_level}] {enc.id_name}" for enc in enchants]
+#         return f"{self.name.title()}: {''.join(enc_list)}"
+#
+#
+# def clean_up_names(item_names):
+#     """Cleans up item names
+#
+#     :param item_names: String of item names
+#     :return: String of cleaned up item names
+#     """
+#     unwanted = (".png", "_sm", "iron_", "enchanted_")
+#
+#     if "fishing_rod" in item_names:
+#         item_names = item_names.replace("fishing_rod", "fishingrod")
+#
+#     for chars in unwanted:
+#         if chars in item_names:
+#             item_names = item_names.replace(chars, "")
+#
+#     item_names = item_names.split("_")
+#     item_names = [
+#         "fishing_rod" if item == "fishingrod" else item for item in item_names
+#     ]
+#
+#     return " ".join(item_names)
+#
+#
+# def enchantable_items(soup):
+#     """Scrapes BeautifulSoup object for items
+#
+#     :param soup: BeautifulSoup object
+#     :return: List of enchantable items lists
+#     """
+#     table = soup.find("table", {"id": "minecraft_items"})
+#     items = [
+#         clean_up_names(img["data-src"].split("/")[-1]).split()
+#         for img in table.find_all("img")
+#     ]
+#
+#     return items
+#
+#
+# def generate_enchantments(soup):
+#     """Generates a dictionary of Enchantment objects
+#
+#     :param soup: BeautifulSoup object
+#     :return: DefaultDict of Enchantment objects
+#     """
+#     item_list = enchantable_items(soup)
+#     data = parse_html(soup)
+#     enchant_data: DefaultDict[Any, Enchantment] = defaultdict(Enchantment)
+#
+#     for i, row in enumerate(data):
+#         id_name, name = split_title(row[0])
+#         max_level = ROMAN[row[1]]
+#         description = row[2]
+#         items = item_list[i]
+#         enchant = Enchantment(id_name, name, max_level, description, items)
+#         enchant_data[id_name] = enchant
+#
+#     return enchant_data
+#
+#
+# def generate_items(data):
+#     """Generates a dictionary of Item objects
+#
+#     :param data: DefaultDict of Enchantment objects
+#     :return: DefaultDict of Item objects
+#     """
+#     mc_items: DefaultDict[Any, Item] = defaultdict(Item)
+#     unique_items = gen_item_set(data)
+#
+#     for item in unique_items:
+#         mc_items[item] = Item(item.replace("_", " "))
+#
+#     for enchant in data:
+#         for item in data[enchant].items:
+#             mc_items[item].enchantments.append(data[enchant])
+#
+#     return mc_items
+#
+#
+# def gen_item_set(data):
+#     """Returns a set of item names
+#
+#     :param data: Dictionary of Enchantment objects
+#     :return: Set of sorted item object name strings
+#     """
+#     mc_items = set()
+#     for enchantment in data.keys():
+#         for item in data[enchantment].items:
+#             mc_items.add(item)
+#
+#     return sorted(mc_items)
+#
+#
+# def get_soup(file=HTML_FILE):
+#     """Retrieves source HTML and returns a BeautifulSoup object
+#
+#     :param file: Path file object
+#     :return: BeautifulSoup object
+#     """
+#     if isinstance(file, Path):
+#         if not file.is_file():
+#             urlretrieve(URL, file)
+#
+#         with file.open() as html_source:
+#             soup = Soup(html_source, "html.parser")
+#     else:
+#         soup = Soup(file, "html.parser")
+#
+#     return soup
+#
+#
+# def main():
+#     """This function is here to help you test your final code"""
+#     soup = get_soup()
+#     enchantment_data = generate_enchantments(soup)
+#     minecraft_items = generate_items(enchantment_data)
+#     for item in minecraft_items:
+#         print(minecraft_items[item], "\n")
+#
+#
+# def parse_html(soup):
+#     """Parses BeautifulSoup object and returns the table
+#
+#     :param soup: BeautifulSoup object
+#     :return: List of the rows that make up the table
+#     """
+#     table = soup.find("table", {"id": "minecraft_items"})
+#     data = [
+#         [td.get_text() for td in row.find_all("td")] for row in table.find_all("tr")
+#     ]
+#
+#     return data[1:]
+#
+#
+# def split_title(title):
+#     """
+#     Splits the title string
+#
+#     :param title: String of the enchantment title
+#     :return: Tuple(id_names, names)
+#     """
+#     pattern = compile(r"(.*)\((.*)\)")
+#     names, id_names = search(pattern, title).groups()
+#     return id_names, names
+#
+#
+# if __name__ == "__main__":
+#     main()
 
-from dateutil.parser import parse
 
-MAC1 = """
-reboot    ~                         Wed Apr 10 22:39
-reboot    ~                         Wed Mar 27 16:24
-reboot    ~                         Wed Mar 27 15:01
-reboot    ~                         Sun Mar  3 14:51
-reboot    ~                         Sun Feb 17 11:36
-reboot    ~                         Thu Jan 17 21:54
-reboot    ~                         Mon Jan 14 09:25
-"""
-
-# Pybite solutions
-def calc_max_uptime(reboots):
-    """Parse the passed in reboots output,
-       extracting the datetimes.
-
-       Calculate the highest uptime between reboots =
-       highest diff between extracted reboot datetimes.
-
-       Return a tuple of this max uptime in days (int) and the
-       date (str) this record was hit.
-
-       For the output above it would be (30, '2019-02-17'),
-       but we use different outputs in the tests as well ...
-    """
-    tstamps = [parse(line.split('~')[1].strip())
-               for line in
-               reversed(reboots.strip().splitlines())]
-
-    diffs = {}
-    for i, j in zip(tstamps, tstamps[1:]):
-        diffs[j - i] = j
-        max_uptime = max(diffs)
-
-    return max_uptime.days, str(diffs[max_uptime].date())
