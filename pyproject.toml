@@ -21,3 +21,8 @@ dependencies = [
     "textblob>=0.20.0",
     "typer>=0.24.1",
 ]
+
+[dependency-groups]
+dev = [
+    "pytest-asyncio>=1.4.0",
+]
