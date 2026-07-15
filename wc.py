@@ -3600,6 +3600,7 @@ Pairs wines and cheeses by similarity of wine name and cheese name.
 import heapq
 from collections import defaultdict
 
+from feedparser import namespaces
 from httpx._transports import default
 from pygments.lexers import wren
 from sqlalchemy import DateTime
@@ -16730,216 +16731,315 @@ def calc_max_uptime(reboots):
 #
 # if __name__ == "__main__":
 #     main()
-
-import time
-import asyncio
-from typing import Union
-# ONE_MIN = 60
-# FIVE_MIN = ONE_MIN * 5
-# TWENTY_FIVE_MIN = ONE_MIN * 25
-# THIRTY_MIN = ONE_MIN * 30
-# HOUR = ONE_MIN * 60
+#
+# import time
+# import asyncio
+# from typing import Union
+# # ONE_MIN = 60
+# # FIVE_MIN = ONE_MIN * 5
+# # TWENTY_FIVE_MIN = ONE_MIN * 25
+# # THIRTY_MIN = ONE_MIN * 30
+# # HOUR = ONE_MIN * 60
+# # CURRENT_SESSION = 1
+#
+# ONE_MIN = .006
+# FIVE_MIN = ONE_MIN * .0005
+# TWENTY_FIVE_MIN = ONE_MIN * .0025
+# THIRTY_MIN = ONE_MIN * .003
+# HOUR = ONE_MIN * .06
 # CURRENT_SESSION = 1
+#
+#
+# async def break_time(delay:Union[int, float], loop:int)->None:
+#     """Break time
+#
+#     :param delay: float of delay in seconds
+#     :param loop: int of the current loop
+#     :return: None
+#     """
+#     _delay = int(delay / ONE_MIN)
+#     print(f"[{loop}] {time.strftime('%X')} Time for a {_delay} min break!")
+#     await asyncio.sleep(delay)
+#
+#
+# async def lunch_time(delay:Union[int, float])->None:
+#     """Lunch time
+#
+#     :param delay: float of delay in seconds
+#     :return: None
+#     """
+#     print(f"\n** {time.strftime('%X')} Time for lunch! **")
+#     await asyncio.sleep(delay)
+#
+#
+# async def work_time(delay:Union[int, float], loop:int)->None:
+#     """Work time
+#
+#     :param delay: float of delay in seconds
+#     :param loop: int of the current loop
+#     :return: None
+#     """
+#     print(f"[{loop}] {time.strftime('%X')} Time to work!")
+#     await asyncio.sleep(delay)
+#
+#
+# async def session(
+#     work_length:Union[int, float]=TWENTY_FIVE_MIN,
+#     short_break_length:Union[int, float]=FIVE_MIN,
+#     long_break_length:Union[int, float]=THIRTY_MIN,
+# )->None:
+#     """Session
+#
+#     :param work_length: float of work length in seconds
+#     :param short_break_length: float of short break length in seconds
+#     :param long_break_length: float of long break length in seconds
+#     :return: None
+#     """
+#     loop = 1
+#
+#     while loop < 4:
+#         await work_time(work_length, loop)
+#         await break_time(short_break_length, loop)
+#         loop += 1
+#
+#     await work_time(work_length, loop)
+#
+#     if CURRENT_SESSION % 2 != 0:
+#         await break_time(long_break_length, loop)
+#
+#
+# async def main(
+#     work_length: Union[int, float] =TWENTY_FIVE_MIN,
+#     short_break_length: Union[int, float] =FIVE_MIN,
+#     long_break_length: Union[int, float]=THIRTY_MIN,
+#     lunch_length: Union[int, float]=HOUR,
+# )->None:
+#     """Main entry point
+#
+#     :param work_length: float of work length in seconds
+#     :param short_break_length: float of short break length in seconds
+#     :param long_break_length: float of long break length in seconds
+#     :param lunch_length: float of lunch length in seconds
+#     :return: None
+#     """
+#     global CURRENT_SESSION
+#     print(f"Pomodor timer started at: {time.strftime('%X')}")
+#
+#     while CURRENT_SESSION <= 4:
+#         print(f"\nSession: {CURRENT_SESSION}")
+#         await session(work_length, short_break_length, long_break_length)
+#         if CURRENT_SESSION == 2:
+#             await lunch_time(lunch_length)
+#         CURRENT_SESSION += 1
+#
+#     print(f"\n{time.strftime('%X')} Time to go home!")
+#
+#     print(f"\nWork day completed at: {time.strftime('%X')}")
+#
+#
+# if __name__ == "__main__":
+#     asyncio.run(main())
+#
+#
+# # Pybite solution
+# import asyncio
+# import time
+# from typing import Union
+#
+# ONE_MIN: int = 60
+# FIVE_MIN: Union[int, float] = ONE_MIN * 5
+# TWENTY_FIVE_MIN: Union[int, float] = ONE_MIN * 25
+# THIRTY_MIN: Union[int, float] = ONE_MIN * 30
+# HOUR: Union[int, float] = ONE_MIN * 60
+# CURRENT_SESSION: int = 1
+#
+#
+# async def break_time(delay: Union[int, float], loop: int) -> None:
+#     """Break time
+#
+#     :param delay: float of delay in seconds
+#     :param loop: int of the current loop
+#     :return: None
+#     """
+#     _delay = int(delay / ONE_MIN)
+#     print(f"[{loop}] {time.strftime('%X')} Time for a {_delay} min break!")
+#     await asyncio.sleep(delay)
+#
+#
+# async def lunch_time(delay: Union[int, float]) -> None:
+#     """Lunch time
+#
+#     :param delay: float of delay in seconds
+#     :return: None
+#     """
+#     print(f"\n** {time.strftime('%X')} Time for lunch! **")
+#     await asyncio.sleep(delay)
+#
+#
+# async def work_time(delay: Union[int, float], loop: int) -> None:
+#     """Work time
+#
+#     :param delay: float of delay in seconds
+#     :param loop: int of the current loop
+#     :return: None
+#     """
+#     print(f"[{loop}] {time.strftime('%X')} Time to work!")
+#     await asyncio.sleep(delay)
+#
+#
+# async def session(
+#     work_length: Union[int, float] = TWENTY_FIVE_MIN,
+#     short_break_length: Union[int, float] = FIVE_MIN,
+#     long_break_length: Union[int, float] = THIRTY_MIN,
+# ) -> None:
+#     """Session
+#
+#     :param work_length: float of work length in seconds
+#     :param short_break_length: float of short break length in seconds
+#     :param long_break_length: float of long break length in seconds
+#     :return: None
+#     """
+#     loop = 1
+#
+#     while loop < 4:
+#         await work_time(work_length, loop)
+#         await break_time(short_break_length, loop)
+#         loop += 1
+#
+#     await work_time(work_length, loop)
+#
+#     if CURRENT_SESSION % 2 != 0:
+#         await break_time(long_break_length, loop)
+#
+#
+# async def main(
+#     work_length: Union[int, float] = TWENTY_FIVE_MIN,
+#     short_break_length: Union[int, float] = FIVE_MIN,
+#     long_break_length: Union[int, float] = THIRTY_MIN,
+#     lunch_length: Union[int, float] = HOUR,
+# ) -> None:
+#     """Main entry point
+#
+#     :param work_length: float of work length in seconds
+#     :param short_break_length: float of short break length in seconds
+#     :param long_break_length: float of long break length in seconds
+#     :param lunch_length: float of lunch length in seconds
+#     :return: None
+#     """
+#     global CURRENT_SESSION
+#     print(f"Pomodor timer started at: {time.strftime('%X')}")
+#
+#     while CURRENT_SESSION <= 4:
+#         print(f"\nSession: {CURRENT_SESSION}")
+#         await session(work_length, short_break_length, long_break_length)
+#         if CURRENT_SESSION == 2:
+#             await lunch_time(lunch_length)
+#         CURRENT_SESSION += 1
+#
+#     print(f"\n{time.strftime('%X')} Time to go home!")
+#
+#     print(f"\nWork day completed at: {time.strftime('%X')}")
+#
+#
+# if __name__ == "__main__":
+#     asyncio.run(main())
 
-ONE_MIN = .006
-FIVE_MIN = ONE_MIN * .0005
-TWENTY_FIVE_MIN = ONE_MIN * .0025
-THIRTY_MIN = ONE_MIN * .003
-HOUR = ONE_MIN * .06
-CURRENT_SESSION = 1
+from random import random
+from time import sleep
+
+"""
+def my_decorator(func):
+    def wrapper():
+        print("Something is happening before the function is called.")
+        func()
+        print("Something is happening after the function is called.")
+    return wrapper
+
+@my_decorator
+def say_hello():
+    print("Hello!")
+
+# When say_hello() is called, it triggers the wrapper
+say_hello()
+Use code with caution.
+
+"""
 
 
-async def break_time(delay:Union[int, float], loop:int)->None:
-    """Break time
 
-    :param delay: float of delay in seconds
-    :param loop: int of the current loop
-    :return: None
-    """
-    _delay = int(delay / ONE_MIN)
-    print(f"[{loop}] {time.strftime('%X')} Time for a {_delay} min break!")
-    await asyncio.sleep(delay)
-
-
-async def lunch_time(delay:Union[int, float])->None:
-    """Lunch time
-
-    :param delay: float of delay in seconds
-    :return: None
-    """
-    print(f"\n** {time.strftime('%X')} Time for lunch! **")
-    await asyncio.sleep(delay)
+def cached_property(func):
+    """decorator used to cache expensive object attribute lookup"""
+    my_dict = {}
+    @property
+    def wrapper(self):
+        if self.color not in my_dict:
+            my_dict[self.color] = func(self)
+        return my_dict[self.color]
+    return wrapper
 
 
-async def work_time(delay:Union[int, float], loop:int)->None:
-    """Work time
 
-    :param delay: float of delay in seconds
-    :param loop: int of the current loop
-    :return: None
-    """
-    print(f"[{loop}] {time.strftime('%X')} Time to work!")
-    await asyncio.sleep(delay)
+class Planet:
+    """the nicest little orb this side of Orion's Belt"""
 
+    GRAVITY_CONSTANT = 42
+    TEMPORAL_SHIFT = 0.12345
+    SOLAR_MASS_UNITS = 'M\N{SUN}'
 
-async def session(
-    work_length:Union[int, float]=TWENTY_FIVE_MIN,
-    short_break_length:Union[int, float]=FIVE_MIN,
-    long_break_length:Union[int, float]=THIRTY_MIN,
-)->None:
-    """Session
+    def __init__(self, color):
+        self.color = color
+        self._mass = None
 
-    :param work_length: float of work length in seconds
-    :param short_break_length: float of short break length in seconds
-    :param long_break_length: float of long break length in seconds
-    :return: None
-    """
-    loop = 1
-
-    while loop < 4:
-        await work_time(work_length, loop)
-        await break_time(short_break_length, loop)
-        loop += 1
-
-    await work_time(work_length, loop)
-
-    if CURRENT_SESSION % 2 != 0:
-        await break_time(long_break_length, loop)
+    def __repr__(self):
+        return f'{self.__class__.__name__}({repr(self.color)})'
 
 
-async def main(
-    work_length: Union[int, float] =TWENTY_FIVE_MIN,
-    short_break_length: Union[int, float] =FIVE_MIN,
-    long_break_length: Union[int, float]=THIRTY_MIN,
-    lunch_length: Union[int, float]=HOUR,
-)->None:
-    """Main entry point
+    @cached_property
+    def mass(self):
+        scale_factor = random()
+        sleep(self.TEMPORAL_SHIFT)
+        self._mass = (f'{round(scale_factor * self.GRAVITY_CONSTANT, 4)} '
+                      f'{self.SOLAR_MASS_UNITS}')
+        return self._mass
 
-    :param work_length: float of work length in seconds
-    :param short_break_length: float of short break length in seconds
-    :param long_break_length: float of long break length in seconds
-    :param lunch_length: float of lunch length in seconds
-    :return: None
-    """
-    global CURRENT_SESSION
-    print(f"Pomodor timer started at: {time.strftime('%X')}")
-
-    while CURRENT_SESSION <= 4:
-        print(f"\nSession: {CURRENT_SESSION}")
-        await session(work_length, short_break_length, long_break_length)
-        if CURRENT_SESSION == 2:
-            await lunch_time(lunch_length)
-        CURRENT_SESSION += 1
-
-    print(f"\n{time.strftime('%X')} Time to go home!")
-
-    print(f"\nWork day completed at: {time.strftime('%X')}")
-
-
-if __name__ == "__main__":
-    asyncio.run(main())
 
 
 # Pybite solution
-import asyncio
-import time
-from typing import Union
-
-ONE_MIN: int = 60
-FIVE_MIN: Union[int, float] = ONE_MIN * 5
-TWENTY_FIVE_MIN: Union[int, float] = ONE_MIN * 25
-THIRTY_MIN: Union[int, float] = ONE_MIN * 30
-HOUR: Union[int, float] = ONE_MIN * 60
-CURRENT_SESSION: int = 1
-
-
-async def break_time(delay: Union[int, float], loop: int) -> None:
-    """Break time
-
-    :param delay: float of delay in seconds
-    :param loop: int of the current loop
-    :return: None
-    """
-    _delay = int(delay / ONE_MIN)
-    print(f"[{loop}] {time.strftime('%X')} Time for a {_delay} min break!")
-    await asyncio.sleep(delay)
-
-
-async def lunch_time(delay: Union[int, float]) -> None:
-    """Lunch time
-
-    :param delay: float of delay in seconds
-    :return: None
-    """
-    print(f"\n** {time.strftime('%X')} Time for lunch! **")
-    await asyncio.sleep(delay)
-
-
-async def work_time(delay: Union[int, float], loop: int) -> None:
-    """Work time
-
-    :param delay: float of delay in seconds
-    :param loop: int of the current loop
-    :return: None
-    """
-    print(f"[{loop}] {time.strftime('%X')} Time to work!")
-    await asyncio.sleep(delay)
-
-
-async def session(
-    work_length: Union[int, float] = TWENTY_FIVE_MIN,
-    short_break_length: Union[int, float] = FIVE_MIN,
-    long_break_length: Union[int, float] = THIRTY_MIN,
-) -> None:
-    """Session
-
-    :param work_length: float of work length in seconds
-    :param short_break_length: float of short break length in seconds
-    :param long_break_length: float of long break length in seconds
-    :return: None
-    """
-    loop = 1
-
-    while loop < 4:
-        await work_time(work_length, loop)
-        await break_time(short_break_length, loop)
-        loop += 1
-
-    await work_time(work_length, loop)
-
-    if CURRENT_SESSION % 2 != 0:
-        await break_time(long_break_length, loop)
-
-
-async def main(
-    work_length: Union[int, float] = TWENTY_FIVE_MIN,
-    short_break_length: Union[int, float] = FIVE_MIN,
-    long_break_length: Union[int, float] = THIRTY_MIN,
-    lunch_length: Union[int, float] = HOUR,
-) -> None:
-    """Main entry point
-
-    :param work_length: float of work length in seconds
-    :param short_break_length: float of short break length in seconds
-    :param long_break_length: float of long break length in seconds
-    :param lunch_length: float of lunch length in seconds
-    :return: None
-    """
-    global CURRENT_SESSION
-    print(f"Pomodor timer started at: {time.strftime('%X')}")
-
-    while CURRENT_SESSION <= 4:
-        print(f"\nSession: {CURRENT_SESSION}")
-        await session(work_length, short_break_length, long_break_length)
-        if CURRENT_SESSION == 2:
-            await lunch_time(lunch_length)
-        CURRENT_SESSION += 1
-
-    print(f"\n{time.strftime('%X')} Time to go home!")
-
-    print(f"\nWork day completed at: {time.strftime('%X')}")
-
-
-if __name__ == "__main__":
-    asyncio.run(main())
-
+# from random import random
+# from time import sleep
+#
+#
+# def cached_property(func):
+#     """decorator used to cache expensive object attribute lookup"""
+#     name = f'_cached_{func.__name__}'
+#
+#     @property
+#     def lookup(instance):
+#         if hasattr(instance, name):
+#             return getattr(instance, name)
+#         else:
+#             value = func(instance)
+#             setattr(instance, name, value)
+#             return value
+#     return lookup
+#
+#
+# class Planet:
+#     """the nicest little orb this side of Orion's Belt"""
+#
+#     GRAVITY_CONSTANT = 42
+#     TEMPORAL_SHIFT = 0.12345
+#     SOLAR_MASS_UNITS = 'M\N{SUN}'
+#
+#     def __init__(self, color):
+#         self.color = color
+#
+#     def __repr__(self):
+#         return f'{self.__class__.__name__}({repr(self.color)})'
+#
+#     @cached_property
+#     def mass(self):
+#         scale_factor = random()
+#         sleep(self.TEMPORAL_SHIFT)
+#         return (f'{round(scale_factor * self.GRAVITY_CONSTANT, 4)} '
+#                 f'{self.SOLAR_MASS_UNITS}')
