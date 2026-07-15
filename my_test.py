@@ -16836,35 +16836,75 @@ Inputs are modified to check how the function deals with unknown characters
 #     assert "Work day completed at" in output
 #     assert len(output.splitlines()) == 45
 
+#
+# from time import perf_counter
+# import pytest
+#
+# from wc import Planet
+#
+#
+# @pytest.fixture(scope="module")
+# def blue():
+#     return Planet('blue')
+#
+#
+# def test_property_is_cached_timing(blue):
+#     start_time = perf_counter()
+#     for _ in range(5):
+#         blue.mass
+#     end_time = perf_counter()
+#     elapsed_time = end_time - start_time
+#     assert elapsed_time < .5
+#
+#
+# def test_property_is_cached_value(blue):
+#     masses = [blue.mass for _ in range(10)]
+#     initial_mass = masses[0]
+#     assert all(m == initial_mass for m in masses)
+#     red, green = Planet('red'), Planet('green')
+#     assert red.mass != green.mass != blue.mass
+#
+#
+# def test_property_is_immutable(blue):
+#     with pytest.raises(AttributeError):
+#         blue.mass = 11
 
-from time import perf_counter
 import pytest
 
-from wc import Planet
+from wc import retry, MaxRetriesException, MAX_RETRIES
 
 
-@pytest.fixture(scope="module")
-def blue():
-    return Planet('blue')
+@retry
+def sum_numbers(numbers):
+    """
+    Sum numbers, if not all ints raise a ValueError
+    (bit silly but justs to test the decorator)
+    """
+    if not all(type(i) == int for i in numbers):
+        raise ValueError('not all ints')
+    return sum(numbers)
 
 
-def test_property_is_cached_timing(blue):
-    start_time = perf_counter()
-    for _ in range(5):
-        blue.mass
-    end_time = perf_counter()
-    elapsed_time = end_time - start_time
-    assert elapsed_time < .5
+def test_bad_data_max_retries_and_exception(capfd):
+    with pytest.raises(MaxRetriesException):
+        sum_numbers(['a', 'b'])
+    output = capfd.readouterr()[0]
+    assert output.count('not all ints') == MAX_RETRIES
 
 
-def test_property_is_cached_value(blue):
-    masses = [blue.mass for _ in range(10)]
-    initial_mass = masses[0]
-    assert all(m == initial_mass for m in masses)
-    red, green = Planet('red'), Planet('green')
-    assert red.mass != green.mass != blue.mass
+def test_good_data_no_retry_and_no_exception(capfd):
+    sum_numbers([1, 2, 3])
+    output = capfd.readouterr()[0]
+    assert output.count('not all ints') == 0
 
 
-def test_property_is_immutable(blue):
-    with pytest.raises(AttributeError):
-        blue.mass = 11
+def test_decorated_function_preserves_docstring(capfd):
+    docstring = sum_numbers.__doc__
+    assert docstring is not None
+    assert "Sum numbers, if not all ints raise a ValueError" in docstring
+    assert "(bit silly but justs to test the decorator)" in docstring
+
+
+def test_decorator_returns_function():
+    ret = sum_numbers([1, 2, 3])
+    assert ret == 6

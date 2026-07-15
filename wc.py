@@ -16966,41 +16966,41 @@ Use code with caution.
 """
 
 
-
-def cached_property(func):
-    """decorator used to cache expensive object attribute lookup"""
-    my_dict = {}
-    @property
-    def wrapper(self):
-        if self.color not in my_dict:
-            my_dict[self.color] = func(self)
-        return my_dict[self.color]
-    return wrapper
-
-
-
-class Planet:
-    """the nicest little orb this side of Orion's Belt"""
-
-    GRAVITY_CONSTANT = 42
-    TEMPORAL_SHIFT = 0.12345
-    SOLAR_MASS_UNITS = 'M\N{SUN}'
-
-    def __init__(self, color):
-        self.color = color
-        self._mass = None
-
-    def __repr__(self):
-        return f'{self.__class__.__name__}({repr(self.color)})'
-
-
-    @cached_property
-    def mass(self):
-        scale_factor = random()
-        sleep(self.TEMPORAL_SHIFT)
-        self._mass = (f'{round(scale_factor * self.GRAVITY_CONSTANT, 4)} '
-                      f'{self.SOLAR_MASS_UNITS}')
-        return self._mass
+#
+# def cached_property(func):
+#     """decorator used to cache expensive object attribute lookup"""
+#     my_dict = {}
+#     @property
+#     def wrapper(self):
+#         if self.color not in my_dict:
+#             my_dict[self.color] = func(self)
+#         return my_dict[self.color]
+#     return wrapper
+#
+#
+#
+# class Planet:
+#     """the nicest little orb this side of Orion's Belt"""
+#
+#     GRAVITY_CONSTANT = 42
+#     TEMPORAL_SHIFT = 0.12345
+#     SOLAR_MASS_UNITS = 'M\N{SUN}'
+#
+#     def __init__(self, color):
+#         self.color = color
+#         self._mass = None
+#
+#     def __repr__(self):
+#         return f'{self.__class__.__name__}({repr(self.color)})'
+#
+#
+#     @cached_property
+#     def mass(self):
+#         scale_factor = random()
+#         sleep(self.TEMPORAL_SHIFT)
+#         self._mass = (f'{round(scale_factor * self.GRAVITY_CONSTANT, 4)} '
+#                       f'{self.SOLAR_MASS_UNITS}')
+#         return self._mass
 
 
 
@@ -17043,3 +17043,68 @@ class Planet:
 #         sleep(self.TEMPORAL_SHIFT)
 #         return (f'{round(scale_factor * self.GRAVITY_CONSTANT, 4)} '
 #                 f'{self.SOLAR_MASS_UNITS}')
+
+
+from functools import wraps
+
+MAX_RETRIES = 3
+
+
+class MaxRetriesException(Exception):
+    pass
+
+
+def retry(func):
+    """Complete this decorator, make sure
+       you print the exception thrown"""
+    # ... retry MAX_RETRIES times
+    # ...
+    # make sure you include this for testing:
+    # except Exception as exc:
+    #     print(exc)
+    # ...
+    # and use wraps to preserve docstring
+    #
+    @wraps(func)
+    def wrapper(*args, **kwargs):
+        for i in range(MAX_RETRIES):
+            try:
+                return  func(*args, **kwargs)
+            except Exception as exc:
+                print(exc)
+        raise MaxRetriesException
+    return wrapper
+
+
+# Pybite solution
+# from functools import wraps
+#
+# MAX_RETRIES = 3
+#
+#
+# class MaxRetriesException(Exception):
+#     pass
+#
+#
+# def retry(func):
+#     """Complete this decorator, make sure
+#        you print the exception thrown"""
+#     # ... retry MAX_RETRIES times
+#     # ...
+#     # make sure you include this for testing:
+#     # except Exception as exc:
+#     #     print(exc)
+#     # ...
+#     # and use wraps to preserve docstring
+#     #
+#     @wraps(func)
+#     def wrapper(*args, **kwargs):
+#         exc = None
+#         for i in range(1, MAX_RETRIES + 1):
+#             try:
+#                 return func(*args, **kwargs)
+#             except Exception as exc:
+#                 print(exc)
+#         error = f'Tried max {MAX_RETRIES} times'
+#         raise MaxRetriesException(error)
+#     return wrapper
