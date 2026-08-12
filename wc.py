@@ -16943,27 +16943,27 @@ def calc_max_uptime(reboots):
 #
 # if __name__ == "__main__":
 #     asyncio.run(main())
-
-from random import random
-from time import sleep
-
-"""
-def my_decorator(func):
-    def wrapper():
-        print("Something is happening before the function is called.")
-        func()
-        print("Something is happening after the function is called.")
-    return wrapper
-
-@my_decorator
-def say_hello():
-    print("Hello!")
-
-# When say_hello() is called, it triggers the wrapper
-say_hello()
-Use code with caution.
-
-"""
+#
+# from random import random
+# from time import sleep
+#
+# """
+# def my_decorator(func):
+#     def wrapper():
+#         print("Something is happening before the function is called.")
+#         func()
+#         print("Something is happening after the function is called.")
+#     return wrapper
+#
+# @my_decorator
+# def say_hello():
+#     print("Hello!")
+#
+# # When say_hello() is called, it triggers the wrapper
+# say_hello()
+# Use code with caution.
+#
+# """
 
 
 #
@@ -17044,37 +17044,37 @@ Use code with caution.
 #         return (f'{round(scale_factor * self.GRAVITY_CONSTANT, 4)} '
 #                 f'{self.SOLAR_MASS_UNITS}')
 
-
-from functools import wraps
-
-MAX_RETRIES = 3
-
-
-class MaxRetriesException(Exception):
-    pass
-
-
-def retry(func):
-    """Complete this decorator, make sure
-       you print the exception thrown"""
-    # ... retry MAX_RETRIES times
-    # ...
-    # make sure you include this for testing:
-    # except Exception as exc:
-    #     print(exc)
-    # ...
-    # and use wraps to preserve docstring
-    #
-    @wraps(func)
-    def wrapper(*args, **kwargs):
-        for i in range(MAX_RETRIES):
-            try:
-                return  func(*args, **kwargs)
-            except Exception as exc:
-                print(exc)
-        raise MaxRetriesException
-    return wrapper
-
+#
+# from functools import wraps
+#
+# MAX_RETRIES = 3
+#
+#
+# class MaxRetriesException(Exception):
+#     pass
+#
+#
+# def retry(func):
+#     """Complete this decorator, make sure
+#        you print the exception thrown"""
+#     # ... retry MAX_RETRIES times
+#     # ...
+#     # make sure you include this for testing:
+#     # except Exception as exc:
+#     #     print(exc)
+#     # ...
+#     # and use wraps to preserve docstring
+#     #
+#     @wraps(func)
+#     def wrapper(*args, **kwargs):
+#         for i in range(MAX_RETRIES):
+#             try:
+#                 return  func(*args, **kwargs)
+#             except Exception as exc:
+#                 print(exc)
+#         raise MaxRetriesException
+#     return wrapper
+#
 
 # Pybite solution
 # from functools import wraps
@@ -17108,3 +17108,184 @@ def retry(func):
 #         error = f'Tried max {MAX_RETRIES} times'
 #         raise MaxRetriesException(error)
 #     return wrapper
+#
+# import re
+# # import pytest
+# #
+# # bite_15_en = '''<p>Iterate over the given <code>names</code> and <code>countries list</code>s, <strong>printing</strong> them prepending the number of the loop (starting at 1). Here is the output you need to deliver:<pre>
+# # 1. Julian     Australia
+# # 2. Bob        Spain
+# # 3. PyBites    Global
+# # 4. Dante      Argentina
+# # 5. Martin     USA
+# # 6. Rodolfo    Mexico
+# # </pre></p><p>Notice that the 2nd column should have a fixed width of 11 chars, so between <i>Julian</i> and <i>Australia</i> there are 5 spaces, between <i>Bob</i> and <i>Spain</i>, there are 8. This column should also be aligned to the left.</p><p>Ideally you use only one for loop, but that is not a requirement.</p><p>Good luck and keep calm and code in Python!</p>'''
+# # bite_15_it = '''<p>Iterare i <code>nomi</code> e le <code>liste dei paesi</code>s indicati, <strong>stampandoli</strong> anteponendo il numero del ciclo (a partire da 1). Ecco l'output che devi consegnare:<pre> 1. Julian Australia 2. Bob Spagna 3. PyBites Global 4. Dante Argentina 5. Martin Stati Uniti d'America 6. Rodolfo Messico </pre></p><p>Si noti che la seconda colonna dovrebbe avere una larghezza fissa di 11 caratteri, quindi tra <i>Julian</i> e <i>Australia</i> ci sono 5 spazi, tra <i>Bob</i> e <i>Spagna</i> , ci sono 8. Questa colonna dovrebbe anche essere allineata a sinistra. </p><p>Idealmente si utilizza solo uno for loop, ma questo non è un requisito. </p><p>Buona fortuna e mantenere la calma e codice in Python! </p>'''
+# # bite_15_it_fixed = '''<p>Iterare i <code>names</code> e le <code>countries list</code>s indicati, <strong>stampandoli</strong> anteponendo il numero del ciclo (a partire da 1). Ecco l'output che devi consegnare:<pre>
+# # 1. Julian     Australia
+# # 2. Bob        Spain
+# # 3. PyBites    Global
+# # 4. Dante      Argentina
+# # 5. Martin     USA
+# # 6. Rodolfo    Mexico
+# # </pre></p><p>Si noti che la seconda colonna dovrebbe avere una larghezza fissa di 11 caratteri, quindi tra <i>Julian</i> e <i>Australia</i> ci sono 5 spazi, tra <i>Bob</i> e <i>Spagna</i> , ci sono 8. Questa colonna dovrebbe anche essere allineata a sinistra. </p><p>Idealmente si utilizza solo uno for loop, ma questo non è un requisito. </p><p>Buona fortuna e mantenere la calma e codice in Python! </p>'''
+# #
+# # bite_15_pretag = """<pre>
+# # 1. Julian     Australia
+# # 2. Bob        Spain
+# # 3. PyBites    Global
+# # 4. Dante      Argentina
+# # 5. Martin     USA
+# # 6. Rodolfo    Mexico
+# # </pre>"""
+# #
+# #
+# # bite_202_en = '''<p>In this Bite you will analyze complexity levels of our first 200 Bites of Py exercises.</p> <p>We loaded <a href="https://bit.ly/2MQyqXQ">this CSV file</a> with some stats that look like this:</p> <pre>
+# #   $ head bite_levels.csv
+# # Bite;Difficulty
+# # Bite 1. Sum n numbers;3.45
+# # Bite 2. Regex Fun;4.89
+# # Bite 3. Word Values;3.97
+# # Bite 4. Top 10 PyBites tags;4.72
+# # Bite 5. Parse a list of names;4.48
+# # Bite 6. PyBites Die Hard;6.8
+# # Bite 7. Parsing dates from logs;5.76
+# # Bite 8. Rotate string characters;3.5
+# # Bite 9. Palindromes;4.71
+# # ...
+# # ...
+# # Bite 200. 🥳 Minecraft Enchantable Items;None
+# # </pre> <p>The last column shows the average complexity score if available, if not it shows <code>None</code>.</p> <p>Complete the <code>get_most_complex_bites</code> function below following its <em>docstring</em>.</p> <p>Your code will be tested calling your function with different arguments.</p> <p>Have fun and keep calm and code in Python!</p>'''
+# #
+# # bite_202_pretag = """<pre>
+# #   $ head bite_levels.csv
+# # Bite;Difficulty
+# # Bite 1. Sum n numbers;3.45
+# # Bite 2. Regex Fun;4.89
+# # Bite 3. Word Values;3.97
+# # Bite 4. Top 10 PyBites tags;4.72
+# # Bite 5. Parse a list of names;4.48
+# # Bite 6. PyBites Die Hard;6.8
+# # Bite 7. Parsing dates from logs;5.76
+# # Bite 8. Rotate string characters;3.5
+# # Bite 9. Palindromes;4.71
+# # ...
+# # ...
+# # Bite 200. 🥳 Minecraft Enchantable Items;None
+# # </pre>"""
+#
+#
+# def get_pre_tag(input_str):
+#     pattern = r"(?s)(?P<pretag><pre>.+<\/pre>)"
+#     match = re.search(pattern, input_str)
+#     if match:
+#         return match.group('pretag')
+#     return ''
+#
+#
+# def get_code_tag(input_str):
+#     pattern = r"(?s)(?P<codetag><code>.+?<\/code>)"
+#     matches = re.finditer(pattern, input_str)
+#     return [match.group('codetag') for match in matches]
+#
+# # @pytest.mark.parametrize("input_val, expected",
+# #                          [(bite_15_en, bite_15_pretag),
+# #                           (bite_202_en, bite_202_pretag)
+# #                           ])
+# # def test_pre_tag(input_val, expected):
+# #     assert get_pre_tag(input_val) == expected
+# #
+# # @pytest.mark.parametrize("input_val, expected",
+# #                          [(bite_15_en, ['<code>names</code>', '<code>countries list</code>']),
+# #                           (bite_202_en,['<code>None</code>', '<code>get_most_complex_bites</code>'])
+# #                           ])
+# # def test_code_tag(input_val, expected):
+# #     assert get_code_tag(input_val) == expected
+#
+#
+# def fix_translation(org_text, trans_text):
+#     """Receives original English text as well as text returned by translator.
+#        Parse trans_text restoring the original (English) code (wrapped inside
+#        code and pre tags) into it. Return the fixed translation str
+#     """
+#     # replace pretag
+#     pretag_pattern = r"(?s)(?P<pretag><pre>.+<\/pre>)"
+#     original_pretag = get_pre_tag(org_text)
+#     replaced_text = re.sub(pretag_pattern, original_pretag , trans_text)
+#
+#     # replace codetags
+#     original_codetags = get_code_tag(org_text)
+#     defective_codetags = get_code_tag(trans_text)
+#
+#     for pattern, replacement in zip(defective_codetags, original_codetags):
+#         replaced_text = re.sub(pattern, replacement, replaced_text)
+#
+#     return replaced_text
+#
+# #
+# # @pytest.mark.parametrize("original_text, translated_text, expected",
+# #                              [(bite_15_en, bite_15_it, bite_15_it_fixed)
+# #                               ])
+# # def test_transalte(original_text, translated_text, expected):
+# #     assert fix_translation(original_text,translated_text) == expected
+#
+# #
+#
+# import re
+#
+# def get_pre_tag(input_str):
+#     pattern = r"(?s)(?P<pretag><pre>.+<\/pre>)"
+#     match = re.search(pattern, input_str)
+#     if match:
+#         return match.group('pretag')
+#     return ''
+#
+#
+# def get_code_tag(input_str):
+#     pattern = r"(?s)(?P<codetag><code>.+?<\/code>)"
+#     matches = re.finditer(pattern, input_str)
+#     return [match.group('codetag') for match in matches]
+#
+#
+# def fix_translation(org_text, trans_text):
+#     """Receives original English text as well as text returned by translator.
+#        Parse trans_text restoring the original (English) code (wrapped inside
+#        code and pre tags) into it. Return the fixed translation str
+#     """
+#     # replace pretag
+#     pretag_pattern = r"(?s)(?P<pretag><pre>.+<\/pre>)"
+#     original_pretag = get_pre_tag(org_text)
+#     replaced_text = re.sub(pretag_pattern, original_pretag , trans_text)
+#
+#     # replace codetags
+#     original_codetags = get_code_tag(org_text)
+#     defective_codetags = get_code_tag(trans_text)
+#
+#     for pattern, replacement in zip(defective_codetags, original_codetags):
+#         replaced_text = re.sub(pattern, replacement, replaced_text)
+#
+#     return replaced_text
+
+# Pybite solution:
+import re
+
+def fix_translation(org_text, trans_text):
+    """Receives original English text as well as text returned by translator.
+       Parse trans_text restoring the original (English) code (wrapped inside
+       code and pre tags) into it. Return the fixed translation str
+    """
+    code_tags = r'<code>.*?</code>'
+    pre_tags = r'<pre>.*?</pre>'
+
+    # DOTALL is to match text wrapped over multiple lines
+    # https://www.thegeekstuff.com/2014/07/advanced-python-regex/
+    preserve_tags = (re.findall(code_tags, org_text) +
+                     re.findall(pre_tags, org_text, re.DOTALL))
+
+    restore_trans_code = (re.findall(code_tags, trans_text) +
+                          re.findall(pre_tags, trans_text, re.DOTALL))
+
+    for from_, to in zip(restore_trans_code, preserve_tags):
+        trans_text = trans_text.replace(from_, to)
+
+    return trans_text
