@@ -17267,25 +17267,90 @@ def calc_max_uptime(reboots):
 #     return replaced_text
 
 # Pybite solution:
+# import re
+#
+# def fix_translation(org_text, trans_text):
+#     """Receives original English text as well as text returned by translator.
+#        Parse trans_text restoring the original (English) code (wrapped inside
+#        code and pre tags) into it. Return the fixed translation str
+#     """
+#     code_tags = r'<code>.*?</code>'
+#     pre_tags = r'<pre>.*?</pre>'
+#
+#     # DOTALL is to match text wrapped over multiple lines
+#     # https://www.thegeekstuff.com/2014/07/advanced-python-regex/
+#     preserve_tags = (re.findall(code_tags, org_text) +
+#                      re.findall(pre_tags, org_text, re.DOTALL))
+#
+#     restore_trans_code = (re.findall(code_tags, trans_text) +
+#                           re.findall(pre_tags, trans_text, re.DOTALL))
+#
+#     for from_, to in zip(restore_trans_code, preserve_tags):
+#         trans_text = trans_text.replace(from_, to)
+#
+#     return trans_text
+
 import re
+from typing import Dict, Optional
 
-def fix_translation(org_text, trans_text):
-    """Receives original English text as well as text returned by translator.
-       Parse trans_text restoring the original (English) code (wrapped inside
-       code and pre tags) into it. Return the fixed translation str
+import pytest
+
+EMAIL_HEADER = """Return-Path: <bounces+5555-7602-redacted-info>
+...
+Received: by 10.8.49.86 with SMTP id mf9.22328.51C1E5CDF
+    Wed, 19 Jun 2013 17:09:33 +0000 (UTC)
+Received: from NzI3MDQ (174.37.77.208-static.reverse.softlayer.com [174.37.77.208])
+by mi22.sendgrid.net (SG) with HTTP id 13f5d69ac61.41fe.2cc1d0b
+for <redacted-info>; Wed, 19 Jun 2013 12:09:33 -0500 (CST)
+Content-Type: multipart/alternative;
+boundary="===============8730907547464832727=="
+MIME-Version: 1.0
+From: redacted-address
+To: redacted-address
+Subject: A Test From SendGrid
+Message-ID: <1371661773.974270694268263@mf9.sendgrid.net>
+Date: Wed, 19 Jun 2013 17:09:33 +0000 (UTC)
+X-SG-EID: P3IPuU2e1Ijn5xEegYUQ...
+X-SendGrid-Contentd-ID: {"test_id":"1371661776"}"""  # noqa E501
+
+
+def get_line(header:str, line_to_get):
+    pattern = fr"{line_to_get}:(.*)"
+    match = re.search(pattern, header)
+    if match:
+        if line_to_get == "Date":
+            date_str = match.group(1).strip()
+            return " ".join(date_str.split()[:5])
+        return match.group(1).strip()
+    return None
+#
+# def test_get_line():
+#     assert get_line(EMAIL_HEADER,'To') == "redacted-address"
+#     assert get_line(EMAIL_HEADER,'From') == "redacted-address"
+#     assert get_line(EMAIL_HEADER,'Subject') == "A Test From SendGrid"
+#     assert get_line(EMAIL_HEADER,'Date') == "Wed, 19 Jun 2013 17:09:33"
+
+
+def get_email_details(header: str) -> Optional[Dict[str, str]]:
+    """User re.search or re.match to capture the from, to, subject
+       and date fields. Return the groupdict() of matching object, see:
+       https://docs.python.org/3.7/library/re.html#re.Match.groupdict
+       If not match, return None
     """
-    code_tags = r'<code>.*?</code>'
-    pre_tags = r'<pre>.*?</pre>'
+    lines = ['To', 'From', 'Subject', 'Date']
+    line_dict = { line.lower():get_line(header,line) for line in lines if get_line(header,line)}
+    return line_dict or None
 
-    # DOTALL is to match text wrapped over multiple lines
-    # https://www.thegeekstuff.com/2014/07/advanced-python-regex/
-    preserve_tags = (re.findall(code_tags, org_text) +
-                     re.findall(pre_tags, org_text, re.DOTALL))
+## Pybite solution
 
-    restore_trans_code = (re.findall(code_tags, trans_text) +
-                          re.findall(pre_tags, trans_text, re.DOTALL))
-
-    for from_, to in zip(restore_trans_code, preserve_tags):
-        trans_text = trans_text.replace(from_, to)
-
-    return trans_text
+def get_email_details(header: str) -> Optional[Dict[str, str]]:
+    """User re.search or re.match to capture the from, to, subject
+       and date fields. Return the groupdict() of matching object, see:
+       https://docs.python.org/3.7/library/re.html#re.Match.groupdict
+       If not match, return None
+    """
+    m = re.search((r'From: (?P<from>.*?)\n.*To: (?P<to>.*?)\n.*'
+                   r'Subject: (?P<subject>.*?)\n.*Date: '
+                   r'(?P<date>.*?) [-+]'),
+                  header, re.DOTALL)
+    return m and m.groupdict() or None
