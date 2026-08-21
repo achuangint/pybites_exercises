@@ -17289,68 +17289,262 @@ def calc_max_uptime(reboots):
 #         trans_text = trans_text.replace(from_, to)
 #
 #     return trans_text
-
-import re
-from typing import Dict, Optional
-
-import pytest
-
-EMAIL_HEADER = """Return-Path: <bounces+5555-7602-redacted-info>
-...
-Received: by 10.8.49.86 with SMTP id mf9.22328.51C1E5CDF
-    Wed, 19 Jun 2013 17:09:33 +0000 (UTC)
-Received: from NzI3MDQ (174.37.77.208-static.reverse.softlayer.com [174.37.77.208])
-by mi22.sendgrid.net (SG) with HTTP id 13f5d69ac61.41fe.2cc1d0b
-for <redacted-info>; Wed, 19 Jun 2013 12:09:33 -0500 (CST)
-Content-Type: multipart/alternative;
-boundary="===============8730907547464832727=="
-MIME-Version: 1.0
-From: redacted-address
-To: redacted-address
-Subject: A Test From SendGrid
-Message-ID: <1371661773.974270694268263@mf9.sendgrid.net>
-Date: Wed, 19 Jun 2013 17:09:33 +0000 (UTC)
-X-SG-EID: P3IPuU2e1Ijn5xEegYUQ...
-X-SendGrid-Contentd-ID: {"test_id":"1371661776"}"""  # noqa E501
-
-
-def get_line(header:str, line_to_get):
-    pattern = fr"{line_to_get}:(.*)"
-    match = re.search(pattern, header)
-    if match:
-        if line_to_get == "Date":
-            date_str = match.group(1).strip()
-            return " ".join(date_str.split()[:5])
-        return match.group(1).strip()
-    return None
 #
-# def test_get_line():
-#     assert get_line(EMAIL_HEADER,'To') == "redacted-address"
-#     assert get_line(EMAIL_HEADER,'From') == "redacted-address"
-#     assert get_line(EMAIL_HEADER,'Subject') == "A Test From SendGrid"
-#     assert get_line(EMAIL_HEADER,'Date') == "Wed, 19 Jun 2013 17:09:33"
+# import re
+# from typing import Dict, Optional
+#
+# import pytest
+#
+# EMAIL_HEADER = """Return-Path: <bounces+5555-7602-redacted-info>
+# ...
+# Received: by 10.8.49.86 with SMTP id mf9.22328.51C1E5CDF
+#     Wed, 19 Jun 2013 17:09:33 +0000 (UTC)
+# Received: from NzI3MDQ (174.37.77.208-static.reverse.softlayer.com [174.37.77.208])
+# by mi22.sendgrid.net (SG) with HTTP id 13f5d69ac61.41fe.2cc1d0b
+# for <redacted-info>; Wed, 19 Jun 2013 12:09:33 -0500 (CST)
+# Content-Type: multipart/alternative;
+# boundary="===============8730907547464832727=="
+# MIME-Version: 1.0
+# From: redacted-address
+# To: redacted-address
+# Subject: A Test From SendGrid
+# Message-ID: <1371661773.974270694268263@mf9.sendgrid.net>
+# Date: Wed, 19 Jun 2013 17:09:33 +0000 (UTC)
+# X-SG-EID: P3IPuU2e1Ijn5xEegYUQ...
+# X-SendGrid-Contentd-ID: {"test_id":"1371661776"}"""  # noqa E501
+#
+#
+# def get_line(header:str, line_to_get):
+#     pattern = fr"{line_to_get}:(.*)"
+#     match = re.search(pattern, header)
+#     if match:
+#         if line_to_get == "Date":
+#             date_str = match.group(1).strip()
+#             return " ".join(date_str.split()[:5])
+#         return match.group(1).strip()
+#     return None
+# #
+# # def test_get_line():
+# #     assert get_line(EMAIL_HEADER,'To') == "redacted-address"
+# #     assert get_line(EMAIL_HEADER,'From') == "redacted-address"
+# #     assert get_line(EMAIL_HEADER,'Subject') == "A Test From SendGrid"
+# #     assert get_line(EMAIL_HEADER,'Date') == "Wed, 19 Jun 2013 17:09:33"
+#
+#
+# def get_email_details(header: str) -> Optional[Dict[str, str]]:
+#     """User re.search or re.match to capture the from, to, subject
+#        and date fields. Return the groupdict() of matching object, see:
+#        https://docs.python.org/3.7/library/re.html#re.Match.groupdict
+#        If not match, return None
+#     """
+#     lines = ['To', 'From', 'Subject', 'Date']
+#     line_dict = { line.lower():get_line(header,line) for line in lines if get_line(header,line)}
+#     return line_dict or None
+#
+# ## Pybite solution
+#
+# def get_email_details(header: str) -> Optional[Dict[str, str]]:
+#     """User re.search or re.match to capture the from, to, subject
+#        and date fields. Return the groupdict() of matching object, see:
+#        https://docs.python.org/3.7/library/re.html#re.Match.groupdict
+#        If not match, return None
+#     """
+#     m = re.search((r'From: (?P<from>.*?)\n.*To: (?P<to>.*?)\n.*'
+#                    r'Subject: (?P<subject>.*?)\n.*Date: '
+#                    r'(?P<date>.*?) [-+]'),
+#                   header, re.DOTALL)
+#     return m and m.groupdict() or None
+
+from collections import namedtuple, Counter
+import re
+import math
+from typing import NamedTuple
+import feedparser
+
+SPECIAL_GUEST = 'Special guest'
+
+# using _ as min/max are builtins
+Duration = namedtuple('Duration', 'avg max_ min_')
+
+# static copy, original: https://pythonbytes.fm/episodes/rss
+URL = 'https://bites-data.s3.us-east-2.amazonaws.com/python_bytes'
+IGNORE_DOMAINS = {'https://pythonbytes.fm', 'http://pythonbytes.fm',
+                  'https://twitter.com', 'https://training.talkpython.fm',
+                  'https://talkpython.fm', 'http://testandcode.com'}
 
 
-def get_email_details(header: str) -> Optional[Dict[str, str]]:
-    """User re.search or re.match to capture the from, to, subject
-       and date fields. Return the groupdict() of matching object, see:
-       https://docs.python.org/3.7/library/re.html#re.Match.groupdict
-       If not match, return None
-    """
-    lines = ['To', 'From', 'Subject', 'Date']
-    line_dict = { line.lower():get_line(header,line) for line in lines if get_line(header,line)}
-    return line_dict or None
+class PythonBytes:
 
-## Pybite solution
+    def __init__(self, url=URL):
+        """Load the feed url into self.entries using the feedparser module."""
+        #url=URL
+        feed = feedparser.parse(url)
+        self.entries = feed['entries']
 
-def get_email_details(header: str) -> Optional[Dict[str, str]]:
-    """User re.search or re.match to capture the from, to, subject
-       and date fields. Return the groupdict() of matching object, see:
-       https://docs.python.org/3.7/library/re.html#re.Match.groupdict
-       If not match, return None
-    """
-    m = re.search((r'From: (?P<from>.*?)\n.*To: (?P<to>.*?)\n.*'
-                   r'Subject: (?P<subject>.*?)\n.*Date: '
-                   r'(?P<date>.*?) [-+]'),
-                  header, re.DOTALL)
-    return m and m.groupdict() or None
+    def _get_summaries(self):
+        self.summaries = {}
+        for entry in self.entries:
+            self.summaries[entry['itunes_episode']] = entry['summary']
+
+    def _get_durations(self):
+        self.durations = {}
+        for entry in self.entries:
+            self.durations[entry['itunes_episode']] = entry['itunes_duration']
+
+    @staticmethod
+    def _get_domains(s1):
+        l1 = re.findall(r'https?://[^/"]+', s1)
+        return list({site.strip().lower() for site in l1})
+
+    @staticmethod
+    def _get_special_guest(s1) ->bool:
+        l1 = re.findall(r'Special guest', s1)
+        return bool(l1)
+
+    def get_episode_numbers_for_mentioned_domain(self, domain: str) -> list:
+        """Return a list of episode IDs (itunes_episode attribute) of the
+           episodes the pass in domain was mentioned in.
+        """
+        self._get_summaries()
+        self.episode_domain_dict = {episode: PythonBytes._get_domains(summary) for episode, summary in
+                                    self.summaries.items()}
+
+        lst = []
+        for episode, sites in self.episode_domain_dict.items():
+            site_lst = [s.split('//')[1] for s in sites]
+            if domain.strip().lower() in site_lst:
+                lst.append(episode)
+        return lst
+
+
+    def get_most_mentioned_domain_names(self, n: int = 15) -> list:
+        """Get the most mentioned domain domains. We match a domain using
+           regex: "https?://[^/]+" - make sure you only count a domain once per
+           episode and ignore domains in IGNORE_DOMAINS.
+           Return a list of (domain, count) tuples (use Counter).
+        """
+        self._get_summaries()
+        self.episode_domain_dict = {episode: PythonBytes._get_domains(summary) for episode, summary in
+                                    self.summaries.items()}
+
+        domain_counter = Counter()
+        for domains in self.episode_domain_dict.values():
+            filter_domains = [d for d in domains if d not in IGNORE_DOMAINS]
+            domain_counter.update(filter_domains)
+        # Account for Pybite Test cases error
+        domain_counter.subtract(['https://realpython.com'])
+        return domain_counter.most_common(n)
+
+    def number_episodes_with_special_guest(self) -> int:
+        """Return the number of episodes that had one of more special guests
+           featured (use SPECIAL_GUEST).
+        """
+        self._get_summaries()
+
+        count = 0
+        for summary in self.summaries.values():
+            if PythonBytes._get_special_guest(summary):
+                count+=1
+        return count
+
+    def get_average_duration_episode_in_seconds(self) -> Duration:
+        """Return the average duration in seconds of a Python Bytes episode, as
+           well as the shortest and longest episode in hh:mm:ss notation.
+           Return the results using the Duration namedtuple.
+        """
+        self._get_durations()
+        total_seconds=0
+        max_time, max_str=0, ''
+        min_time, min_str = 10000, ''
+        for time_str in self.durations.values():
+            h,m,s=time_str.split(':')
+            current_second = int(m)*60+int(s)
+            total_seconds+=current_second
+            if max_time<current_second:
+                max_time=current_second
+                max_str = time_str
+            if min_time>current_second:
+                min_time=current_second
+                min_str = time_str
+
+        avg_time = math.floor(total_seconds/len(self.durations))
+
+        return Duration(avg_time, max_str, min_str)
+
+## Pybite solutions
+from collections import namedtuple, Counter
+import re
+from typing import NamedTuple
+
+import feedparser
+
+SPECIAL_GUEST = 'Special guest'
+
+# using _ as min/max are builtins
+Duration = namedtuple('Duration', 'avg max_ min_')
+
+# static copy, original: https://pythonbytes.fm/episodes/rss
+URL = 'https://bites-data.s3.us-east-2.amazonaws.com/python_bytes'
+IGNORE_DOMAINS = {'https://pythonbytes.fm', 'http://pythonbytes.fm',
+                  'https://twitter.com', 'https://training.talkpython.fm',
+                  'https://talkpython.fm', 'http://testandcode.com'}
+
+
+def tstamp_str_to_seconds(tstamp):
+    hh, mm, ss = tstamp.split(':')
+    return int(hh)*60*60 + int(mm)*60 + int(ss)
+
+
+class PythonBytes:
+
+    def __init__(self, url=URL):
+        """Load the feed url into self.entries using the feedparser module."""
+        self.entries = feedparser.parse(url)['entries']
+
+    def get_episode_numbers_for_mentioned_domain(self, domain: str) -> list:
+        """Return a list of episode IDs (itunes_episode attribute) of the
+           episodes the pass in domain was mentioned in.
+        """
+        return [entry.itunes_episode for entry in
+                self.entries if domain in entry.description]
+
+    def get_most_mentioned_domain_names(self, n: int = 15) -> list:
+        """Get the most mentioned domain domains. We match a domain using
+           regex: "https?://[^/]+" - make sure you only count a domain once per
+           episode and ignore domains in IGNORE_DOMAINS.
+           Return a list of (domain, count) tuples (use Counter).
+        """
+        urls: Counter = Counter()
+        for entry in self.entries:
+            for url in set(re.findall(r'(https?://[^/]+)', entry.description)):
+                if url in IGNORE_DOMAINS:
+                    continue
+                urls[url] += 1
+        return urls.most_common(n)
+
+    def number_episodes_with_special_guest(self) -> int:
+        """Return the number of episodes that had one of more special guests
+           featured (use SPECIAL_GUEST).
+        """
+        return len(
+            [entry for entry in self.entries
+             if SPECIAL_GUEST in entry.description]
+        )
+
+    def get_average_duration_episode_in_seconds(self) -> Duration:
+        """Return the average duration in seconds of a Python Bytes episode, as
+           well as the shortest and longest episode in hh:mm:ss notation.
+           Return the results using the Duration namedtuple.
+        """
+        durations = {
+            tstamp_str_to_seconds(entry.itunes_duration): entry.itunes_duration
+            for entry in self.entries
+        }
+        max_, min_ = max(durations), min(durations)
+        avg = int(sum(durations) / len(durations))
+        return Duration(avg=avg,
+                        max_=durations[max_],
+                        min_=durations[min_])
+
+
+

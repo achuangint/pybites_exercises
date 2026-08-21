@@ -17004,45 +17004,173 @@ Inputs are modified to check how the function deals with unknown characters
 #     print('fix', len(fix.splitlines()))
 #     """
 #     assert fix_translation(org, trans) == fix
-import inspect
+#
+# import inspect
+#
+# from wc import get_email_details, EMAIL_HEADER
+#
+# OTHER_HEADER = """
+# Return-Path: <info@pybit.es>
+# From: Bob & Julian from PyBites (info@pybit.es)
+# To: pybites@ninja.com
+# Subject: New regex learning path!
+# Date: Sun, 18 Aug 2019 17:16:10 -0700 (PDT)
+# Envelope-To: pybites@ninja.com
+# ...
+# X-SendGrid-Contentd-ID: {"test_id":"1371661776"}
+# """
+#
+#
+# def test_source():
+#     src = inspect.getsource(get_email_details)
+#     assert 're.match' in src or 're.search' in src
+#     assert 'groupdict' in src
+#
+#
+# def test_given_header():
+#     actual = get_email_details(EMAIL_HEADER)
+#     expected = {'from': 'redacted-address',
+#                 'to': 'redacted-address',
+#                 'subject': 'A Test From SendGrid',
+#                 'date': 'Wed, 19 Jun 2013 17:09:33'}
+#     assert actual == expected
+#
+#
+# def test_other_header():
+#     actual = get_email_details(OTHER_HEADER)
+#     expected = {'from': 'Bob & Julian from PyBites (info@pybit.es)',
+#                 'to': 'pybites@ninja.com',
+#                 'subject': 'New regex learning path!',
+#                 'date': 'Sun, 18 Aug 2019 17:16:10'}
+#     assert actual == expected
+#
+#
+# def test_no_match():
+#     assert get_email_details('bogus') is None
 
-from wc import get_email_details, EMAIL_HEADER
+import pytest
 
-OTHER_HEADER = """
-Return-Path: <info@pybit.es>
-From: Bob & Julian from PyBites (info@pybit.es)
-To: pybites@ninja.com
-Subject: New regex learning path!
-Date: Sun, 18 Aug 2019 17:16:10 -0700 (PDT)
-Envelope-To: pybites@ninja.com
-...
-X-SendGrid-Contentd-ID: {"test_id":"1371661776"}
-"""
+from wc import Duration, PythonBytes
+
+REAL_PYTHON = "realpython.com"
+PYBITES = "pybit.es"
 
 
-def test_source():
-    src = inspect.getsource(get_email_details)
-    assert 're.match' in src or 're.search' in src
-    assert 'groupdict' in src
+@pytest.fixture(scope="module")
+def pb():
+    return PythonBytes()
 
 
-def test_given_header():
-    actual = get_email_details(EMAIL_HEADER)
-    expected = {'from': 'redacted-address',
-                'to': 'redacted-address',
-                'subject': 'A Test From SendGrid',
-                'date': 'Wed, 19 Jun 2013 17:09:33'}
+def test_get_episodes_pybites_was_mentioned(pb):
+    actual = pb.get_episode_numbers_for_mentioned_domain(PYBITES)
+    expected = ["106", "98", "34", "26", "14"]
+    assert sorted(actual) == sorted(expected)
+
+
+def test_get_episodes_realpython_was_mentioned(pb):
+    actual = pb.get_episode_numbers_for_mentioned_domain(REAL_PYTHON)
+    expected = [
+        "143",
+        "134",
+        "123",
+        "119",
+        "118",
+        "114",
+        "110",
+        "102",
+        "100",
+        "97",
+        "88",
+        "86",
+        "85",
+        "84",
+        "83",
+        "82",
+        "80",
+        "76",
+        "75",
+        "71",
+        "66",
+        "56",
+        "37",
+        "20",
+        "7",
+    ]
+    assert sorted(actual) == sorted(expected)
+
+
+def test_number_episodes_with_special_guests(pb):
+    actual = pb.number_episodes_with_special_guest()
+    expected = 17
     assert actual == expected
 
 
-def test_other_header():
-    actual = get_email_details(OTHER_HEADER)
-    expected = {'from': 'Bob & Julian from PyBites (info@pybit.es)',
-                'to': 'pybites@ninja.com',
-                'subject': 'New regex learning path!',
-                'date': 'Sun, 18 Aug 2019 17:16:10'}
+def test_number_episodes_with_special_guests_half_feed(pb):
+    """To prevent hardcoding the answer"""
+    org_entries = pb.entries
+    pb.entries = pb.entries[:20]
+    actual = pb.number_episodes_with_special_guest()
+    expected = 7
+    pb.entries = org_entries  # pb is module scope so restore entries
     assert actual == expected
 
 
-def test_no_match():
-    assert get_email_details('bogus') is None
+def test_get_most_mentioned_domain_names_default_top_15(pb):
+    actual = pb.get_most_mentioned_domain_names()
+    # fp = feedparser
+    expected_fp5 = [
+        ("https://github.com", 120),
+        ("https://www.youtube.com", 50),
+        ("https://medium.com", 38),
+        ("https://www.python.org", 26),
+        ("https://www.reddit.com", 26),
+        ("https://docs.python.org", 25),
+        ("https://realpython.com", 24),
+        ("https://hackernoon.com", 22),
+        ("https://pypi.python.org", 20),
+        ("https://pypi.org", 16),
+        ("https://en.wikipedia.org", 14),
+        ("https://pragprog.com", 13),
+        ("https://docs.pytest.org", 11),
+        ("http://rollbar.com", 11),
+        ("https://dbader.org", 9),
+    ]
+    expected_fp6 = [("https://github.com", 119)] + expected_fp5[1:]
+    assert actual in (expected_fp5, expected_fp6)
+
+
+def test_get_most_mentioned_domain_names_top_5(pb):
+    actual = pb.get_most_mentioned_domain_names(n=5)
+    # fp = feedparser
+    expected_fp5 = [
+        ("https://github.com", 120),
+        ("https://www.youtube.com", 50),
+        ("https://medium.com", 38),
+        ("https://www.python.org", 26),
+        ("https://www.reddit.com", 26),
+    ]
+    expected_fp6 = [("https://github.com", 119)] + expected_fp5[1:]
+    assert actual in (expected_fp5, expected_fp6)
+
+
+def test_average_episode_duration_full_feed(pb):
+    actual = pb.get_average_duration_episode_in_seconds()
+    max_, min_ = "00:56:54", "00:15:27"
+    expected = Duration(avg=1439, max_=max_, min_=min_)
+    # depending the way mean is calculated, results might differ
+    expected_alt = Duration(avg=1442, max_=max_, min_=min_)
+    assert actual in (expected, expected_alt)
+
+
+def test_average_episode_duration_half_feed(pb):
+    """To prevent hardcoding the answer"""
+    num_half_episodes = int(len(pb.entries) / 2)
+    org_entries = pb.entries
+    pb.entries = pb.entries[:num_half_episodes]
+    actual = pb.get_average_duration_episode_in_seconds()
+    max_, min_ = "00:56:54", "00:16:40"
+    expected = Duration(avg=1606, max_=max_, min_=min_)
+    # depending the way mean is calculated, results might differ
+    expected_alt = Duration(avg=1607, max_=max_, min_=min_)
+    pb.entries = org_entries  # pb is module scope so restore entries
+    assert actual in (expected, expected_alt)
