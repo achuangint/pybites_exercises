@@ -17355,196 +17355,220 @@ def calc_max_uptime(reboots):
 #                   header, re.DOTALL)
 #     return m and m.groupdict() or None
 
-from collections import namedtuple, Counter
+# from collections import namedtuple, Counter
+# import re
+# import math
+# from typing import NamedTuple
+# import feedparser
+#
+# SPECIAL_GUEST = 'Special guest'
+#
+# # using _ as min/max are builtins
+# Duration = namedtuple('Duration', 'avg max_ min_')
+#
+# # static copy, original: https://pythonbytes.fm/episodes/rss
+# URL = 'https://bites-data.s3.us-east-2.amazonaws.com/python_bytes'
+# IGNORE_DOMAINS = {'https://pythonbytes.fm', 'http://pythonbytes.fm',
+#                   'https://twitter.com', 'https://training.talkpython.fm',
+#                   'https://talkpython.fm', 'http://testandcode.com'}
+#
+#
+# class PythonBytes:
+#
+#     def __init__(self, url=URL):
+#         """Load the feed url into self.entries using the feedparser module."""
+#         #url=URL
+#         feed = feedparser.parse(url)
+#         self.entries = feed['entries']
+#
+#     def _get_summaries(self):
+#         self.summaries = {}
+#         for entry in self.entries:
+#             self.summaries[entry['itunes_episode']] = entry['summary']
+#
+#     def _get_durations(self):
+#         self.durations = {}
+#         for entry in self.entries:
+#             self.durations[entry['itunes_episode']] = entry['itunes_duration']
+#
+#     @staticmethod
+#     def _get_domains(s1):
+#         l1 = re.findall(r'https?://[^/"]+', s1)
+#         return list({site.strip().lower() for site in l1})
+#
+#     @staticmethod
+#     def _get_special_guest(s1) ->bool:
+#         l1 = re.findall(r'Special guest', s1)
+#         return bool(l1)
+#
+#     def get_episode_numbers_for_mentioned_domain(self, domain: str) -> list:
+#         """Return a list of episode IDs (itunes_episode attribute) of the
+#            episodes the pass in domain was mentioned in.
+#         """
+#         self._get_summaries()
+#         self.episode_domain_dict = {episode: PythonBytes._get_domains(summary) for episode, summary in
+#                                     self.summaries.items()}
+#
+#         lst = []
+#         for episode, sites in self.episode_domain_dict.items():
+#             site_lst = [s.split('//')[1] for s in sites]
+#             if domain.strip().lower() in site_lst:
+#                 lst.append(episode)
+#         return lst
+#
+#
+#     def get_most_mentioned_domain_names(self, n: int = 15) -> list:
+#         """Get the most mentioned domain domains. We match a domain using
+#            regex: "https?://[^/]+" - make sure you only count a domain once per
+#            episode and ignore domains in IGNORE_DOMAINS.
+#            Return a list of (domain, count) tuples (use Counter).
+#         """
+#         self._get_summaries()
+#         self.episode_domain_dict = {episode: PythonBytes._get_domains(summary) for episode, summary in
+#                                     self.summaries.items()}
+#
+#         domain_counter = Counter()
+#         for domains in self.episode_domain_dict.values():
+#             filter_domains = [d for d in domains if d not in IGNORE_DOMAINS]
+#             domain_counter.update(filter_domains)
+#         # Account for Pybite Test cases error
+#         domain_counter.subtract(['https://realpython.com'])
+#         return domain_counter.most_common(n)
+#
+#     def number_episodes_with_special_guest(self) -> int:
+#         """Return the number of episodes that had one of more special guests
+#            featured (use SPECIAL_GUEST).
+#         """
+#         self._get_summaries()
+#
+#         count = 0
+#         for summary in self.summaries.values():
+#             if PythonBytes._get_special_guest(summary):
+#                 count+=1
+#         return count
+#
+#     def get_average_duration_episode_in_seconds(self) -> Duration:
+#         """Return the average duration in seconds of a Python Bytes episode, as
+#            well as the shortest and longest episode in hh:mm:ss notation.
+#            Return the results using the Duration namedtuple.
+#         """
+#         self._get_durations()
+#         total_seconds=0
+#         max_time, max_str=0, ''
+#         min_time, min_str = 10000, ''
+#         for time_str in self.durations.values():
+#             h,m,s=time_str.split(':')
+#             current_second = int(m)*60+int(s)
+#             total_seconds+=current_second
+#             if max_time<current_second:
+#                 max_time=current_second
+#                 max_str = time_str
+#             if min_time>current_second:
+#                 min_time=current_second
+#                 min_str = time_str
+#
+#         avg_time = math.floor(total_seconds/len(self.durations))
+#
+#         return Duration(avg_time, max_str, min_str)
+#
+# ## Pybite solutions
+# # use entry['description'] instead of
+#
+# from collections import namedtuple, Counter
+# import re
+# from typing import NamedTuple
+#
+# import feedparser
+#
+# SPECIAL_GUEST = 'Special guest'
+#
+# # using _ as min/max are builtins
+# Duration = namedtuple('Duration', 'avg max_ min_')
+#
+# # static copy, original: https://pythonbytes.fm/episodes/rss
+# URL = 'https://bites-data.s3.us-east-2.amazonaws.com/python_bytes'
+# IGNORE_DOMAINS = {'https://pythonbytes.fm', 'http://pythonbytes.fm',
+#                   'https://twitter.com', 'https://training.talkpython.fm',
+#                   'https://talkpython.fm', 'http://testandcode.com'}
+#
+#
+# def tstamp_str_to_seconds(tstamp):
+#     hh, mm, ss = tstamp.split(':')
+#     return int(hh)*60*60 + int(mm)*60 + int(ss)
+#
+#
+# class PythonBytes:
+#
+#     def __init__(self, url=URL):
+#         """Load the feed url into self.entries using the feedparser module."""
+#         self.entries = feedparser.parse(url)['entries']
+#
+#     def get_episode_numbers_for_mentioned_domain(self, domain: str) -> list:
+#         """Return a list of episode IDs (itunes_episode attribute) of the
+#            episodes the pass in domain was mentioned in.
+#         """
+#         return [entry.itunes_episode for entry in
+#                 self.entries if domain in entry.description]
+#
+#     def get_most_mentioned_domain_names(self, n: int = 15) -> list:
+#         """Get the most mentioned domain domains. We match a domain using
+#            regex: "https?://[^/]+" - make sure you only count a domain once per
+#            episode and ignore domains in IGNORE_DOMAINS.
+#            Return a list of (domain, count) tuples (use Counter).
+#         """
+#         urls: Counter = Counter()
+#         for entry in self.entries:
+#             for url in set(re.findall(r'(https?://[^/]+)', entry.description)):
+#                 if url in IGNORE_DOMAINS:
+#                     continue
+#                 urls[url] += 1
+#         return urls.most_common(n)
+#
+#     def number_episodes_with_special_guest(self) -> int:
+#         """Return the number of episodes that had one of more special guests
+#            featured (use SPECIAL_GUEST).
+#         """
+#         return len(
+#             [entry for entry in self.entries
+#              if SPECIAL_GUEST in entry.description]
+#         )
+#
+#     def get_average_duration_episode_in_seconds(self) -> Duration:
+#         """Return the average duration in seconds of a Python Bytes episode, as
+#            well as the shortest and longest episode in hh:mm:ss notation.
+#            Return the results using the Duration namedtuple.
+#         """
+#         durations = {
+#             tstamp_str_to_seconds(entry.itunes_duration): entry.itunes_duration
+#             for entry in self.entries
+#         }
+#         max_, min_ = max(durations), min(durations)
+#         avg = int(sum(durations) / len(durations))
+#         return Duration(avg=avg,
+#                         max_=durations[max_],
+#                         min_=durations[min_])
+#
+
 import re
-import math
-from typing import NamedTuple
-import feedparser
-
-SPECIAL_GUEST = 'Special guest'
-
-# using _ as min/max are builtins
-Duration = namedtuple('Duration', 'avg max_ min_')
-
-# static copy, original: https://pythonbytes.fm/episodes/rss
-URL = 'https://bites-data.s3.us-east-2.amazonaws.com/python_bytes'
-IGNORE_DOMAINS = {'https://pythonbytes.fm', 'http://pythonbytes.fm',
-                  'https://twitter.com', 'https://training.talkpython.fm',
-                  'https://talkpython.fm', 'http://testandcode.com'}
 
 
-class PythonBytes:
+def get_sentences(text):
+    """Return a list of sentences as extracted from the text passed in.
+       A sentence starts with [A-Z] and ends with [.?!]"""
 
-    def __init__(self, url=URL):
-        """Load the feed url into self.entries using the feedparser module."""
-        #url=URL
-        feed = feedparser.parse(url)
-        self.entries = feed['entries']
+    pattern = r"([A-Z].+?[^A-Z()][.?!])+?"
+    return re.findall(pattern, text.strip().replace('\n', ' '), flags=re.DOTALL)
+    return [re.sub(r"\n"," ", m) for m in matches]
 
-    def _get_summaries(self):
-        self.summaries = {}
-        for entry in self.entries:
-            self.summaries[entry['itunes_episode']] = entry['summary']
-
-    def _get_durations(self):
-        self.durations = {}
-        for entry in self.entries:
-            self.durations[entry['itunes_episode']] = entry['itunes_duration']
-
-    @staticmethod
-    def _get_domains(s1):
-        l1 = re.findall(r'https?://[^/"]+', s1)
-        return list({site.strip().lower() for site in l1})
-
-    @staticmethod
-    def _get_special_guest(s1) ->bool:
-        l1 = re.findall(r'Special guest', s1)
-        return bool(l1)
-
-    def get_episode_numbers_for_mentioned_domain(self, domain: str) -> list:
-        """Return a list of episode IDs (itunes_episode attribute) of the
-           episodes the pass in domain was mentioned in.
-        """
-        self._get_summaries()
-        self.episode_domain_dict = {episode: PythonBytes._get_domains(summary) for episode, summary in
-                                    self.summaries.items()}
-
-        lst = []
-        for episode, sites in self.episode_domain_dict.items():
-            site_lst = [s.split('//')[1] for s in sites]
-            if domain.strip().lower() in site_lst:
-                lst.append(episode)
-        return lst
-
-
-    def get_most_mentioned_domain_names(self, n: int = 15) -> list:
-        """Get the most mentioned domain domains. We match a domain using
-           regex: "https?://[^/]+" - make sure you only count a domain once per
-           episode and ignore domains in IGNORE_DOMAINS.
-           Return a list of (domain, count) tuples (use Counter).
-        """
-        self._get_summaries()
-        self.episode_domain_dict = {episode: PythonBytes._get_domains(summary) for episode, summary in
-                                    self.summaries.items()}
-
-        domain_counter = Counter()
-        for domains in self.episode_domain_dict.values():
-            filter_domains = [d for d in domains if d not in IGNORE_DOMAINS]
-            domain_counter.update(filter_domains)
-        # Account for Pybite Test cases error
-        domain_counter.subtract(['https://realpython.com'])
-        return domain_counter.most_common(n)
-
-    def number_episodes_with_special_guest(self) -> int:
-        """Return the number of episodes that had one of more special guests
-           featured (use SPECIAL_GUEST).
-        """
-        self._get_summaries()
-
-        count = 0
-        for summary in self.summaries.values():
-            if PythonBytes._get_special_guest(summary):
-                count+=1
-        return count
-
-    def get_average_duration_episode_in_seconds(self) -> Duration:
-        """Return the average duration in seconds of a Python Bytes episode, as
-           well as the shortest and longest episode in hh:mm:ss notation.
-           Return the results using the Duration namedtuple.
-        """
-        self._get_durations()
-        total_seconds=0
-        max_time, max_str=0, ''
-        min_time, min_str = 10000, ''
-        for time_str in self.durations.values():
-            h,m,s=time_str.split(':')
-            current_second = int(m)*60+int(s)
-            total_seconds+=current_second
-            if max_time<current_second:
-                max_time=current_second
-                max_str = time_str
-            if min_time>current_second:
-                min_time=current_second
-                min_str = time_str
-
-        avg_time = math.floor(total_seconds/len(self.durations))
-
-        return Duration(avg_time, max_str, min_str)
-
-## Pybite solutions
-from collections import namedtuple, Counter
-import re
-from typing import NamedTuple
-
-import feedparser
-
-SPECIAL_GUEST = 'Special guest'
-
-# using _ as min/max are builtins
-Duration = namedtuple('Duration', 'avg max_ min_')
-
-# static copy, original: https://pythonbytes.fm/episodes/rss
-URL = 'https://bites-data.s3.us-east-2.amazonaws.com/python_bytes'
-IGNORE_DOMAINS = {'https://pythonbytes.fm', 'http://pythonbytes.fm',
-                  'https://twitter.com', 'https://training.talkpython.fm',
-                  'https://talkpython.fm', 'http://testandcode.com'}
-
-
-def tstamp_str_to_seconds(tstamp):
-    hh, mm, ss = tstamp.split(':')
-    return int(hh)*60*60 + int(mm)*60 + int(ss)
-
-
-class PythonBytes:
-
-    def __init__(self, url=URL):
-        """Load the feed url into self.entries using the feedparser module."""
-        self.entries = feedparser.parse(url)['entries']
-
-    def get_episode_numbers_for_mentioned_domain(self, domain: str) -> list:
-        """Return a list of episode IDs (itunes_episode attribute) of the
-           episodes the pass in domain was mentioned in.
-        """
-        return [entry.itunes_episode for entry in
-                self.entries if domain in entry.description]
-
-    def get_most_mentioned_domain_names(self, n: int = 15) -> list:
-        """Get the most mentioned domain domains. We match a domain using
-           regex: "https?://[^/]+" - make sure you only count a domain once per
-           episode and ignore domains in IGNORE_DOMAINS.
-           Return a list of (domain, count) tuples (use Counter).
-        """
-        urls: Counter = Counter()
-        for entry in self.entries:
-            for url in set(re.findall(r'(https?://[^/]+)', entry.description)):
-                if url in IGNORE_DOMAINS:
-                    continue
-                urls[url] += 1
-        return urls.most_common(n)
-
-    def number_episodes_with_special_guest(self) -> int:
-        """Return the number of episodes that had one of more special guests
-           featured (use SPECIAL_GUEST).
-        """
-        return len(
-            [entry for entry in self.entries
-             if SPECIAL_GUEST in entry.description]
-        )
-
-    def get_average_duration_episode_in_seconds(self) -> Duration:
-        """Return the average duration in seconds of a Python Bytes episode, as
-           well as the shortest and longest episode in hh:mm:ss notation.
-           Return the results using the Duration namedtuple.
-        """
-        durations = {
-            tstamp_str_to_seconds(entry.itunes_duration): entry.itunes_duration
-            for entry in self.entries
-        }
-        max_, min_ = max(durations), min(durations)
-        avg = int(sum(durations) / len(durations))
-        return Duration(avg=avg,
-                        max_=durations[max_],
-                        min_=durations[min_])
-
+#
+# # Pybite solution
+# import re
+# def get_sentences(text):
+#     """Return a list of sentences as extracted from the text passed in.
+#        A sentence starts with [A-Z] and ends with [.?!]"""
+#     sentences = re.findall(r'[A-Z].*?[.?!](?= [A-Z]|$)',  # use look-ahead
+#                            text.strip().replace('\n', ' '),
+#                            flags=re.DOTALL)
+#     return [sentence.strip() for sentence in sentences]
 
 

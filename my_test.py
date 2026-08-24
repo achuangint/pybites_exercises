@@ -17047,130 +17047,172 @@ Inputs are modified to check how the function deals with unknown characters
 #
 # def test_no_match():
 #     assert get_email_details('bogus') is None
+#
+# import pytest
+#
+# from wc import Duration, PythonBytes
+#
+# REAL_PYTHON = "realpython.com"
+# PYBITES = "pybit.es"
+#
+#
+# @pytest.fixture(scope="module")
+# def pb():
+#     return PythonBytes()
+#
+#
+# def test_get_episodes_pybites_was_mentioned(pb):
+#     actual = pb.get_episode_numbers_for_mentioned_domain(PYBITES)
+#     expected = ["106", "98", "34", "26", "14"]
+#     assert sorted(actual) == sorted(expected)
+#
+#
+# def test_get_episodes_realpython_was_mentioned(pb):
+#     actual = pb.get_episode_numbers_for_mentioned_domain(REAL_PYTHON)
+#     expected = [
+#         "143",
+#         "134",
+#         "123",
+#         "119",
+#         "118",
+#         "114",
+#         "110",
+#         "102",
+#         "100",
+#         "97",
+#         "88",
+#         "86",
+#         "85",
+#         "84",
+#         "83",
+#         "82",
+#         "80",
+#         "76",
+#         "75",
+#         "71",
+#         "66",
+#         "56",
+#         "37",
+#         "20",
+#         "7",
+#     ]
+#     assert sorted(actual) == sorted(expected)
+#
+#
+# def test_number_episodes_with_special_guests(pb):
+#     actual = pb.number_episodes_with_special_guest()
+#     expected = 17
+#     assert actual == expected
+#
+#
+# def test_number_episodes_with_special_guests_half_feed(pb):
+#     """To prevent hardcoding the answer"""
+#     org_entries = pb.entries
+#     pb.entries = pb.entries[:20]
+#     actual = pb.number_episodes_with_special_guest()
+#     expected = 7
+#     pb.entries = org_entries  # pb is module scope so restore entries
+#     assert actual == expected
+#
+#
+# def test_get_most_mentioned_domain_names_default_top_15(pb):
+#     actual = pb.get_most_mentioned_domain_names()
+#     # fp = feedparser
+#     expected_fp5 = [
+#         ("https://github.com", 120),
+#         ("https://www.youtube.com", 50),
+#         ("https://medium.com", 38),
+#         ("https://www.python.org", 26),
+#         ("https://www.reddit.com", 26),
+#         ("https://docs.python.org", 25),
+#         ("https://realpython.com", 24),
+#         ("https://hackernoon.com", 22),
+#         ("https://pypi.python.org", 20),
+#         ("https://pypi.org", 16),
+#         ("https://en.wikipedia.org", 14),
+#         ("https://pragprog.com", 13),
+#         ("https://docs.pytest.org", 11),
+#         ("http://rollbar.com", 11),
+#         ("https://dbader.org", 9),
+#     ]
+#     expected_fp6 = [("https://github.com", 119)] + expected_fp5[1:]
+#     assert actual in (expected_fp5, expected_fp6)
+#
+#
+# def test_get_most_mentioned_domain_names_top_5(pb):
+#     actual = pb.get_most_mentioned_domain_names(n=5)
+#     # fp = feedparser
+#     expected_fp5 = [
+#         ("https://github.com", 120),
+#         ("https://www.youtube.com", 50),
+#         ("https://medium.com", 38),
+#         ("https://www.python.org", 26),
+#         ("https://www.reddit.com", 26),
+#     ]
+#     expected_fp6 = [("https://github.com", 119)] + expected_fp5[1:]
+#     assert actual in (expected_fp5, expected_fp6)
+#
+#
+# def test_average_episode_duration_full_feed(pb):
+#     actual = pb.get_average_duration_episode_in_seconds()
+#     max_, min_ = "00:56:54", "00:15:27"
+#     expected = Duration(avg=1439, max_=max_, min_=min_)
+#     # depending the way mean is calculated, results might differ
+#     expected_alt = Duration(avg=1442, max_=max_, min_=min_)
+#     assert actual in (expected, expected_alt)
+#
+#
+# def test_average_episode_duration_half_feed(pb):
+#     """To prevent hardcoding the answer"""
+#     num_half_episodes = int(len(pb.entries) / 2)
+#     org_entries = pb.entries
+#     pb.entries = pb.entries[:num_half_episodes]
+#     actual = pb.get_average_duration_episode_in_seconds()
+#     max_, min_ = "00:56:54", "00:16:40"
+#     expected = Duration(avg=1606, max_=max_, min_=min_)
+#     # depending the way mean is calculated, results might differ
+#     expected_alt = Duration(avg=1607, max_=max_, min_=min_)
+#     pb.entries = org_entries  # pb is module scope so restore entries
+#     assert actual in (expected, expected_alt)
 
-import pytest
+from wc import get_sentences
 
-from wc import Duration, PythonBytes
+TEXT = """
+PyBites was founded 19th of December 2016. That means that today,
+14th of October 2019 we are 1029 days old. Time flies when you code
+in Python. Anyways, good luck with this Bite. What is your favorite editor?
+"""  # contains 5 sentences
 
-REAL_PYTHON = "realpython.com"
-PYBITES = "pybit.es"
-
-
-@pytest.fixture(scope="module")
-def pb():
-    return PythonBytes()
-
-
-def test_get_episodes_pybites_was_mentioned(pb):
-    actual = pb.get_episode_numbers_for_mentioned_domain(PYBITES)
-    expected = ["106", "98", "34", "26", "14"]
-    assert sorted(actual) == sorted(expected)
+TEXT_WITH_DOTS = """
+We are looking forward attending the next Pycon in the U.S.A.
+in 2020. Hope you do so too. There is no better Python networking
+event than Pycon. Meet awesome people and get inspired. Btw this
+dot (.) should not end this sentence, the next one should. Have fun!
+"""  # contains 6 sentences
 
 
-def test_get_episodes_realpython_was_mentioned(pb):
-    actual = pb.get_episode_numbers_for_mentioned_domain(REAL_PYTHON)
+def test_get_sentences():
+    actual = get_sentences(TEXT)
     expected = [
-        "143",
-        "134",
-        "123",
-        "119",
-        "118",
-        "114",
-        "110",
-        "102",
-        "100",
-        "97",
-        "88",
-        "86",
-        "85",
-        "84",
-        "83",
-        "82",
-        "80",
-        "76",
-        "75",
-        "71",
-        "66",
-        "56",
-        "37",
-        "20",
-        "7",
+        "PyBites was founded 19th of December 2016.",
+        "That means that today, 14th of October 2019 we are 1029 days old.",
+        "Time flies when you code in Python.",
+        "Anyways, good luck with this Bite.",
+        "What is your favorite editor?"
     ]
-    assert sorted(actual) == sorted(expected)
-
-
-def test_number_episodes_with_special_guests(pb):
-    actual = pb.number_episodes_with_special_guest()
-    expected = 17
     assert actual == expected
 
 
-def test_number_episodes_with_special_guests_half_feed(pb):
-    """To prevent hardcoding the answer"""
-    org_entries = pb.entries
-    pb.entries = pb.entries[:20]
-    actual = pb.number_episodes_with_special_guest()
-    expected = 7
-    pb.entries = org_entries  # pb is module scope so restore entries
+def test_dot_mid_sentence():
+    actual = get_sentences(TEXT_WITH_DOTS)
+    expected = [
+        ("We are looking forward attending the next Pycon in the "
+         "U.S.A. in 2020."),
+        "Hope you do so too.",
+        "There is no better Python networking event than Pycon.",
+        "Meet awesome people and get inspired.",
+        "Btw this dot (.) should not end this sentence, the next one should.",
+        "Have fun!"
+    ]
     assert actual == expected
 
-
-def test_get_most_mentioned_domain_names_default_top_15(pb):
-    actual = pb.get_most_mentioned_domain_names()
-    # fp = feedparser
-    expected_fp5 = [
-        ("https://github.com", 120),
-        ("https://www.youtube.com", 50),
-        ("https://medium.com", 38),
-        ("https://www.python.org", 26),
-        ("https://www.reddit.com", 26),
-        ("https://docs.python.org", 25),
-        ("https://realpython.com", 24),
-        ("https://hackernoon.com", 22),
-        ("https://pypi.python.org", 20),
-        ("https://pypi.org", 16),
-        ("https://en.wikipedia.org", 14),
-        ("https://pragprog.com", 13),
-        ("https://docs.pytest.org", 11),
-        ("http://rollbar.com", 11),
-        ("https://dbader.org", 9),
-    ]
-    expected_fp6 = [("https://github.com", 119)] + expected_fp5[1:]
-    assert actual in (expected_fp5, expected_fp6)
-
-
-def test_get_most_mentioned_domain_names_top_5(pb):
-    actual = pb.get_most_mentioned_domain_names(n=5)
-    # fp = feedparser
-    expected_fp5 = [
-        ("https://github.com", 120),
-        ("https://www.youtube.com", 50),
-        ("https://medium.com", 38),
-        ("https://www.python.org", 26),
-        ("https://www.reddit.com", 26),
-    ]
-    expected_fp6 = [("https://github.com", 119)] + expected_fp5[1:]
-    assert actual in (expected_fp5, expected_fp6)
-
-
-def test_average_episode_duration_full_feed(pb):
-    actual = pb.get_average_duration_episode_in_seconds()
-    max_, min_ = "00:56:54", "00:15:27"
-    expected = Duration(avg=1439, max_=max_, min_=min_)
-    # depending the way mean is calculated, results might differ
-    expected_alt = Duration(avg=1442, max_=max_, min_=min_)
-    assert actual in (expected, expected_alt)
-
-
-def test_average_episode_duration_half_feed(pb):
-    """To prevent hardcoding the answer"""
-    num_half_episodes = int(len(pb.entries) / 2)
-    org_entries = pb.entries
-    pb.entries = pb.entries[:num_half_episodes]
-    actual = pb.get_average_duration_episode_in_seconds()
-    max_, min_ = "00:56:54", "00:16:40"
-    expected = Duration(avg=1606, max_=max_, min_=min_)
-    # depending the way mean is calculated, results might differ
-    expected_alt = Duration(avg=1607, max_=max_, min_=min_)
-    pb.entries = org_entries  # pb is module scope so restore entries
-    assert actual in (expected, expected_alt)
