@@ -17548,17 +17548,17 @@ def calc_max_uptime(reboots):
 #                         max_=durations[max_],
 #                         min_=durations[min_])
 #
-
-import re
-
-
-def get_sentences(text):
-    """Return a list of sentences as extracted from the text passed in.
-       A sentence starts with [A-Z] and ends with [.?!]"""
-
-    pattern = r"([A-Z].+?[^A-Z()][.?!])+?"
-    return re.findall(pattern, text.strip().replace('\n', ' '), flags=re.DOTALL)
-    return [re.sub(r"\n"," ", m) for m in matches]
+#
+# import re
+#
+#
+# def get_sentences(text):
+#     """Return a list of sentences as extracted from the text passed in.
+#        A sentence starts with [A-Z] and ends with [.?!]"""
+#
+#     pattern = r"([A-Z].+?[^A-Z()][.?!])+?"
+#     return re.findall(pattern, text.strip().replace('\n', ' '), flags=re.DOTALL)
+#     return [re.sub(r"\n"," ", m) for m in matches]
 
 #
 # # Pybite solution
@@ -17571,4 +17571,299 @@ def get_sentences(text):
 #                            flags=re.DOTALL)
 #     return [sentence.strip() for sentence in sentences]
 
+import os
+from pathlib import Path
+from urllib.request import urlretrieve
 
+from bs4 import BeautifulSoup
+
+url = ("https://bites-data.s3.us-east-2.amazonaws.com/"
+       "best-programming-books.html")
+tmp = Path(os.getenv("TMP", "/tmp"))
+html_file = tmp / "books.html"
+
+if not html_file.exists():
+    urlretrieve(url, html_file)
+
+
+class Book:
+    """Book class should instantiate the following variables:
+
+    title - as it appears on the page
+    author - should be entered as lastname, firstname
+    year - four digit integer year that the book was published
+    rank - integer rank to be updated once the books have been sorted
+    rating - float as indicated on the page
+    """
+    def __init__(self, title, author, year,  rank=None, rating=None):
+        self.title=title
+        self.author=Book._parse_author(author)
+        self.year=int(year)
+        self.rating=float(rating)
+        self.rank=rank
+
+    @staticmethod
+    def _parse_author(author):
+        if ',' not in author:
+            names = author.split()
+            return f"{names[-1]}, {' '.join(names[:-1])}"
+        return author
+
+    def __str__(self) -> str:
+        return f"""[{self.rank:03d}] {self.title} ({self.year})
+      {self.author} {self.rating}"""
+
+
+def _get_soup(file):
+    return BeautifulSoup(file.read_text(encoding="utf-8"), "html.parser")
+
+
+def display_books(books, limit=10, year=None):
+    """Prints the specified books to the console
+
+    :param books: list of all the books
+    :param limit: integer that indicates how many books to return
+    :param year: integer indicating the oldest year to include
+    :return: None
+    """
+    if year:
+        books =[b for b in books if b.year >=year]
+    if limit > len(books):
+        books = books[:limit+1]
+
+    for b in books:
+        print(b)
+
+
+
+def load_data():
+    """Loads the data from the html file
+
+    Creates the soup object and processes it to extract the information
+    required to create the Book class objects and returns a sorted list
+    of Book objects.
+
+    Books should be sorted by rating, year, title, and then by author's
+    last name. After the books have been sorted, the rank of each book
+    should be updated to indicate this new sorting order.The Book object
+    with the highest rating should be first and go down from there.
+    """
+    soup = _get_soup(html_file)
+    books = soup.find_all("div", class_="book accepted normal")
+
+    book_list = []
+    for b in books:
+        try:
+            t = b.find("h2", class_="main").get_text()
+            subtitle_div = b.find("div", class_='subtitle')
+            # author
+            a = subtitle_div.find("h3", class_="authors").a.get_text()
+            # year
+            y = subtitle_div.find("span", class_="date").get_text().split('|')[1].strip()
+            # rating
+            r = subtitle_div.find("span", class_="rating").get_text()
+        except:
+            continue
+        book_list.append(Book(t, a, y, None, r))
+
+    # Filter web page
+    python_books = [b for b in book_list if 'python' in b.title.lower()]
+
+    sorted_python_books = sorted(python_books, key=lambda x: (-x.rating, x.year, x.title.title(), x.author) )
+
+    for i, b in enumerate(sorted_python_books, start=1):
+        b.rank=i
+    return sorted_python_books
+
+def main():
+    books = load_data()
+    display_books(books, limit=5, year=2017)
+    """If done correctly, the previous function call should display the
+    output below.
+    """
+
+
+if __name__ == "__main__":
+    main()
+
+"""
+[001] Python Tricks (2017)
+      Bader, Dan 4.74
+[002] Mastering Deep Learning Fundamentals with Python (2019)
+      Wilson, Richard 4.7
+[006] Python Programming (2019)
+      Fedden, Antony Mc 4.68
+[007] Python Programming (2019)
+      Mining, Joseph 4.68
+[009] A Smarter Way to Learn Python (2017)
+      Myers, Mark 4.66
+"""
+
+## Pybite solutions:
+from dataclasses import dataclass
+from functools import total_ordering
+from operator import attrgetter
+import os
+from pathlib import Path
+from typing import Any, List, Optional
+from urllib.request import urlretrieve
+
+from bs4 import BeautifulSoup  # type: ignore
+
+url = ("https://bites-data.s3.us-east-2.amazonaws.com/"
+       "best-programming-books.html")
+tmp = Path(os.getenv("TMP", "/tmp"))
+html_file = tmp / "books.html"
+
+if not html_file.exists():
+    urlretrieve(url, html_file)
+
+
+@total_ordering
+@dataclass
+class Book:
+    title: str
+    author: str
+    year: int
+    rank: int
+    rating: float
+
+    def __lt__(self, other) -> bool:
+        last = self.author.split(", ")[0]
+        other_last = other.author.split(", ")[0]
+        title = self.title.title()
+        other_title = other.title.title()
+        if self.rating < other.rating:
+            return True
+        elif self.rating == other.rating and self.year < other.year:
+            return True
+        elif (
+            self.rating == other.rating
+            and self.year == other.year
+            and title < other_title
+        ):
+            return True
+        elif (
+            self.rating == other.rating
+            and self.year == other.year
+            and title == other_title
+            and last < other_last
+        ):
+            return True
+        else:
+            return False
+
+    def __gt__(self, other) -> bool:
+        last = self.author.split(", ")[0]
+        other_last = other.author.split(", ")[0]
+        title = self.title.title()
+        other_title = other.title.title()
+        if self.rating > other.rating:
+            return True
+        elif self.rating == other.rating and self.year > other.year:
+            return True
+        elif (
+            self.rating == other.rating
+            and self.year == other.year
+            and title > other_title
+        ):
+            return True
+        elif (
+            self.rating == other.rating
+            and self.year == other.year
+            and title == other_title
+            and last > other_last
+        ):
+            return True
+        else:
+            return False
+
+    def __str__(self) -> str:
+        desc = f"[{str(self.rank).zfill(3)}] {self.title} ({self.year})\n"
+        desc += f"      {self.author} {float(self.rating)}"
+        return desc
+
+
+def _clean_data(soup: Any, replace: str = "", as_type: Any = str) -> Any:
+    return as_type(soup.replace(replace, ""))
+
+
+def _format_authors(authors: Any) -> str:
+    names = []
+    if "," in authors:
+        authors = authors.split(", ")
+        for name in authors:
+            first, last = name.rsplit(maxsplit=1)
+            names.append(f"{last}, {first}")
+    else:
+        first, last = authors.rsplit(maxsplit=1)
+        names.append(f"{last}, {first}")
+    return ", ".join(names)
+
+
+def _get_soup(file: Path) -> Any:
+    return BeautifulSoup(file.read_text(), "html.parser")
+
+
+def _process_soup(soup: Any) -> Optional[Book]:
+    try:
+        title_soup = soup.find("h2", {"class": "main"}).text
+        author_soup = soup.find("h3", {"class": "authors"}).text
+        year_soup = soup.find("span", {"class", "date"}).text
+        rank_soup = soup.find("div", {"class": "rank"}).text
+        rating_soup = soup.find("span", {"class", "our-rating"}).text
+
+        title: str = _clean_data(title_soup)
+        authors: str = _clean_data(author_soup, " (You?)")
+        author: str = _format_authors(authors)
+        year: int = _clean_data(year_soup, " | ", int)
+        rank: int = _clean_data(rank_soup, as_type=int)
+        rating: float = _clean_data(rating_soup, as_type=float)
+
+        return Book(title, author, year, rank, rating)
+    except AttributeError:
+        return None
+
+
+def _sort_books(python_books: Any) -> List[Book]:
+    books = [book for book in python_books if book is not None]
+    sorted_books = sorted(books)
+    rated = sorted(sorted_books, key=attrgetter("rating"), reverse=True)
+
+    for i, book in enumerate(rated, 1):
+        book.rank = i
+
+    return rated
+
+
+def display_books(books: List[Book], limit: int = 10,
+                  year: Optional[int] = None):
+    if year:
+        books = [book for book in books if book.year >= year]
+    for book in books[:limit]:
+        print(book)
+
+
+def load_data() -> List[Book]:
+    soup = _get_soup(html_file)
+    all_books = soup.find_all("div", {"class": "book accepted normal"})
+    selected_books = [
+        book
+        for book in all_books
+        if "python" in book["data-title"].split(": ")[0].lower()
+    ]
+    python_books = [_process_soup(book) for book in selected_books]
+
+    return _sort_books(python_books)
+
+
+def main():
+    books = load_data()
+    display_books(books, limit=5, year=2017)
+    """If done correctly, the previous function call should display the
+    output below.
+    """
+
+
+if __name__ == "__main__":
+    main()
