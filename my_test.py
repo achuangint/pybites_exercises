@@ -17305,48 +17305,110 @@ Inputs are modified to check how the function deals with unknown characters
 #     output = capfd.readouterr()[0].splitlines()
 #     assert len(output) == expected
 #
+#
+# from urllib.request import urlretrieve
+#
+# from wc import get_belts, TMP
+#
+#
+# def get_data(file_no=1, tmp=TMP):
+#     file_name = f'bite_scores{file_no}.json'
+#     file_path = TMP / file_name
+#     remote = 'https://bites-data.s3.us-east-2.amazonaws.com/'
+#     if not file_path.exists():
+#         urlretrieve(f'{remote}{file_name}',
+#                     file_path)
+#     return file_path
+#
+#
+# def test_data_set1():
+#     data = get_data(1)
+#     actual = get_belts(data)
+#     # py 3.7 we should be able to rely on ordering
+#     expected = {
+#         'white': 'January 23, 2018',
+#         'yellow': 'June 20, 2018',
+#         'orange': 'October 07, 2018',
+#         'green': 'April 08, 2019'
+#     }
+#     assert actual == expected
+#
+#
+# def test_data_set2():
+#     data = get_data(2)
+#     actual = get_belts(data)
+#     expected = {
+#         'white': 'January 06, 2018',
+#         'yellow': 'January 25, 2018',
+#         'orange': 'February 08, 2018',
+#         'green': 'March 15, 2018',
+#         'blue': 'April 29, 2018',
+#         'brown': 'July 13, 2018',
+#         'black': 'October 31, 2018',
+#         'paneled': 'March 01, 2019',
+#         'red': 'June 26, 2019'
+#     }
+#     assert actual == expected
 
-from urllib.request import urlretrieve
 
-from wc import get_belts, TMP
+from wc import Account
+import pytest
 
+# write your pytest functions below, they need to start with test_
 
-def get_data(file_no=1, tmp=TMP):
-    file_name = f'bite_scores{file_no}.json'
-    file_path = TMP / file_name
-    remote = 'https://bites-data.s3.us-east-2.amazonaws.com/'
-    if not file_path.exists():
-        urlretrieve(f'{remote}{file_name}',
-                    file_path)
-    return file_path
+a1 = Account('Jim Jones', 23.45)
+print(str(a1))
+a1.add_transaction(34)
+a1._transactions.pop()
 
+a1.add_transaction(34)
+a1.balance
+len(a1)
+a1[0]
 
-def test_data_set1():
-    data = get_data(1)
-    actual = get_belts(data)
-    # py 3.7 we should be able to rely on ordering
-    expected = {
-        'white': 'January 23, 2018',
-        'yellow': 'June 20, 2018',
-        'orange': 'October 07, 2018',
-        'green': 'April 08, 2019'
-    }
-    assert actual == expected
+class TestAcount:
 
+    @pytest.fixture
+    def basic_account(self):
+        return Account('Jim Jones', 23.45)
 
-def test_data_set2():
-    data = get_data(2)
-    actual = get_belts(data)
-    expected = {
-        'white': 'January 06, 2018',
-        'yellow': 'January 25, 2018',
-        'orange': 'February 08, 2018',
-        'green': 'March 15, 2018',
-        'blue': 'April 29, 2018',
-        'brown': 'July 13, 2018',
-        'black': 'October 31, 2018',
-        'paneled': 'March 01, 2019',
-        'red': 'June 26, 2019'
-    }
-    assert actual == expected
+    def test_account(self, basic_account):
+        assert basic_account.owner=='Jim Jones'
 
+    def test_str(self, basic_account):
+        assert str(basic_account)=='Account of Jim Jones with starting amount: 23.45'
+
+    def test_repr(self, basic_account):
+        assert repr(basic_account)=="Account('Jim Jones', 23.45)"
+
+    def test_add_transaction(self, basic_account):
+        basic_account.add_transaction(45)
+        assert 45 == basic_account._transactions.pop()
+
+        with pytest.raises(ValueError):
+            basic_account.add_transaction("Hello")
+
+    def test_property(self, basic_account):
+        basic_account.add_transaction(45)
+        assert basic_account.balance==68.45
+
+    def test_len(self, basic_account):
+        basic_account.add_transaction(45)
+        assert len(basic_account)==1
+
+    def test_get_item(self, basic_account):
+        basic_account.add_transaction(45)
+        assert basic_account[0]==45
+
+    def test_eq(self, basic_account):
+        a1 = Account('Jenny Smith', 23.45)
+        assert a1==basic_account
+
+    def test_lt(self, basic_account):
+        a1 = Account('Jenny Smith', 21.45)
+        assert a1 < basic_account
+
+    def test_add(self, basic_account):
+        a1 = Account('Jenny Smith', 21.45)
+        basic_account = basic_account + a1
+        assert basic_account.balance==44.90

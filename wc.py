@@ -17868,179 +17868,229 @@ def calc_max_uptime(reboots):
 #
 # if __name__ == "__main__":
 #     main()
+#
+# import bisect
+# import json
+# import os
+# from pathlib import Path
+# from dateutil.parser import parse
+# import pytest
+#
+#
+# SCORES = [10, 50, 100, 175, 250, 400, 600, 800, 1000]
+# BELTS = ('white yellow orange green blue brown black '
+#          'paneled red').split()
+# TMP = Path(os.getenv("TMP", "/tmp"))
+#
+# def pts_to_belt(pts:int) -> str:
+#     index = bisect.bisect_right(SCORES,pts)
+#     if index == 0:
+#         return 'NA'
+#     return BELTS[index-1]
+#
+# # write a test
+# @pytest.mark.parametrize(
+#     "pts, expected",
+#     [
+#         (10, "white"),
+#         (25, "white"),
+#         (50, "yellow"),
+#         (995, "paneled"),
+#         (1005, "red"),
+#     ]
+# )
+# def test_pts_to_belt(pts, expected):
+#     assert pts_to_belt(pts) == expected
+#
+#
+# # write another unit test
+# def numeric_date_str_to_alphabetic_date_str(numeric_date_str:str)->str:
+#     return parse(numeric_date_str).strftime("%B %d, %Y")
+#
+# @pytest.mark.parametrize(
+#  "ndate, expected",
+#     [
+#         ("1/25/2018", 'January 25, 2018'),
+#         ("5/20/2019", 'May 20, 2019'),
+#
+#     ]
+# )
+# def test_numeric_date_str_to_alphabetic_date_Str(ndate,expected):
+#     assert numeric_date_str_to_alphabetic_date_str(ndate) == expected
+#
+# def get_belts(data: str) -> dict:
+#     """Parsed the passed in json data:
+#        {"date":"5/1/2019","score":1},
+#        {"date":"9/13/2018","score":3},
+#        {"date":"10/25/2019","score":1},
+#
+#     [{"date":"10/20/2019","score":1},
+#     {"date":"1/19/2019","score":1},
+#     {"date":"8/14/2018","score":1},
+#     {"date":"10/26/2019","score":4},
+#     {"date":"3/27/2019","score":1}]
+#
+#        Loop through the scores in chronological order,
+#        determining when belts were achieved (use SCORES
+#        and BELTS).
+#
+#        Return a dict with keys = belts, and values =
+#        readable dates, example entry:
+#        'yellow': 'January 25, 2018'
+#     """
+#     # get the json data as a list
+#     score_date_list = get_json_dates(data)
+#     chronological_dates = sorted(score_date_list, key=lambda x: parse(x['date']))
+#
+#     ninja_belts = {}
+#     total_pts = 0
+#     current_belt = 'NA'
+#
+#     for d in chronological_dates:
+#         dt,score = d['date'], d['score']
+#         total_pts += score
+#         new_belt = pts_to_belt(total_pts)
+#         if new_belt != current_belt:
+#             ninja_belts[new_belt]= numeric_date_str_to_alphabetic_date_str(dt)
+#             current_belt =  new_belt
+#     return ninja_belts
+#
+#
+# def get_json_dates(data:Path)->list:
+#     with open(data, "r", encoding="utf-8") as file:
+#         d = json.load(file)
+#     return d
+#
+# def test_get_json_dates():
+#     file_path = Path('C:/Users/AHuang/AppData/Local/Temp/bite_scores1.json')
+#     d1 = get_json_dates(file_path)
+#     assert d1[0] == {'date': '10/20/2019', 'score': 1}
+#
+#
+#
+# """
+# What this program does:
+#
+# Given a list of (dates, scores) => {'yellow': 'January 25, 2018'}
+#
+# functions:
+# -date=>string (takes a python date and returns a string)
+# -pts_to_belt  (takes total points return to a belt)
+#    write the unit tests for these
+#
+# Algorithm:
+#
+# -   Read the file to get a list (date, points)
+# -   sort the list of (date,points) based on dates (chronological)
+#
+#     ninja_betls ={}
+#     set total_pts = 0
+#     current_belt= White
+# -   for each (date, points) tuple:
+#         add points to total_points
+#         new_belt = pt_to_belt(total_pts)
+#         if new_belt != current_belt
+#             current_belt = new_belt
+#             ninja_belts.update({current_belt, formatedstr(date)  })
+# """
+# ## Pybite solutions:
+#
+# import json
+# import os
+# from pathlib import Path
+#
+# from dateutil.parser import parse
+#
+# SCORES = [10, 50, 100, 175, 250, 400, 600, 800, 1000]
+# BELTS = ('white yellow orange green blue brown black '
+#          'paneled red').split()
+# TMP = Path(os.getenv("TMP", "/tmp"))
+#
+#
+# def _parse_data(data):
+#     with open(data) as f:
+#         rows = json.loads(f.read())
+#         return sorted(rows, key=lambda x: parse(x['date']))
+#
+#
+# def get_belts(data: str) -> dict:
+#     """Parsed the passed in json data:
+#        {"date":"5/1/2019","score":1},
+#        {"date":"9/13/2018","score":3},
+#        {"date":"10/25/2019","score":1},
+#
+#        Loop through the scores in chronological order,
+#        determining when belts were achieved (use SCORES
+#        and BELTS).
+#
+#        Return a dict with keys = belts, and values =
+#        readable dates, example entry:
+#        'yellow': 'January 25, 2018'
+#     """
+#     rows = _parse_data(data)
+#     score = 0
+#
+#     it = iter(zip(SCORES, BELTS))
+#     belt_score, belt_name = next(it)
+#
+#     my_belts = {}
+#     for row in rows:
+#         score += row['score']
+#         if score >= belt_score:
+#             my_belts[belt_name] = parse(row['date']).strftime('%B %d, %Y')
+#             try:
+#                 belt_score, belt_name = next(it)
+#             except StopIteration:
+#                 break
+#
+#     return my_belts
 
-import bisect
-import json
-import os
-from pathlib import Path
-from dateutil.parser import parse
-import pytest
+# source: https://dbader.org/blog/python-dunder-methods
+from functools import total_ordering
 
 
-SCORES = [10, 50, 100, 175, 250, 400, 600, 800, 1000]
-BELTS = ('white yellow orange green blue brown black '
-         'paneled red').split()
-TMP = Path(os.getenv("TMP", "/tmp"))
+@total_ordering
+class Account:
+    'A simple account class'
 
-def pts_to_belt(pts:int) -> str:
-    index = bisect.bisect_right(SCORES,pts)
-    if index == 0:
-        return 'NA'
-    return BELTS[index-1]
+    def __init__(self, owner, amount=0):
+        'This is the constructor that lets us create objects from this class'
+        self.owner = owner
+        self.amount = amount
+        self._transactions = []
 
-# write a test
-@pytest.mark.parametrize(
-    "pts, expected",
-    [
-        (10, "white"),
-        (25, "white"),
-        (50, "yellow"),
-        (995, "paneled"),
-        (1005, "red"),
-    ]
-)
-def test_pts_to_belt(pts, expected):
-    assert pts_to_belt(pts) == expected
+    def __repr__(self):
+        return 'Account({!r}, {!r})'.format(self.owner, self.amount)
 
+    def __str__(self):
+        return 'Account of {} with starting amount: {}'.format(self.owner,
+                                                               self.amount)
 
-# write another unit test
-def numeric_date_str_to_alphabetic_date_str(numeric_date_str:str)->str:
-    return parse(numeric_date_str).strftime("%B %d, %Y")
+    def add_transaction(self, amount):
+        if not isinstance(amount, int):
+            raise ValueError('please use int for amount')
+        self._transactions.append(amount)
 
-@pytest.mark.parametrize(
- "ndate, expected",
-    [
-        ("1/25/2018", 'January 25, 2018'),
-        ("5/20/2019", 'May 20, 2019'),
+    @property
+    def balance(self):
+        return self.amount + sum(self._transactions)
 
-    ]
-)
-def test_numeric_date_str_to_alphabetic_date_Str(ndate,expected):
-    assert numeric_date_str_to_alphabetic_date_str(ndate) == expected
+    def __len__(self):
+        return len(self._transactions)
 
-def get_belts(data: str) -> dict:
-    """Parsed the passed in json data:
-       {"date":"5/1/2019","score":1},
-       {"date":"9/13/2018","score":3},
-       {"date":"10/25/2019","score":1},
+    def __getitem__(self, position):
+        return self._transactions[position]
 
-    [{"date":"10/20/2019","score":1},
-    {"date":"1/19/2019","score":1},
-    {"date":"8/14/2018","score":1},
-    {"date":"10/26/2019","score":4},
-    {"date":"3/27/2019","score":1}]
+    def __eq__(self, other):
+        return self.balance == other.balance
 
-       Loop through the scores in chronological order,
-       determining when belts were achieved (use SCORES
-       and BELTS).
+    def __lt__(self, other):
+        return self.balance < other.balance
 
-       Return a dict with keys = belts, and values =
-       readable dates, example entry:
-       'yellow': 'January 25, 2018'
-    """
-    # get the json data as a list
-    score_date_list = get_json_dates(data)
-    chronological_dates = sorted(score_date_list, key=lambda x: parse(x['date']))
-
-    ninja_belts = {}
-    total_pts = 0
-    current_belt = 'NA'
-
-    for d in chronological_dates:
-        dt,score = d['date'], d['score']
-        total_pts += score
-        new_belt = pts_to_belt(total_pts)
-        if new_belt != current_belt:
-            ninja_belts[new_belt]= numeric_date_str_to_alphabetic_date_str(dt)
-            current_belt =  new_belt
-    return ninja_belts
-
-
-def get_json_dates(data:Path)->list:
-    with open(data, "r", encoding="utf-8") as file:
-        d = json.load(file)
-    return d
-
-def test_get_json_dates():
-    file_path = Path('C:/Users/AHuang/AppData/Local/Temp/bite_scores1.json')
-    d1 = get_json_dates(file_path)
-    assert d1[0] == {'date': '10/20/2019', 'score': 1}
-
-
-
-"""
-What this program does:
-
-Given a list of (dates, scores) => {'yellow': 'January 25, 2018'}
-
-functions:
--date=>string (takes a python date and returns a string)
--pts_to_belt  (takes total points return to a belt)
-   write the unit tests for these
-
-Algorithm:
-
--   Read the file to get a list (date, points)
--   sort the list of (date,points) based on dates (chronological)
-    
-    ninja_betls ={}
-    set total_pts = 0
-    current_belt= White
--   for each (date, points) tuple:
-        add points to total_points
-        new_belt = pt_to_belt(total_pts)
-        if new_belt != current_belt
-            current_belt = new_belt     
-            ninja_belts.update({current_belt, formatedstr(date)  })
-"""
-## Pybite solutions:
-
-import json
-import os
-from pathlib import Path
-
-from dateutil.parser import parse
-
-SCORES = [10, 50, 100, 175, 250, 400, 600, 800, 1000]
-BELTS = ('white yellow orange green blue brown black '
-         'paneled red').split()
-TMP = Path(os.getenv("TMP", "/tmp"))
-
-
-def _parse_data(data):
-    with open(data) as f:
-        rows = json.loads(f.read())
-        return sorted(rows, key=lambda x: parse(x['date']))
-
-
-def get_belts(data: str) -> dict:
-    """Parsed the passed in json data:
-       {"date":"5/1/2019","score":1},
-       {"date":"9/13/2018","score":3},
-       {"date":"10/25/2019","score":1},
-
-       Loop through the scores in chronological order,
-       determining when belts were achieved (use SCORES
-       and BELTS).
-
-       Return a dict with keys = belts, and values =
-       readable dates, example entry:
-       'yellow': 'January 25, 2018'
-    """
-    rows = _parse_data(data)
-    score = 0
-
-    it = iter(zip(SCORES, BELTS))
-    belt_score, belt_name = next(it)
-
-    my_belts = {}
-    for row in rows:
-        score += row['score']
-        if score >= belt_score:
-            my_belts[belt_name] = parse(row['date']).strftime('%B %d, %Y')
-            try:
-                belt_score, belt_name = next(it)
-            except StopIteration:
-                break
-
-    return my_belts
+    def __add__(self, other):
+        owner = '{}&{}'.format(self.owner, other.owner)
+        start_amount = self.amount + other.amount
+        acc = Account(owner, start_amount)
+        for t in list(self) + list(other):
+            acc.add_transaction(t)
+        return acc
