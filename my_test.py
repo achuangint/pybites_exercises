@@ -17350,65 +17350,120 @@ Inputs are modified to check how the function deals with unknown characters
 #     }
 #     assert actual == expected
 
+#
+# from wc import Account
+# import pytest
+#
+# # write your pytest functions below, they need to start with test_
+#
+# a1 = Account('Jim Jones', 23.45)
+# print(str(a1))
+# a1.add_transaction(34)
+# a1._transactions.pop()
+#
+# a1.add_transaction(34)
+# a1.balance
+# len(a1)
+# a1[0]
+#
+# class TestAcount:
+#
+#     @pytest.fixture
+#     def basic_account(self):
+#         return Account('Jim Jones', 23.45)
+#
+#     def test_account(self, basic_account):
+#         assert basic_account.owner=='Jim Jones'
+#
+#     def test_str(self, basic_account):
+#         assert str(basic_account)=='Account of Jim Jones with starting amount: 23.45'
+#
+#     def test_repr(self, basic_account):
+#         assert repr(basic_account)=="Account('Jim Jones', 23.45)"
+#
+#     def test_add_transaction(self, basic_account):
+#         basic_account.add_transaction(45)
+#         assert 45 == basic_account._transactions.pop()
+#
+#         with pytest.raises(ValueError):
+#             basic_account.add_transaction("Hello")
+#
+#     def test_property(self, basic_account):
+#         basic_account.add_transaction(45)
+#         assert basic_account.balance==68.45
+#
+#     def test_len(self, basic_account):
+#         basic_account.add_transaction(45)
+#         assert len(basic_account)==1
+#
+#     def test_get_item(self, basic_account):
+#         basic_account.add_transaction(45)
+#         assert basic_account[0]==45
+#
+#     def test_eq(self, basic_account):
+#         a1 = Account('Jenny Smith', 23.45)
+#         assert a1==basic_account
+#
+#     def test_lt(self, basic_account):
+#         a1 = Account('Jenny Smith', 21.45)
+#         assert a1 < basic_account
+#
+#     def test_add(self, basic_account):
+#         a1 = Account('Jenny Smith', 21.45)
+#         basic_account = basic_account + a1
+#         assert basic_account.balance==44.90
 
-from wc import Account
+from datetime import datetime
+import json
+import os
+from pathlib import Path
+from urllib.request import urlretrieve
+from operator import itemgetter
 import pytest
+from datetime import datetime
 
-# write your pytest functions below, they need to start with test_
+from wc import (get_signs, get_sign_with_most_famous_people,
+                    signs_are_mutually_compatible, get_sign_by_date)
 
-a1 = Account('Jim Jones', 23.45)
-print(str(a1))
-a1.add_transaction(34)
-a1._transactions.pop()
+# original source: https://zodiacal.herokuapp.com/api
+URL = "https://bites-data.s3.us-east-2.amazonaws.com/zodiac.json"
+TMP = os.getenv("TMP", "/tmp")
+PATH = Path(TMP, "zodiac.json")
 
-a1.add_transaction(34)
-a1.balance
-len(a1)
-a1[0]
 
-class TestAcount:
+@pytest.fixture(scope='module')
+def signs():
+    if not PATH.exists():
+        urlretrieve(URL, PATH)
+    with open(PATH, encoding="utf-8") as f:
+        data = json.loads(f.read())
+    return get_signs(data)
 
-    @pytest.fixture
-    def basic_account(self):
-        return Account('Jim Jones', 23.45)
+# write your pytest code here ...
+#
+# d1 =  signs()
+#
+# p1=get_sign_with_most_famous_people(d1)
 
-    def test_account(self, basic_account):
-        assert basic_account.owner=='Jim Jones'
 
-    def test_str(self, basic_account):
-        assert str(basic_account)=='Account of Jim Jones with starting amount: 23.45'
+def test_get_sign_with_most_famous_people(signs):
+    famous_people = [
+        (s.name, len(s.famous_people)) for s in signs
+    ]
+    fp = max(famous_people, key=itemgetter(1))
+    assert fp == get_sign_with_most_famous_people(signs)
 
-    def test_repr(self, basic_account):
-        assert repr(basic_account)=="Account('Jim Jones', 23.45)"
 
-    def test_add_transaction(self, basic_account):
-        basic_account.add_transaction(45)
-        assert 45 == basic_account._transactions.pop()
+def test_mutual_compatibility(signs):
+    assert True == signs_are_mutually_compatible(signs, 'Aries','Leo' )
+    assert False == signs_are_mutually_compatible(signs, 'Aries','Taurus' )
+    assert False == signs_are_mutually_compatible(signs, 'A','B' )
 
-        with pytest.raises(ValueError):
-            basic_account.add_transaction("Hello")
+def test_get_sign_by_date(signs):
+    dt1 = datetime(2026, 7, 4, 0, 30, 0)
+    assert 'Cancer' == get_sign_by_date(signs, dt1)
+    dt2 = datetime(2026, 1, 20, 0, 30, 0)
+    assert 'Aquarius' == get_sign_by_date(signs, dt2)
+    dt3 = datetime(2026, 12, 13, 0, 30, 0)
+    assert 'Sagittarius' == get_sign_by_date(signs, dt3)
 
-    def test_property(self, basic_account):
-        basic_account.add_transaction(45)
-        assert basic_account.balance==68.45
-
-    def test_len(self, basic_account):
-        basic_account.add_transaction(45)
-        assert len(basic_account)==1
-
-    def test_get_item(self, basic_account):
-        basic_account.add_transaction(45)
-        assert basic_account[0]==45
-
-    def test_eq(self, basic_account):
-        a1 = Account('Jenny Smith', 23.45)
-        assert a1==basic_account
-
-    def test_lt(self, basic_account):
-        a1 = Account('Jenny Smith', 21.45)
-        assert a1 < basic_account
-
-    def test_add(self, basic_account):
-        a1 = Account('Jenny Smith', 21.45)
-        basic_account = basic_account + a1
-        assert basic_account.balance==44.90

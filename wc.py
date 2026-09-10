@@ -3597,14 +3597,14 @@
 """
 Pairs wines and cheeses by similarity of wine name and cheese name.
 """
-import heapq
-from collections import defaultdict
-from turtledemo.forest import doit1
-
-from feedparser import namespaces
-from httpx._transports import default
-from pygments.lexers import wren
-from sqlalchemy import DateTime
+# import heapq
+# from collections import defaultdict
+# from turtledemo.forest import doit1
+#
+# from feedparser import namespaces
+# from httpx._transports import default
+# from pygments.lexers import wren
+# from sqlalchemy import DateTime
 
 #
 # from collections import Counter
@@ -18044,53 +18044,114 @@ def calc_max_uptime(reboots):
 #                 break
 #
 #     return my_belts
+#
+# # source: https://dbader.org/blog/python-dunder-methods
+# from functools import total_ordering
+#
+#
+# @total_ordering
+# class Account:
+#     'A simple account class'
+#
+#     def __init__(self, owner, amount=0):
+#         'This is the constructor that lets us create objects from this class'
+#         self.owner = owner
+#         self.amount = amount
+#         self._transactions = []
+#
+#     def __repr__(self):
+#         return 'Account({!r}, {!r})'.format(self.owner, self.amount)
+#
+#     def __str__(self):
+#         return 'Account of {} with starting amount: {}'.format(self.owner,
+#                                                                self.amount)
+#
+#     def add_transaction(self, amount):
+#         if not isinstance(amount, int):
+#             raise ValueError('please use int for amount')
+#         self._transactions.append(amount)
+#
+#     @property
+#     def balance(self):
+#         return self.amount + sum(self._transactions)
+#
+#     def __len__(self):
+#         return len(self._transactions)
+#
+#     def __getitem__(self, position):
+#         return self._transactions[position]
+#
+#     def __eq__(self, other):
+#         return self.balance == other.balance
+#
+#     def __lt__(self, other):
+#         return self.balance < other.balance
+#
+#     def __add__(self, other):
+#         owner = '{}&{}'.format(self.owner, other.owner)
+#         start_amount = self.amount + other.amount
+#         acc = Account(owner, start_amount)
+#         for t in list(self) + list(other):
+#             acc.add_transaction(t)
+#         return acc
 
-# source: https://dbader.org/blog/python-dunder-methods
-from functools import total_ordering
+import calendar
+from collections import namedtuple
+from datetime import datetime
+from operator import itemgetter
+from typing import List
+
+Sign = namedtuple('Sign', 'name compatibility famous_people sun_dates')
 
 
-@total_ordering
-class Account:
-    'A simple account class'
+def get_signs(data: list) -> List[Sign]:
+    ret = []
+    for sign in data:
+        name = sign['name']
+        compatibility = sign['compatibility']
+        famous_people = sign['famous_people']
+        sun_dates = sign['sun_dates']
+        sign = Sign(name, compatibility, famous_people, sun_dates)
+        ret.append(
+            sign
+        )
+    return ret
 
-    def __init__(self, owner, amount=0):
-        'This is the constructor that lets us create objects from this class'
-        self.owner = owner
-        self.amount = amount
-        self._transactions = []
 
-    def __repr__(self):
-        return 'Account({!r}, {!r})'.format(self.owner, self.amount)
+def get_sign_with_most_famous_people(signs: list):
+    """Get the sign with the most famous people associated"""
+    famous_people = [
+        (s.name, len(s.famous_people)) for s in signs
+    ]
+    return max(famous_people, key=itemgetter(1))
 
-    def __str__(self):
-        return 'Account of {} with starting amount: {}'.format(self.owner,
-                                                               self.amount)
 
-    def add_transaction(self, amount):
-        if not isinstance(amount, int):
-            raise ValueError('please use int for amount')
-        self._transactions.append(amount)
+def signs_are_mutually_compatible(signs: list, sign1: str, sign2: str) -> bool:
+    """Given 2 signs return if they are compatible (compatibility field)"""
+    ret = False
+    for sign in signs:
+        if sign.name == sign1:
+            ret = sign2 in sign.compatibility
+        elif sign.name == sign2:
+            ret = sign1 in sign.compatibility
+    return ret
 
-    @property
-    def balance(self):
-        return self.amount + sum(self._transactions)
 
-    def __len__(self):
-        return len(self._transactions)
+def _get_month_int(month):
+    month_mapping = dict((v, k) for k, v in
+                         enumerate(calendar.month_abbr))
+    return int(month_mapping[month[:3]])
 
-    def __getitem__(self, position):
-        return self._transactions[position]
 
-    def __eq__(self, other):
-        return self.balance == other.balance
+def get_sign_by_date(signs: list, date: datetime) -> str:
+    """Given a date return the right sign (sun_dates field)"""
+    month = date.month
+    day = date.day
 
-    def __lt__(self, other):
-        return self.balance < other.balance
-
-    def __add__(self, other):
-        owner = '{}&{}'.format(self.owner, other.owner)
-        start_amount = self.amount + other.amount
-        acc = Account(owner, start_amount)
-        for t in list(self) + list(other):
-            acc.add_transaction(t)
-        return acc
+    for sign in signs:
+        start, end = sign.sun_dates
+        start_month, start_day = start.split()
+        end_month, end_day = end.split()
+        if(month == _get_month_int(start_month) and day >= int(start_day)
+           or month == _get_month_int(end_month) and day <= int(end_day)):
+            return sign.name
