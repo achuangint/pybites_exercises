@@ -18156,52 +18156,116 @@ def calc_max_uptime(reboots):
 #            or month == _get_month_int(end_month) and day <= int(end_day)):
 #             return sign.name
 
+#
+# MAX_NUMBER = 15
+#
+#
+# class InvalidNumber(Exception):
+#     pass
+#
+#
+# class GuessGame:
+#
+#     def __init__(self, secret_number, max_guesses=5):
+#         self.secret_number = self._validate(secret_number)
+#         self.max_guesses = max_guesses
+#         self.attempt = 0
+#
+#     def _validate(self, number):
+#         try:
+#             number = int(number)
+#         except ValueError:
+#             raise InvalidNumber('Not a number')
+#         if number < 0:
+#             raise InvalidNumber('Negative number')
+#         if number > MAX_NUMBER:
+#             raise InvalidNumber('Number too high')
+#         return number
+#
+#     def __call__(self):
+#         while self.attempt < self.max_guesses:
+#             try:
+#                 print('Guess a number: ')
+#                 guess = int(input())
+#                 print(f"guess:{guess}")
+#             except ValueError:
+#                 print('Enter a number, try again')
+#                 continue
+#
+#             self.attempt += 1
+#
+#             if guess < self.secret_number:
+#                 print('Too low')
+#             elif guess > self.secret_number:
+#                 print('Too high')
+#             else:
+#                 print('You guessed it!')
+#                 break
+#
+#         else:
+#             print(f'Sorry, the number was {self.secret_number}')
+#
 
-MAX_NUMBER = 15
+import sqlite3
 
 
-class InvalidNumber(Exception):
-    pass
+class MovieDb:
 
+    def __init__(self, db, data, table):
+        self.con = sqlite3.connect(db)
+        self.data = data
+        self.table = table
+        self.cur = self.con.cursor()
 
-class GuessGame:
+    def init(self):
+        self._create_table()
+        self._insert_sample_data()
 
-    def __init__(self, secret_number, max_guesses=5):
-        self.secret_number = self._validate(secret_number)
-        self.max_guesses = max_guesses
-        self.attempt = 0
+    def _create_table(self):
+        self.cur.execute(
+            (f"CREATE TABLE IF NOT EXISTS {self.table}"
+             "(id INTEGER PRIMARY KEY AUTOINCREMENT,"
+             "title TEXT NOT NULL,"
+             "year INTEGER NOT NULL,"
+             "score REAL NOT NULL)")
+        )
 
-    def _validate(self, number):
-        try:
-            number = int(number)
-        except ValueError:
-            raise InvalidNumber('Not a number')
-        if number < 0:
-            raise InvalidNumber('Negative number')
-        if number > MAX_NUMBER:
-            raise InvalidNumber('Number too high')
-        return number
+    def _insert_sample_data(self):
+        self.con.executemany(
+            (f"INSERT INTO {self.table} (title, year, score)"
+             "VALUES (?, ?, ?)"),
+            self.data)
+        self.con.commit()
 
-    def __call__(self):
-        while self.attempt < self.max_guesses:
-            try:
-                print('Guess a number: ')
-                guess = int(input())
-                print(f"guess:{guess}")
-            except ValueError:
-                print('Enter a number, try again')
-                continue
+    def drop_table(self):
+        self.cur.execute(f"DROP TABLE {self.table}")
+        self.con.commit()
 
-            self.attempt += 1
+    def query(self, title=None, year=None, score_gt=None):
+        sql = f"SELECT * FROM {self.table}"
+        params = []
+        if title is not None:
+            sql += " WHERE title LIKE ?"
+            params.append(f"%{title}%")
+        elif year is not None:
+            sql += " WHERE year = ?"
+            params.append(year)
+        elif score_gt is not None:
+            sql += " WHERE score > ?"
+            params.append(score_gt)
+        self.cur.execute(sql, params)
+        return self.cur.fetchall()
 
-            if guess < self.secret_number:
-                print('Too low')
-            elif guess > self.secret_number:
-                print('Too high')
-            else:
-                print('You guessed it!')
-                break
+    def add(self, title, year, score):
+        self.cur.execute(
+            (f"INSERT INTO {self.table} (title, year, score)"
+             " VALUES (?, ?, ?)"),
+            (title, year, score)
+        )
+        return self.cur.lastrowid
 
-        else:
-            print(f'Sorry, the number was {self.secret_number}')
+    def delete(self, idx):
+        self.cur.execute(
+            f"DELETE FROM {self.table} WHERE id=?", (idx,)
+        )
 

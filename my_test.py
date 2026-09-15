@@ -17466,13 +17466,13 @@ Inputs are modified to check how the function deals with unknown characters
 #     assert 'Aquarius' == get_sign_by_date(signs, dt2)
 #     dt3 = datetime(2026, 12, 13, 0, 30, 0)
 #     assert 'Sagittarius' == get_sign_by_date(signs, dt3)
-
-from unittest.mock import Mock, patch
-import builtins
-import pytest
-
-from wc import GuessGame, InvalidNumber
-
+#
+# from unittest.mock import Mock, patch
+# import builtins
+# import pytest
+#
+# from wc import GuessGame, InvalidNumber
+#
 
 # write test code to reach coverage + make mutatest happy
 
@@ -17480,61 +17480,215 @@ from wc import GuessGame, InvalidNumber
 # What is the system being tested?
 
 # Need to test the GuessGame class.
+#
+# def test_init():
+#     g = GuessGame(4)
+#     assert g.secret_number == 4
+#     assert g.max_guesses == 5
+#
+# def test_validate():
+#
+#     with pytest.raises(InvalidNumber,match='Not a number'):
+#         GuessGame("abc")
+#
+#     with pytest.raises(InvalidNumber,match='Negative number'):
+#         GuessGame(-4)
+#
+#     with pytest.raises(InvalidNumber,match='Number too high'):
+#         GuessGame(23)
+#
+# # can I use a fixture
+#
+# @pytest.fixture
+# def game_start():
+#     g = GuessGame(4,2)
+#     return g
+#
+# #
+# # @patch('builtins.input', return_value='Jim')
+# # def test_User_Input(mock_input):
+# #     name=input("What is your name? ")
+# #     assert name == 'Jim'
+#
+# @patch('builtins.input', side_effect=[1,2,34])
+# def test_value_error(mock_input):
+#     with pytest.raises(ValueError):
+#         g = GuessGame(4,2)
+#         g()
+#
+#
+# @patch('builtins.input', side_effect=[1,7,4])
+# def test_guess_it(mock_input, capsys):
+#     g = GuessGame(4,3)
+#     g()
+#     out, err = capsys.readouterr()
+#     assert out.split('\n')[-2] == 'You guessed it!'
+#
+#
+# @patch('builtins.input', side_effect=[1,7,9])
+# def test_sorry(mock_input):
+#     g = GuessGame(4,3)
+#     g()
+#
+#
+# @patch('builtins.input', side_effect=[1,7,"abc"])
+# def test_value_error(mock_input):
+#     g = GuessGame(4,3)
+#     try:
+#         g()
+#     except Exception:
+#         pass
 
-def test_init():
-    g = GuessGame(4)
-    assert g.secret_number == 4
-    assert g.max_guesses == 5
+# Pybite solution:
+#
+# import pytest
+#
+# from guess import GuessGame, InvalidNumber
+#
+#
+# def _strip_lines(output):
+#     return [line.strip() for line in output.strip().splitlines()]
+#
+#
+# def test_different_inputs():
+#     with pytest.raises(InvalidNumber, match='Not a number'):
+#         GuessGame('a')
+#     with pytest.raises(InvalidNumber, match='Negative number'):
+#         GuessGame(-1)
+#     with pytest.raises(InvalidNumber, match='Number too high'):
+#         GuessGame(16)
+#     # these boundaries are ok
+#     GuessGame(0)
+#     GuessGame(15)
+#
+#
+# @patch("builtins.input", side_effect=[1, 2, 9, 7, 11])
+# def test_bad_game(input_mock, capfd):
+#     expected = """
+#         Guess a number:
+#         Too low
+#         Guess a number:
+#         Too low
+#         Guess a number:
+#         Too high
+#         Guess a number:
+#         Too high
+#         Guess a number:
+#         Too high
+#         Sorry, the number was 5
+#     """
+#     GuessGame('5')()  # can be casted to int
+#     actual = capfd.readouterr()[0]
+#     assert _strip_lines(actual) == _strip_lines(expected)
+#
+#
+# @patch("builtins.input", side_effect=[1, 11, 9, 5])
+# def test_good_game(input_mock, capfd):
+#     expected = """
+#         Guess a number:
+#         Too low
+#         Guess a number:
+#         Too high
+#         Guess a number:
+#         You guessed it!
+#     """
+#     GuessGame(9)()
+#     actual = capfd.readouterr()[0]
+#     assert _strip_lines(actual) == _strip_lines(expected)
+#
+#
+# @patch("builtins.input", side_effect=[1, 'a', 9, '1a', '1', 6])
+# def test_continue_on_bad_inputs(input_mock, capfd):
+#     expected = """
+#         Guess a number:
+#         Too low
+#         Guess a number:
+#         Enter a number, try again
+#         Guess a number:
+#         Too high
+#         Guess a number:
+#         Enter a number, try again
+#         Guess a number:
+#         Too low
+#         Guess a number:
+#         You guessed it!
+#     """
+#     GuessGame(6)()
+#     actual = capfd.readouterr()[0]
+#     assert _strip_lines(actual) == _strip_lines(expected)
+#
+#
+# @patch("builtins.input", side_effect=['5', 2, 3])
+# def test_lesser_guesses(input_mock, capfd):
+#     expected = """
+#         Guess a number:
+#         Too high
+#         Guess a number:
+#         Too high
+#         Guess a number:
+#         Too high
+#         Sorry, the number was 1
+#     """
+#     GuessGame(1, max_guesses=3)()
+#     actual = capfd.readouterr()[0]
+#     assert _strip_lines(actual) == _strip_lines(expected)
 
-def test_validate():
 
-    with pytest.raises(InvalidNumber,match='Not a number'):
-        GuessGame("abc")
 
-    with pytest.raises(InvalidNumber,match='Negative number'):
-        GuessGame(-4)
 
-    with pytest.raises(InvalidNumber,match='Number too high'):
-        GuessGame(23)
 
-# can I use a fixture
+import os
+import random
+import string
+
+import pytest
+
+from wc import MovieDb
+
+salt = ''.join(
+    random.choice(string.ascii_lowercase) for i in range(20)
+)
+DB = os.path.join(os.getenv("TMP", "/tmp"), f'movies_{salt}.db')
+# https://www.imdb.com/list/ls055592025/
+DATA = [
+    ("The Godfather", 1972, 9.2),
+    ("The Shawshank Redemption", 1994, 9.3),
+    ("Schindler's List", 1993, 8.9),
+    ("Raging Bull", 1980, 8.2),
+    ("Casablanca", 1942, 8.5),
+    ("Citizen Kane", 1941, 8.3),
+    ("Gone with the Wind", 1939, 8.1),
+    ("The Wizard of Oz", 1939, 8),
+    ("One Flew Over the Cuckoo's Nest", 1975, 8.7),
+    ("Lawrence of Arabia", 1962, 8.3),
+]
+TABLE = 'movies'
+
 
 @pytest.fixture
-def game_start():
-    g = GuessGame(4,2)
-    return g
+def db():
+    # instantiate MovieDb class using above constants
+    # do proper setup / teardown using MovieDb methods
+    # https://docs.pytest.org/en/latest/fixture.html (hint: yield)
+    m = MovieDb(DB,DATA,TABLE)
+    m.init()
+    yield m
+    m.drop_table()
+# write tests for all MovieDb's query / add / delete
 
-#
-# @patch('builtins.input', return_value='Jim')
-# def test_User_Input(mock_input):
-#     name=input("What is your name? ")
-#     assert name == 'Jim'
+def test_query_title(db):
+    assert [(1, 'The Godfather', 1972, 9.2)] == db.query(title='The Godfather')
 
-@patch('builtins.input', side_effect=[1,2,34])
-def test_value_error(mock_input):
-    with pytest.raises(ValueError):
-        g = GuessGame(4,2)
-        g()
+def test_delete(db):
+    db.delete(2)
+    assert [] == db.query(score_gt=9.2)
 
+def test_add(db):
+    db.add('Test Movie', 1950, 10)
+    assert [(11, 'Test Movie', 1950, 10.0)] == db.query(score_gt=9.9)
 
-@patch('builtins.input', side_effect=[1,7,4])
-def test_guess_it(mock_input, capsys):
-    g = GuessGame(4,3)
-    g()
-    out, err = capsys.readouterr()
-    assert out.split('\n')[-2] == 'You guessed it!'
+def test_query_year(db):
+    assert [(1, 'The Godfather', 1972, 9.2)] == db.query(year=1972)
 
-
-@patch('builtins.input', side_effect=[1,7,9])
-def test_sorry(mock_input):
-    g = GuessGame(4,3)
-    g()
-
-
-@patch('builtins.input', side_effect=[1,7,"abc"])
-def test_value_error(mock_input):
-    g = GuessGame(4,3)
-    try:
-        g()
-    except Exception:
-        pass
+def test_query_score_gt(db):
+    assert [(2, 'The Shawshank Redemption', 1994, 9.3)] == db.query(score_gt=9.2)
