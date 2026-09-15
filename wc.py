@@ -18094,64 +18094,114 @@ def calc_max_uptime(reboots):
 #         for t in list(self) + list(other):
 #             acc.add_transaction(t)
 #         return acc
+#
+# import calendar
+# from collections import namedtuple
+# from datetime import datetime
+# from operator import itemgetter
+# from typing import List
+#
+# Sign = namedtuple('Sign', 'name compatibility famous_people sun_dates')
+#
+#
+# def get_signs(data: list) -> List[Sign]:
+#     ret = []
+#     for sign in data:
+#         name = sign['name']
+#         compatibility = sign['compatibility']
+#         famous_people = sign['famous_people']
+#         sun_dates = sign['sun_dates']
+#         sign = Sign(name, compatibility, famous_people, sun_dates)
+#         ret.append(
+#             sign
+#         )
+#     return ret
+#
+#
+# def get_sign_with_most_famous_people(signs: list):
+#     """Get the sign with the most famous people associated"""
+#     famous_people = [
+#         (s.name, len(s.famous_people)) for s in signs
+#     ]
+#     return max(famous_people, key=itemgetter(1))
+#
+#
+# def signs_are_mutually_compatible(signs: list, sign1: str, sign2: str) -> bool:
+#     """Given 2 signs return if they are compatible (compatibility field)"""
+#     ret = False
+#     for sign in signs:
+#         if sign.name == sign1:
+#             ret = sign2 in sign.compatibility
+#         elif sign.name == sign2:
+#             ret = sign1 in sign.compatibility
+#     return ret
+#
+#
+# def _get_month_int(month):
+#     month_mapping = dict((v, k) for k, v in
+#                          enumerate(calendar.month_abbr))
+#     return int(month_mapping[month[:3]])
+#
+#
+# def get_sign_by_date(signs: list, date: datetime) -> str:
+#     """Given a date return the right sign (sun_dates field)"""
+#     month = date.month
+#     day = date.day
+#
+#     for sign in signs:
+#         start, end = sign.sun_dates
+#         start_month, start_day = start.split()
+#         end_month, end_day = end.split()
+#         if(month == _get_month_int(start_month) and day >= int(start_day)
+#            or month == _get_month_int(end_month) and day <= int(end_day)):
+#             return sign.name
 
-import calendar
-from collections import namedtuple
-from datetime import datetime
-from operator import itemgetter
-from typing import List
 
-Sign = namedtuple('Sign', 'name compatibility famous_people sun_dates')
+MAX_NUMBER = 15
 
 
-def get_signs(data: list) -> List[Sign]:
-    ret = []
-    for sign in data:
-        name = sign['name']
-        compatibility = sign['compatibility']
-        famous_people = sign['famous_people']
-        sun_dates = sign['sun_dates']
-        sign = Sign(name, compatibility, famous_people, sun_dates)
-        ret.append(
-            sign
-        )
-    return ret
+class InvalidNumber(Exception):
+    pass
 
 
-def get_sign_with_most_famous_people(signs: list):
-    """Get the sign with the most famous people associated"""
-    famous_people = [
-        (s.name, len(s.famous_people)) for s in signs
-    ]
-    return max(famous_people, key=itemgetter(1))
+class GuessGame:
 
+    def __init__(self, secret_number, max_guesses=5):
+        self.secret_number = self._validate(secret_number)
+        self.max_guesses = max_guesses
+        self.attempt = 0
 
-def signs_are_mutually_compatible(signs: list, sign1: str, sign2: str) -> bool:
-    """Given 2 signs return if they are compatible (compatibility field)"""
-    ret = False
-    for sign in signs:
-        if sign.name == sign1:
-            ret = sign2 in sign.compatibility
-        elif sign.name == sign2:
-            ret = sign1 in sign.compatibility
-    return ret
+    def _validate(self, number):
+        try:
+            number = int(number)
+        except ValueError:
+            raise InvalidNumber('Not a number')
+        if number < 0:
+            raise InvalidNumber('Negative number')
+        if number > MAX_NUMBER:
+            raise InvalidNumber('Number too high')
+        return number
 
+    def __call__(self):
+        while self.attempt < self.max_guesses:
+            try:
+                print('Guess a number: ')
+                guess = int(input())
+                print(f"guess:{guess}")
+            except ValueError:
+                print('Enter a number, try again')
+                continue
 
-def _get_month_int(month):
-    month_mapping = dict((v, k) for k, v in
-                         enumerate(calendar.month_abbr))
-    return int(month_mapping[month[:3]])
+            self.attempt += 1
 
+            if guess < self.secret_number:
+                print('Too low')
+            elif guess > self.secret_number:
+                print('Too high')
+            else:
+                print('You guessed it!')
+                break
 
-def get_sign_by_date(signs: list, date: datetime) -> str:
-    """Given a date return the right sign (sun_dates field)"""
-    month = date.month
-    day = date.day
+        else:
+            print(f'Sorry, the number was {self.secret_number}')
 
-    for sign in signs:
-        start, end = sign.sun_dates
-        start_month, start_day = start.split()
-        end_month, end_day = end.split()
-        if(month == _get_month_int(start_month) and day >= int(start_day)
-           or month == _get_month_int(end_month) and day <= int(end_day)):
-            return sign.name

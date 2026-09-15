@@ -17413,57 +17413,128 @@ Inputs are modified to check how the function deals with unknown characters
 #         basic_account = basic_account + a1
 #         assert basic_account.balance==44.90
 
-from datetime import datetime
-import json
-import os
-from pathlib import Path
-from urllib.request import urlretrieve
-from operator import itemgetter
+#
+# import json
+# import os
+# from pathlib import Path
+# from urllib.request import urlretrieve
+# from operator import itemgetter
+# import pytest
+# from datetime import datetime
+#
+# from wc import (get_signs, get_sign_with_most_famous_people,
+#                     signs_are_mutually_compatible, get_sign_by_date)
+#
+# # original source: https://zodiacal.herokuapp.com/api
+# URL = "https://bites-data.s3.us-east-2.amazonaws.com/zodiac.json"
+# TMP = os.getenv("TMP", "/tmp")
+# PATH = Path(TMP, "zodiac.json")
+#
+#
+# @pytest.fixture(scope='module')
+# def signs():
+#     if not PATH.exists():
+#         urlretrieve(URL, PATH)
+#     with open(PATH, encoding="utf-8") as f:
+#         data = json.loads(f.read())
+#     return get_signs(data)
+#
+# # write your pytest code here ...
+# #
+# # d1 =  signs()
+# #
+# # p1=get_sign_with_most_famous_people(d1)
+#
+#
+# def test_get_sign_with_most_famous_people(signs):
+#     famous_people = [
+#         (s.name, len(s.famous_people)) for s in signs
+#     ]
+#     fp = max(famous_people, key=itemgetter(1))
+#     assert fp == get_sign_with_most_famous_people(signs)
+#
+#
+# def test_mutual_compatibility(signs):
+#     assert True == signs_are_mutually_compatible(signs, 'Aries','Leo' )
+#     assert False == signs_are_mutually_compatible(signs, 'Aries','Taurus' )
+#     assert False == signs_are_mutually_compatible(signs, 'A','B' )
+#
+# def test_get_sign_by_date(signs):
+#     dt1 = datetime(2026, 7, 4, 0, 30, 0)
+#     assert 'Cancer' == get_sign_by_date(signs, dt1)
+#     dt2 = datetime(2026, 1, 20, 0, 30, 0)
+#     assert 'Aquarius' == get_sign_by_date(signs, dt2)
+#     dt3 = datetime(2026, 12, 13, 0, 30, 0)
+#     assert 'Sagittarius' == get_sign_by_date(signs, dt3)
+
+from unittest.mock import Mock, patch
+import builtins
 import pytest
-from datetime import datetime
 
-from wc import (get_signs, get_sign_with_most_famous_people,
-                    signs_are_mutually_compatible, get_sign_by_date)
-
-# original source: https://zodiacal.herokuapp.com/api
-URL = "https://bites-data.s3.us-east-2.amazonaws.com/zodiac.json"
-TMP = os.getenv("TMP", "/tmp")
-PATH = Path(TMP, "zodiac.json")
+from wc import GuessGame, InvalidNumber
 
 
-@pytest.fixture(scope='module')
-def signs():
-    if not PATH.exists():
-        urlretrieve(URL, PATH)
-    with open(PATH, encoding="utf-8") as f:
-        data = json.loads(f.read())
-    return get_signs(data)
+# write test code to reach coverage + make mutatest happy
 
-# write your pytest code here ...
+
+# What is the system being tested?
+
+# Need to test the GuessGame class.
+
+def test_init():
+    g = GuessGame(4)
+    assert g.secret_number == 4
+    assert g.max_guesses == 5
+
+def test_validate():
+
+    with pytest.raises(InvalidNumber,match='Not a number'):
+        GuessGame("abc")
+
+    with pytest.raises(InvalidNumber,match='Negative number'):
+        GuessGame(-4)
+
+    with pytest.raises(InvalidNumber,match='Number too high'):
+        GuessGame(23)
+
+# can I use a fixture
+
+@pytest.fixture
+def game_start():
+    g = GuessGame(4,2)
+    return g
+
 #
-# d1 =  signs()
-#
-# p1=get_sign_with_most_famous_people(d1)
+# @patch('builtins.input', return_value='Jim')
+# def test_User_Input(mock_input):
+#     name=input("What is your name? ")
+#     assert name == 'Jim'
+
+@patch('builtins.input', side_effect=[1,2,34])
+def test_value_error(mock_input):
+    with pytest.raises(ValueError):
+        g = GuessGame(4,2)
+        g()
 
 
-def test_get_sign_with_most_famous_people(signs):
-    famous_people = [
-        (s.name, len(s.famous_people)) for s in signs
-    ]
-    fp = max(famous_people, key=itemgetter(1))
-    assert fp == get_sign_with_most_famous_people(signs)
+@patch('builtins.input', side_effect=[1,7,4])
+def test_guess_it(mock_input, capsys):
+    g = GuessGame(4,3)
+    g()
+    out, err = capsys.readouterr()
+    assert out.split('\n')[-2] == 'You guessed it!'
 
 
-def test_mutual_compatibility(signs):
-    assert True == signs_are_mutually_compatible(signs, 'Aries','Leo' )
-    assert False == signs_are_mutually_compatible(signs, 'Aries','Taurus' )
-    assert False == signs_are_mutually_compatible(signs, 'A','B' )
+@patch('builtins.input', side_effect=[1,7,9])
+def test_sorry(mock_input):
+    g = GuessGame(4,3)
+    g()
 
-def test_get_sign_by_date(signs):
-    dt1 = datetime(2026, 7, 4, 0, 30, 0)
-    assert 'Cancer' == get_sign_by_date(signs, dt1)
-    dt2 = datetime(2026, 1, 20, 0, 30, 0)
-    assert 'Aquarius' == get_sign_by_date(signs, dt2)
-    dt3 = datetime(2026, 12, 13, 0, 30, 0)
-    assert 'Sagittarius' == get_sign_by_date(signs, dt3)
 
+@patch('builtins.input', side_effect=[1,7,"abc"])
+def test_value_error(mock_input):
+    g = GuessGame(4,3)
+    try:
+        g()
+    except Exception:
+        pass
