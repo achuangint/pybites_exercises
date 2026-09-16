@@ -18205,67 +18205,208 @@ def calc_max_uptime(reboots):
 #         else:
 #             print(f'Sorry, the number was {self.secret_number}')
 #
+#
+# import sqlite3
+#
+# class MovieDb:
+#
+#     def __init__(self, db, data, table):
+#         self.con = sqlite3.connect(db)
+#         self.data = data
+#         self.table = table
+#         self.cur = self.con.cursor()
+#
+#     def init(self):
+#         self._create_table()
+#         self._insert_sample_data()
+#
+#     def _create_table(self):
+#         self.cur.execute(
+#             (f"CREATE TABLE IF NOT EXISTS {self.table}"
+#              "(id INTEGER PRIMARY KEY AUTOINCREMENT,"
+#              "title TEXT NOT NULL,"
+#              "year INTEGER NOT NULL,"
+#              "score REAL NOT NULL)")
+#         )
+#
+#     def _insert_sample_data(self):
+#         self.con.executemany(
+#             (f"INSERT INTO {self.table} (title, year, score)"
+#              "VALUES (?, ?, ?)"),
+#             self.data)
+#         self.con.commit()
+#
+#     def drop_table(self):
+#         self.cur.execute(f"DROP TABLE {self.table}")
+#         self.con.commit()
+#
+#     def query(self, title=None, year=None, score_gt=None):
+#         sql = f"SELECT * FROM {self.table}"
+#         params = []
+#         if title is not None:
+#             sql += " WHERE title LIKE ?"
+#             params.append(f"%{title}%")
+#         elif year is not None:
+#             sql += " WHERE year = ?"
+#             params.append(year)
+#         elif score_gt is not None:
+#             sql += " WHERE score > ?"
+#             params.append(score_gt)
+#         self.cur.execute(sql, params)
+#         return self.cur.fetchall()
+#
+#     def add(self, title, year, score):
+#         self.cur.execute(
+#             (f"INSERT INTO {self.table} (title, year, score)"
+#              " VALUES (?, ?, ?)"),
+#             (title, year, score)
+#         )
+#         return self.cur.lastrowid
+#
+#     def delete(self, idx):
+#         self.cur.execute(
+#             f"DELETE FROM {self.table} WHERE id=?", (idx,)
+#         )
+#
 
-import sqlite3
 
 
-class MovieDb:
 
-    def __init__(self, db, data, table):
-        self.con = sqlite3.connect(db)
-        self.data = data
-        self.table = table
-        self.cur = self.con.cursor()
+from math import floor
+from string import ascii_lowercase, ascii_uppercase, digits
+from typing import Dict
 
-    def init(self):
-        self._create_table()
-        self._insert_sample_data()
+CODEX: str = digits + ascii_lowercase + ascii_uppercase
+BASE: int = len(CODEX)
+# makeshift database record
+LINKS: Dict[int, str] = {
+    1: "https://pybit.es",
+    45: "https://pybit.es/pages/articles.html",
+    255: "http://pbreadinglist.herokuapp.com",
+    600: "https://pybit.es/pages/challenges.html",
+    874: "https://stackoverflow.com",
+}
+SITE: str = "https://pybit.es"
 
-    def _create_table(self):
-        self.cur.execute(
-            (f"CREATE TABLE IF NOT EXISTS {self.table}"
-             "(id INTEGER PRIMARY KEY AUTOINCREMENT,"
-             "title TEXT NOT NULL,"
-             "year INTEGER NOT NULL,"
-             "score REAL NOT NULL)")
-        )
+# error messages
+INVALID = "Not a valid PyBites shortened url"
+NO_RECORD = "Not a valid shortened url"
 
-    def _insert_sample_data(self):
-        self.con.executemany(
-            (f"INSERT INTO {self.table} (title, year, score)"
-             "VALUES (?, ?, ?)"),
-            self.data)
-        self.con.commit()
 
-    def drop_table(self):
-        self.cur.execute(f"DROP TABLE {self.table}")
-        self.con.commit()
+def encode(record: int) -> str:
+    """Encodes an integer into Base62"""
+    remainder = record % BASE
+    result = CODEX[remainder]
+    queue = floor(record / BASE)
 
-    def query(self, title=None, year=None, score_gt=None):
-        sql = f"SELECT * FROM {self.table}"
-        params = []
-        if title is not None:
-            sql += " WHERE title LIKE ?"
-            params.append(f"%{title}%")
-        elif year is not None:
-            sql += " WHERE year = ?"
-            params.append(year)
-        elif score_gt is not None:
-            sql += " WHERE score > ?"
-            params.append(score_gt)
-        self.cur.execute(sql, params)
-        return self.cur.fetchall()
+    while queue:
+        q_remainder = queue % BASE  # 1
+        queue = floor(queue / BASE )  # 0
+        result = CODEX[q_remainder] + result   # "1C"
+    return result
 
-    def add(self, title, year, score):
-        self.cur.execute(
-            (f"INSERT INTO {self.table} (title, year, score)"
-             " VALUES (?, ?, ?)"),
-            (title, year, score)
-        )
-        return self.cur.lastrowid
 
-    def delete(self, idx):
-        self.cur.execute(
-            f"DELETE FROM {self.table} WHERE id=?", (idx,)
-        )
+def decode(short_url: str) -> int:
+    """Decodes the Base62 string into a Base10 integer"""
+    total = 0
+    for letter, digit in zip(short_url, reversed((range(len(short_url))))):
+        total += pow(BASE,digit)*CODEX.find(letter)
+    return total
+
+def redirect(url: str) -> str:
+    """Retrieves URL from shortened DB (LINKS)
+
+    1. Check for valid domain
+    2. Check if record exists
+    3. Return URL stored in LINKS or proper message
+    """
+    if SITE not in url:
+        return INVALID
+    record = url.split('/')[-1]
+    index = decode(record)
+    if index not in LINKS:
+        return NO_RECORD
+    return LINKS[index]
+
+
+
+def shorten_url(url: str, next_record: int) -> str:
+    """Shortens URL and updates the LINKS DB
+
+    1. Encode next_record
+    2. Adds url to LINKS
+    3. Return shortened URL
+    """
+    shortcode  = encode(next_record)
+    new_url = SITE + '/' + shortcode
+    LINKS[next_record] = url
+    return new_url
+
+
+# Pybite solution
+from math import floor
+from string import ascii_lowercase, ascii_uppercase, digits
+from typing import Dict
+
+CODEX: str = digits + ascii_lowercase + ascii_uppercase
+BASE: int = len(CODEX)
+# makeshift database record
+LINKS: Dict[int, str] = {
+    1: "https://pybit.es",
+    45: "https://pybit.es/pages/articles.html",
+    255: "http://pbreadinglist.herokuapp.com",
+    600: "https://pybit.es/pages/challenges.html",
+    874: "https://stackoverflow.com",
+}
+SITE: str = "https://pybit.es"
+
+# error messages
+INVALID = "Not a valid PyBites shortened url"
+NO_RECORD = "Not a valid shortened url"
+
+
+def encode(record: int) -> str:
+    """Encodes an integer into Base62"""
+    remainder = record % BASE
+    result = CODEX[remainder]
+    q = floor(record / BASE)
+
+    while q:
+        remainder = q % BASE
+        q = floor(q / BASE)
+        result = CODEX[remainder] + result
+
+    return result
+
+
+def decode(short_url: str) -> int:
+    """Decodes the Base62 string into a Base10 integer"""
+    result = 0
+    for code in short_url:
+        result = BASE * result + CODEX.find(code)
+
+    return result
+
+
+def redirect(url: str) -> str:
+    """Retrieves URL from shortened DB (LINKS)"""
+    if SITE in url:
+        s_url = url.rsplit("/")[-1]
+        record = decode(s_url)
+        # this would be an actual db record ID lookup
+        return LINKS.get(record, NO_RECORD)
+    return INVALID
+
+
+def shorten_url(url: str, next_record: int) -> str:
+    """Shortens URL and updates the LINKS DB"""
+    s_url = f"{SITE}/{encode(next_record)}"
+    LINKS[next_record] = url
+    return s_url
+
+
+
+
+
+
 

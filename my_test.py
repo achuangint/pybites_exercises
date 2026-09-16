@@ -17633,62 +17633,151 @@ Inputs are modified to check how the function deals with unknown characters
 #     actual = capfd.readouterr()[0]
 #     assert _strip_lines(actual) == _strip_lines(expected)
 
+#
+# import os
+# import random
+# import string
+#
+# import pytest
+#
+# from wc import MovieDb
+#
+# salt = ''.join(
+#     random.choice(string.ascii_lowercase) for i in range(20)
+# )
+# DB = os.path.join(os.getenv("TMP", "/tmp"), f'movies_{salt}.db')
+# # https://www.imdb.com/list/ls055592025/
+# DATA = [
+#     ("The Godfather", 1972, 9.2),
+#     ("The Shawshank Redemption", 1994, 9.3),
+#     ("Schindler's List", 1993, 8.9),
+#     ("Raging Bull", 1980, 8.2),
+#     ("Casablanca", 1942, 8.5),
+#     ("Citizen Kane", 1941, 8.3),
+#     ("Gone with the Wind", 1939, 8.1),
+#     ("The Wizard of Oz", 1939, 8),
+#     ("One Flew Over the Cuckoo's Nest", 1975, 8.7),
+#     ("Lawrence of Arabia", 1962, 8.3),
+# ]
+# TABLE = 'movies'
+#
+#
+# @pytest.fixture
+# def db():
+#     # instantiate MovieDb class using above constants
+#     # do proper setup / teardown using MovieDb methods
+#     # https://docs.pytest.org/en/latest/fixture.html (hint: yield)
+#     m = MovieDb(DB,DATA,TABLE)
+#     m.init()
+#     yield m
+#     m.drop_table()
+# # write tests for all MovieDb's query / add / delete
+#
+# def test_query_title(db):
+#     assert [(1, 'The Godfather', 1972, 9.2)] == db.query(title='The Godfather')
+#
+# def test_delete(db):
+#     db.delete(2)
+#     assert [] == db.query(score_gt=9.2)
+#
+# def test_add(db):
+#     db.add('Test Movie', 1950, 10)
+#     assert [(11, 'Test Movie', 1950, 10.0)] == db.query(score_gt=9.9)
+#
+# def test_query_year(db):
+#     assert [(1, 'The Godfather', 1972, 9.2)] == db.query(year=1972)
+#
+# def test_query_score_gt(db):
+#     assert [(2, 'The Shawshank Redemption', 1994, 9.3)] == db.query(score_gt=9.2)
 
 
-
-
-import os
-import random
-import string
 
 import pytest
 
-from wc import MovieDb
+from wc import decode, encode, redirect, shorten_url
 
-salt = ''.join(
-    random.choice(string.ascii_lowercase) for i in range(20)
+
+@pytest.mark.parametrize(
+    "arg, expected",
+    [
+        (1, "1"),
+        (45, "J"),
+        (255, "47"),
+        (600, "9G"),
+        (874, "e6"),
+        (1024, "gw"),
+        (2048, "x2"),
+        (3072, "Ny"),
+        (4096, "144"),
+        (5120, "1kA"),
+    ],
 )
-DB = os.path.join(os.getenv("TMP", "/tmp"), f'movies_{salt}.db')
-# https://www.imdb.com/list/ls055592025/
-DATA = [
-    ("The Godfather", 1972, 9.2),
-    ("The Shawshank Redemption", 1994, 9.3),
-    ("Schindler's List", 1993, 8.9),
-    ("Raging Bull", 1980, 8.2),
-    ("Casablanca", 1942, 8.5),
-    ("Citizen Kane", 1941, 8.3),
-    ("Gone with the Wind", 1939, 8.1),
-    ("The Wizard of Oz", 1939, 8),
-    ("One Flew Over the Cuckoo's Nest", 1975, 8.7),
-    ("Lawrence of Arabia", 1962, 8.3),
-]
-TABLE = 'movies'
+def test_encode(arg, expected):
+    assert encode(arg) == expected
 
 
-@pytest.fixture
-def db():
-    # instantiate MovieDb class using above constants
-    # do proper setup / teardown using MovieDb methods
-    # https://docs.pytest.org/en/latest/fixture.html (hint: yield)
-    m = MovieDb(DB,DATA,TABLE)
-    m.init()
-    yield m
-    m.drop_table()
-# write tests for all MovieDb's query / add / delete
+@pytest.mark.parametrize(
+    "arg, expected",
+    [
+        ("3W", 244),
+        ("1bO", 4576),
+        ("5e", 324),
+        ("co", 768),
+        ("18h", 4357),
+        ("1Yk", 7584),
+        ("3M", 234),
+        ("jnRFH", 286438245),
+    ],
+)
+def test_decode(arg, expected):
+    assert decode(arg) == expected
 
-def test_query_title(db):
-    assert [(1, 'The Godfather', 1972, 9.2)] == db.query(title='The Godfather')
 
-def test_delete(db):
-    db.delete(2)
-    assert [] == db.query(score_gt=9.2)
+@pytest.mark.parametrize(
+    "url, next_record, expected",
+    [
+        ("https://google.com", 5000, "https://pybit.es/1iE"),
+        ("https://youtube.com", 6000, "https://pybit.es/1yM"),
+        ("https://python.org", 7000, "https://pybit.es/1OU"),
+        ("https://medium.com", 8000, "https://pybit.es/252"),
+        ("https://tryexceptpass.org", 9000, "https://pybit.es/2la"),
+        ("https://training.talkpython.fm", 9999, "https://pybit.es/2Bh"),
+    ],
+)
+def test_shorten_url(url, next_record, expected):
+    assert shorten_url(url, next_record) == expected
 
-def test_add(db):
-    db.add('Test Movie', 1950, 10)
-    assert [(11, 'Test Movie', 1950, 10.0)] == db.query(score_gt=9.9)
 
-def test_query_year(db):
-    assert [(1, 'The Godfather', 1972, 9.2)] == db.query(year=1972)
+@pytest.mark.parametrize(
+    "url, expected",
+    [
+        ("https://pybit.es/1", "https://pybit.es"),
+        ("https://pybit.es/J", "https://pybit.es/pages/articles.html"),
+        ("https://pybit.es/47", "http://pbreadinglist.herokuapp.com"),
+        ("https://pybit.es/9G", "https://pybit.es/pages/challenges.html"),
+        ("https://pybit.es/e6", "https://stackoverflow.com"),
+    ],
+)
+def test_redirect(url, expected):
+    assert redirect(url) == expected
 
-def test_query_score_gt(db):
-    assert [(2, 'The Shawshank Redemption', 1994, 9.3)] == db.query(score_gt=9.2)
+
+@pytest.mark.parametrize(
+    "url, expected",
+    [
+        ("https://pybit.es/1iE", "https://google.com"),
+        ("https://pybit.es/1yM", "https://youtube.com"),
+        ("https://pybit.es/1OU", "https://python.org"),
+        ("https://pybit.es/252", "https://medium.com"),
+        ("https://pybit.es/2la", "https://tryexceptpass.org"),
+        ("https://pybit.es/2Bh", "https://training.talkpython.fm"),
+        ("https://pybit.es/bites", "Not a valid shortened url"),
+        ("https://youtu.be/gAYL5H46QnQ", "Not a valid PyBites shortened url"),
+    ]
+)
+def test_modified_links(url, expected):
+    assert redirect(url) == expected
+
+
+
+
