@@ -17690,94 +17690,302 @@ Inputs are modified to check how the function deals with unknown characters
 # def test_query_score_gt(db):
 #     assert [(2, 'The Shawshank Redemption', 1994, 9.3)] == db.query(score_gt=9.2)
 
-
+#
+#
+# import pytest
+#
+# from wc import decode, encode, redirect, shorten_url
+#
+#
+# @pytest.mark.parametrize(
+#     "arg, expected",
+#     [
+#         (1, "1"),
+#         (45, "J"),
+#         (255, "47"),
+#         (600, "9G"),
+#         (874, "e6"),
+#         (1024, "gw"),
+#         (2048, "x2"),
+#         (3072, "Ny"),
+#         (4096, "144"),
+#         (5120, "1kA"),
+#     ],
+# )
+# def test_encode(arg, expected):
+#     assert encode(arg) == expected
+#
+#
+# @pytest.mark.parametrize(
+#     "arg, expected",
+#     [
+#         ("3W", 244),
+#         ("1bO", 4576),
+#         ("5e", 324),
+#         ("co", 768),
+#         ("18h", 4357),
+#         ("1Yk", 7584),
+#         ("3M", 234),
+#         ("jnRFH", 286438245),
+#     ],
+# )
+# def test_decode(arg, expected):
+#     assert decode(arg) == expected
+#
+#
+# @pytest.mark.parametrize(
+#     "url, next_record, expected",
+#     [
+#         ("https://google.com", 5000, "https://pybit.es/1iE"),
+#         ("https://youtube.com", 6000, "https://pybit.es/1yM"),
+#         ("https://python.org", 7000, "https://pybit.es/1OU"),
+#         ("https://medium.com", 8000, "https://pybit.es/252"),
+#         ("https://tryexceptpass.org", 9000, "https://pybit.es/2la"),
+#         ("https://training.talkpython.fm", 9999, "https://pybit.es/2Bh"),
+#     ],
+# )
+# def test_shorten_url(url, next_record, expected):
+#     assert shorten_url(url, next_record) == expected
+#
+#
+# @pytest.mark.parametrize(
+#     "url, expected",
+#     [
+#         ("https://pybit.es/1", "https://pybit.es"),
+#         ("https://pybit.es/J", "https://pybit.es/pages/articles.html"),
+#         ("https://pybit.es/47", "http://pbreadinglist.herokuapp.com"),
+#         ("https://pybit.es/9G", "https://pybit.es/pages/challenges.html"),
+#         ("https://pybit.es/e6", "https://stackoverflow.com"),
+#     ],
+# )
+# def test_redirect(url, expected):
+#     assert redirect(url) == expected
+#
+#
+# @pytest.mark.parametrize(
+#     "url, expected",
+#     [
+#         ("https://pybit.es/1iE", "https://google.com"),
+#         ("https://pybit.es/1yM", "https://youtube.com"),
+#         ("https://pybit.es/1OU", "https://python.org"),
+#         ("https://pybit.es/252", "https://medium.com"),
+#         ("https://pybit.es/2la", "https://tryexceptpass.org"),
+#         ("https://pybit.es/2Bh", "https://training.talkpython.fm"),
+#         ("https://pybit.es/bites", "Not a valid shortened url"),
+#         ("https://youtu.be/gAYL5H46QnQ", "Not a valid PyBites shortened url"),
+#     ]
+# )
+# def test_modified_links(url, expected):
+#     assert redirect(url) == expected
+#
 
 import pytest
 
-from wc import decode, encode, redirect, shorten_url
+from wc import LightsGrid
 
 
 @pytest.mark.parametrize(
     "arg, expected",
     [
-        (1, "1"),
-        (45, "J"),
-        (255, "47"),
-        (600, "9G"),
-        (874, "e6"),
-        (1024, "gw"),
-        (2048, "x2"),
-        (3072, "Ny"),
-        (4096, "144"),
-        (5120, "1kA"),
+        # Turn on all lights
+        (["turn on 0,0 through 9,9"], 100),
+        # Turn on all lights
+        # Turn off selection of lights
+        # Turn on all lights again, intensity should be 100
+        (
+            [
+                "turn on 0,0 through 9,9",
+                "turn off 0,0 through 4,4",
+                "turn on 0,0 through 9,9",
+            ],
+            100,
+        ),
+        # Turn on all lights
+        # Turn off 50 of the lights, intensity decreases 50
+        # Turn on 1/4 the lights again, intensity increases 25
+        (
+            [
+                "turn on 0,0 through 9,9",
+                "turn off 0,0 through 4,9",
+                "turn on 0,0 through 4,4",
+            ],
+            75,
+        ),
+        # Turn on all lights 3 times
+        # Intensity should not go above 100
+        (
+            [
+                "turn on 0,0 through 9,9",
+                "turn on 0,0 through 9,9",
+                "turn on 0,0 through 9,9",
+            ],
+            100,
+        ),
     ],
 )
-def test_encode(arg, expected):
-    assert encode(arg) == expected
+def test_turn_on_lights(arg, expected):
+    lights = LightsGrid(10, arg)
+    lights.follow_instructions()
+    assert lights.lights_intensity == expected
 
 
 @pytest.mark.parametrize(
     "arg, expected",
     [
-        ("3W", 244),
-        ("1bO", 4576),
-        ("5e", 324),
-        ("co", 768),
-        ("18h", 4357),
-        ("1Yk", 7584),
-        ("3M", 234),
-        ("jnRFH", 286438245),
+        # Turn off all lights even though they are not on
+        (["turn off 0,0 through 9,9"], 0),
+        # Turn on all lights
+        # Turn off all lights
+        (["turn on 0,0 through 9,9", "turn off 0,0 through 9,9"], 0),
+        # Turn on all lights
+        # Turn up all lights again intensity should increase 100
+        # Turn off 1/4 of all lights, intensity should decrease 50
+        (
+            [
+                "turn on 0,0 through 9,9",
+                "turn up 1 0,0 through 9,9",
+                "turn off 0,0 through 4,4",
+            ],
+            150,
+        ),
+        # Turn on all lights
+        # Turn up all lights again intensity should increase 100
+        # Turn off 1/4 of all lights, decrease 50
+        # Turn off an over lapping sect10n, decrease 50
+        (
+            [
+                "turn on 0,0 through 9,9",
+                "turn up 1 0,0 through 9,9",
+                "turn off 0,0 through 4,4",
+                "turn off 3,3 through 5,5",
+            ],
+            140,
+        ),
     ],
 )
-def test_decode(arg, expected):
-    assert decode(arg) == expected
+def test_turn_off_lights(arg, expected):
+    lights = LightsGrid(10, arg)
+    lights.follow_instructions()
+    assert lights.lights_intensity == expected
 
 
 @pytest.mark.parametrize(
-    "url, next_record, expected",
+    "arg, expected",
     [
-        ("https://google.com", 5000, "https://pybit.es/1iE"),
-        ("https://youtube.com", 6000, "https://pybit.es/1yM"),
-        ("https://python.org", 7000, "https://pybit.es/1OU"),
-        ("https://medium.com", 8000, "https://pybit.es/252"),
-        ("https://tryexceptpass.org", 9000, "https://pybit.es/2la"),
-        ("https://training.talkpython.fm", 9999, "https://pybit.es/2Bh"),
+        # Toggle all lights
+        (["toggle 0,0 through 9,9"], 300),
+        # Turn on all lights
+        # Toggle all light
+        (["turn on 0,0 through 9,9", "toggle 0,0 through 9,9"], 0),
+        # Turn on all lights in grid
+        # Turn off some lights
+        # Toggle some off lights on
+        (
+            [
+                "turn on 0,0 through 9,9",
+                "turn off 0,0 through 4,4",
+                "toggle 3,3 through 6,6",
+            ],
+            75,
+        ),
     ],
 )
-def test_shorten_url(url, next_record, expected):
-    assert shorten_url(url, next_record) == expected
+def test_toggle_lights(arg, expected):
+    lights = LightsGrid(10, arg)
+    lights.follow_instructions()
+    assert lights.lights_intensity == expected
 
 
 @pytest.mark.parametrize(
-    "url, expected",
+    "arg, expected",
     [
-        ("https://pybit.es/1", "https://pybit.es"),
-        ("https://pybit.es/J", "https://pybit.es/pages/articles.html"),
-        ("https://pybit.es/47", "http://pbreadinglist.herokuapp.com"),
-        ("https://pybit.es/9G", "https://pybit.es/pages/challenges.html"),
-        ("https://pybit.es/e6", "https://stackoverflow.com"),
+        # Turn on all lights
+        # Turn up all light 1
+        (["turn on 0,0 through 9,9", "turn up 1 0,0 through 9,9"], 200),
+        # Turn on all lights
+        # Turn off some lights
+        # turn up some lights 3
+        (
+            [
+                "turn on 0,0 through 9,9",
+                "turn off 0,0 through 4,4",
+                "turn up 3 0,0 through 4,9",
+            ],
+            225,
+        ),
+        # Turn on all lights
+        # Turn off some lights
+        # turn up all lights 5
+        (
+            [
+                "turn on 0,0 through 9,9",
+                "turn off 0,0 through 4,4",
+                "turn up 5 0,0 through 9,9",
+            ],
+            500,
+        ),
     ],
 )
-def test_redirect(url, expected):
-    assert redirect(url) == expected
+def test_turn_up_lights(arg, expected):
+    lights = LightsGrid(10, arg)
+    lights.follow_instructions()
+    assert lights.lights_intensity == expected
 
 
 @pytest.mark.parametrize(
-    "url, expected",
+    "arg, expected",
     [
-        ("https://pybit.es/1iE", "https://google.com"),
-        ("https://pybit.es/1yM", "https://youtube.com"),
-        ("https://pybit.es/1OU", "https://python.org"),
-        ("https://pybit.es/252", "https://medium.com"),
-        ("https://pybit.es/2la", "https://tryexceptpass.org"),
-        ("https://pybit.es/2Bh", "https://training.talkpython.fm"),
-        ("https://pybit.es/bites", "Not a valid shortened url"),
-        ("https://youtu.be/gAYL5H46QnQ", "Not a valid PyBites shortened url"),
-    ]
+        # Turn on all lights
+        # Turn down 1 all light
+        (["turn on 0,0 through 9,9", "turn down 1 0,0 through 9,9"], 0),
+        # Turn on all lights
+        # Turn off some lights
+        # turn up some lights 3
+        # Turn down 2 some lights
+        (
+            [
+                "turn on 0,0 through 9,9",
+                "turn off 0,0 through 4,4",
+                "turn up 3 0,0 through 4,9",
+                "turn down 2 0,5 through 4,9",
+            ],
+            175,
+        ),
+        # Turn on all lights
+        # turn down 2 all lights
+        (["turn on 0,0 through 9,9", "turn down 2 0,0 through 9,9"], 0),
+    ],
 )
-def test_modified_links(url, expected):
-    assert redirect(url) == expected
+def test_turn_down_lights(arg, expected):
+    lights = LightsGrid(10, arg)
+    lights.follow_instructions()
+    assert lights.lights_intensity == expected
 
 
+@pytest.mark.parametrize(
+    "arg, expected",
+    [
+        # Create grid of length 5 - intensity 0
+        # Turn on 1,1 through 3,3 - intensity 9
+        # Turn off 2,2 through 2,2 - intensity 8
+        # Turn up 3 0,2 through 4,2 - intensity 23
+        # Toggle 2,0 through 2,4 - intensity 24
+        # Turn down 2 2,2 through 3,4 - intensity 19
+        (
+            [
+                "turn on 1,1 through 3,3",
+                "turn off 2,2 through 2,2",
+                "turn up 3 0,2 through 4,2",
+                "toggle 2,0 through 2,4",
+                "turn down 2 2,2 through 3,4",
+            ],
+            19,
+        )
+    ],
+)
+def test_example_with_bite(arg, expected):
+    lights = LightsGrid(5, arg)
+    lights.follow_instructions()
+    assert lights.lights_intensity == expected
 
 
