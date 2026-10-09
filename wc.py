@@ -3594,13 +3594,15 @@
 
 # !/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""
-Pairs wines and cheeses by similarity of wine name and cheese name.
-"""
-from platform import python_compiler
-
-from pandas import DataFrame
-
+# """
+# Pairs wines and cheeses by similarity of wine name and cheese name.
+# """
+# from platform import python_compiler
+# from urllib.error import URLError
+#
+# import soupsieve
+# from pandas import DataFrame
+#
 # import heapq
 # from collections import defaultdict
 # from turtledemo.forest import doit1
@@ -8406,14 +8408,14 @@ from pandas import DataFrame
 #     return return_list
 
 # idea:
-"""
-create a list of separatort
-enumerate through the text by letter
-    if the letter is in the list,
-        split out the string, and remove the separator from the list
-
-
-"""
+# """
+# create a list of separatort
+# enumerate through the text by letter
+#     if the letter is in the list,
+#         split out the string, and remove the separator from the list
+#
+#
+# """
 
 # from string import whitespace
 # from typing import List
@@ -18404,196 +18406,120 @@ enumerate through the text by letter
 #     s_url = f"{SITE}/{encode(next_record)}"
 #     LINKS[next_record] = url
 #     return s_url
-
-from typing import List
-import re
-import numpy as np
-import pandas as pd
-from itertools import product
-from dataclasses import dataclass
-
-@dataclass
-class Instruction:
-    x1:int
-    x2:int
-    y1:int
-    y2:int
-    command: str
-    magnitude: int | None = None
-
-
-# Write a function to process commands:
-def on_func(x):
-    return 1
-def off_func(x):
-    return 0
-def toggle_func(x):
-    if int(x)==0:
-        return 3
-    else:
-        return 0
-def add_func(x,y):
-    return 5 if x + y > 5 else x + y
-
-def sub_func(x,y):
-    return 0 if x - y < 0 else x - y
-
-func_config = {
-    "on": on_func,
-    "off":off_func,
-    "toggle":toggle_func,
-    "up":add_func,
-    "down":sub_func
-}
-
-class LightsGrid:
-
-    def __init__(self, grid_size: int, instructions: List[str]):
-        self.grid_size = grid_size
-        self.grid = pd.DataFrame(np.zeros([grid_size, grid_size], dtype=int))
-        self.instructions = instructions
-
-    @staticmethod
-    def _generate_coordinates(x1, x2, y1, y2):
-        x_coords = range(x1, x2 + 1)
-        y_coords = range(y1, y2 + 1)
-        return list(product(x_coords, y_coords))
-
-    @staticmethod
-    def _parse_coordiantes(instruction:str):
-        pattern = r"(\d+,\d+) through (\d+,\d+)"
-        match = re.search(pattern, instruction)
-        if match:
-            x1, y1 = [int(val) for val in match.group(1).split(',')]
-            x2, y2 = [int(val) for val in match.group(2).split(',')]
-            return (x1, x2, y1, y2)
-        return None
-
-    @staticmethod
-    def _get_magnitude(str1):
-        return str1.split()[2]
-
-    @staticmethod
-    def _parse_instruction(instruction: str) -> Instruction:
-        (x1, x2, y1, y2) = LightsGrid._parse_coordiantes(instruction)
-        if "on" in instruction:
-            return Instruction(x1, x2, y1, y2, "on")
-        elif "off" in instruction:
-            return Instruction(x1, x2, y1, y2, "off")
-        elif "toggle" in instruction:
-            return Instruction(x1, x2, y1, y2, "toggle")
-        elif "up" in instruction:
-            return Instruction(x1, x2, y1, y2, "up", LightsGrid._get_magnitude(instruction))
-        elif "down" in instruction:
-            return Instruction(x1, x2, y1, y2, "down", LightsGrid._get_magnitude(instruction))
-
-    def _apply_instruction_to_cells(self, instruction: str):
-        i1 = LightsGrid._parse_instruction(instruction)
-        coords = LightsGrid._generate_coordinates(i1.x1, i1.x2, i1.y1, i1.y2)
-
-        func = func_config[i1.command]
-        for coord in coords:
-            x, y = coord
-            if i1.command in ['on', 'off', 'toggle']:
-                self.grid.iloc[x, y] = func(self.grid.iloc[x, y])
-            elif i1.command in ['up', 'down']:
-                self.grid.iloc[x, y] = func(int(self.grid.iloc[x, y]), int(i1.magnitude))
-
-    def follow_instructions(self):
-        """Function to process all instructions.
-
-        Each instruction should be processed in sequence,
-          excluding the first instruction of course.
-        """
-        for instruction in self.instructions:
-            self._apply_instruction_to_cells(instruction)
-
-
-    @property
-    def lights_intensity(self):
-        """(given) get the total intensity of all lights"""
-        return self.grid.to_numpy().sum()
-
-
-# Main function that can be used to test the Class methods
-if __name__ == "__main__":
-    instructions = """create grid of length 100
-    turn on 46,55 through 56,90
-    turn off 37,3 through 42,83
-    turn up 2 46,85 through 83,91
-    turn off 81,38 through 86,87
-    turn on 59,98 through 80,99
-    turn down 1 37,41 through 76,54
-    turn on 60,36 through 89,60
-    turn off 44,20 through 64,68
-    toggle 5,47 through 45,78
-    toggle 20,41 through 70,82
-    turn up 4 53,33 through 90,87
-    toggle 85,49 through 98,97
-    turn off 63,95 through 89,97
-    turn off 38,1 through 72,70
-    turn down 3 51,84 through 58,94
-    toggle 51,55 through 66,88
-    turn off 26,80 through 87,84
-    turn up 3 14,51 through 71,77
-    turn off 99,93 through 99,98
-    toggle 46,66 through 55,95
-    turn on 95,41 through 95,84
-    turn up 2 56,22 through 94,88
-    turn on 21,31 through 80,72
-    toggle 53,27 through 63,84
-    toggle 61,8 through 68,50
-    turn on 39,70 through 88,72
-    toggle 1,63 through 53,76
-    toggle 70,44 through 834,44
-    turn up 5 31,20 through 49,53
-    toggle 69,18 through 83,34
-    turn down 4 56,67 through 74,71
-    toggle 34,48 through 95,48
-    toggle 3,79 through 98,87
-    turn on 58,54 through 84,71
-    turn off 36,66 through 59,87
-    turn on 80,43 through 96,99
-    turn up 2 20,58 through 51,80
-    turn off 10,49 through 26,77
-    turn on 97,2 through 98,62
-    turn off 31,68 through 36,87
-    turn off 3,30 through 25,55
-    turn off 39,68 through 86,94
-    toggle 22,74 through 85,82
-    turn down 4 38,60 through 55,87
-    turn off 70,79 through 79,96
-    turn off 57,80 through 99,87
-    turn up 3 99,93 through 99,95
-    turn on 80,22 through 86,72
-    turn off 3,72 through 68,75"""
-
-    # Create a list of all the instructions
-    instructions = [line.strip() for line in instructions.splitlines()]
-
-    # The grid size instruction is first
-    # Extract it and convert to int
-    grid_size = int(instructions[0].split(" ")[4])
-
-    # Create a LightsGrid Class instance
-    lights = LightsGrid(grid_size, instructions[1:])
-
-    # Follow the instructions
-    lights.follow_instructions()
-
-    # Print the total intensity of the lights
-    # The correct answer is 12317
-    print(f"Total intensity of Lights on: {lights.lights_intensity}\n")
-
-
-
-# fun idea to solve this:
-
-# Given a left corner, right bottom coordinate => a list of coordinates
 #
-# For each line of instruction, pass in a function to apply to those coordinates.
+# from typing import List
+# import re
+# import numpy as np
+# import pandas as pd
+# from itertools import product
+# from dataclasses import dataclass
 #
-# instructions = """create grid of length 100
+# @dataclass
+# class Instruction:
+#     x1:int
+#     x2:int
+#     y1:int
+#     y2:int
+#     command: str
+#     magnitude: int | None = None
+#
+#
+# # Write a function to process commands:
+# def on_func(x):
+#     return 1
+# def off_func(x):
+#     return 0
+# def toggle_func(x):
+#     if int(x)==0:
+#         return 3
+#     else:
+#         return 0
+# def add_func(x,y):
+#     return 5 if x + y > 5 else x + y
+#
+# def sub_func(x,y):
+#     return 0 if x - y < 0 else x - y
+#
+# func_config = {
+#     "on": on_func,
+#     "off":off_func,
+#     "toggle":toggle_func,
+#     "up":add_func,
+#     "down":sub_func
+# }
+#
+# class LightsGrid:
+#
+#     def __init__(self, grid_size: int, instructions: List[str]):
+#         self.grid_size = grid_size
+#         self.grid = pd.DataFrame(np.zeros([grid_size, grid_size], dtype=int))
+#         self.instructions = instructions
+#
+#     @staticmethod
+#     def _generate_coordinates(x1, x2, y1, y2):
+#         x_coords = range(x1, x2 + 1)
+#         y_coords = range(y1, y2 + 1)
+#         return list(product(x_coords, y_coords))
+#
+#     @staticmethod
+#     def _parse_coordiantes(instruction:str):
+#         pattern = r"(\d+,\d+) through (\d+,\d+)"
+#         match = re.search(pattern, instruction)
+#         if match:
+#             x1, y1 = [int(val) for val in match.group(1).split(',')]
+#             x2, y2 = [int(val) for val in match.group(2).split(',')]
+#             return (x1, x2, y1, y2)
+#         return None
+#
+#     @staticmethod
+#     def _get_magnitude(str1):
+#         return str1.split()[2]
+#
+#     @staticmethod
+#     def _parse_instruction(instruction: str) -> Instruction:
+#         (x1, x2, y1, y2) = LightsGrid._parse_coordiantes(instruction)
+#         if "on" in instruction:
+#             return Instruction(x1, x2, y1, y2, "on")
+#         elif "off" in instruction:
+#             return Instruction(x1, x2, y1, y2, "off")
+#         elif "toggle" in instruction:
+#             return Instruction(x1, x2, y1, y2, "toggle")
+#         elif "up" in instruction:
+#             return Instruction(x1, x2, y1, y2, "up", LightsGrid._get_magnitude(instruction))
+#         elif "down" in instruction:
+#             return Instruction(x1, x2, y1, y2, "down", LightsGrid._get_magnitude(instruction))
+#
+#     def _apply_instruction_to_cells(self, instruction: str):
+#         i1 = LightsGrid._parse_instruction(instruction)
+#         coords = LightsGrid._generate_coordinates(i1.x1, i1.x2, i1.y1, i1.y2)
+#
+#         func = func_config[i1.command]
+#         for coord in coords:
+#             x, y = coord
+#             if i1.command in ['on', 'off', 'toggle']:
+#                 self.grid.iloc[x, y] = func(self.grid.iloc[x, y])
+#             elif i1.command in ['up', 'down']:
+#                 self.grid.iloc[x, y] = func(int(self.grid.iloc[x, y]), int(i1.magnitude))
+#
+#     def follow_instructions(self):
+#         """Function to process all instructions.
+#
+#         Each instruction should be processed in sequence,
+#           excluding the first instruction of course.
+#         """
+#         for instruction in self.instructions:
+#             self._apply_instruction_to_cells(instruction)
+#
+#
+#     @property
+#     def lights_intensity(self):
+#         """(given) get the total intensity of all lights"""
+#         return self.grid.to_numpy().sum()
+#
+#
+# # Main function that can be used to test the Class methods
+# if __name__ == "__main__":
+#     instructions = """create grid of length 100
 #     turn on 46,55 through 56,90
 #     turn off 37,3 through 42,83
 #     turn up 2 46,85 through 83,91
@@ -18606,288 +18532,811 @@ if __name__ == "__main__":
 #     toggle 20,41 through 70,82
 #     turn up 4 53,33 through 90,87
 #     toggle 85,49 through 98,97
-#     turn off 63,95 through 89,97"""
+#     turn off 63,95 through 89,97
+#     turn off 38,1 through 72,70
+#     turn down 3 51,84 through 58,94
+#     toggle 51,55 through 66,88
+#     turn off 26,80 through 87,84
+#     turn up 3 14,51 through 71,77
+#     turn off 99,93 through 99,98
+#     toggle 46,66 through 55,95
+#     turn on 95,41 through 95,84
+#     turn up 2 56,22 through 94,88
+#     turn on 21,31 through 80,72
+#     toggle 53,27 through 63,84
+#     toggle 61,8 through 68,50
+#     turn on 39,70 through 88,72
+#     toggle 1,63 through 53,76
+#     toggle 70,44 through 834,44
+#     turn up 5 31,20 through 49,53
+#     toggle 69,18 through 83,34
+#     turn down 4 56,67 through 74,71
+#     toggle 34,48 through 95,48
+#     toggle 3,79 through 98,87
+#     turn on 58,54 through 84,71
+#     turn off 36,66 through 59,87
+#     turn on 80,43 through 96,99
+#     turn up 2 20,58 through 51,80
+#     turn off 10,49 through 26,77
+#     turn on 97,2 through 98,62
+#     turn off 31,68 through 36,87
+#     turn off 3,30 through 25,55
+#     turn off 39,68 through 86,94
+#     toggle 22,74 through 85,82
+#     turn down 4 38,60 through 55,87
+#     turn off 70,79 through 79,96
+#     turn off 57,80 through 99,87
+#     turn up 3 99,93 through 99,95
+#     turn on 80,22 through 86,72
+#     turn off 3,72 through 68,75"""
 #
-
-
+#     # Create a list of all the instructions
+#     instructions = [line.strip() for line in instructions.splitlines()]
+#
+#     # The grid size instruction is first
+#     # Extract it and convert to int
+#     grid_size = int(instructions[0].split(" ")[4])
+#
+#     # Create a LightsGrid Class instance
+#     lights = LightsGrid(grid_size, instructions[1:])
+#
+#     # Follow the instructions
+#     lights.follow_instructions()
+#
+#     # Print the total intensity of the lights
+#     # The correct answer is 12317
+#     print(f"Total intensity of Lights on: {lights.lights_intensity}\n")
 #
 #
-# grid2 = pd.DataFrame(grid)
 #
-# # try applying the function to a particular cell
-# grid2.iloc[[0], [1]] = grid2.iloc[[0], [1]].apply(lambda x: x + 5)
+# # fun idea to solve this:
 #
-# # write a function that would apply a function to a cell
-#
-#
-#
-#
-# #####################
-# grid_size = 10
-# grid = pd.DataFrame(np.zeros([grid_size, grid_size], dtype=int))
-#
-#
-# instruction="turn off 1,1 through 3,3"
-#
-# instruction = "toggle 4,5 through 7,8"
-# instruction = "turn up 2 4,5 through 8,9"
-
-#
-# # write a program that would change the instructions into values
-# i1 = parse_instruction(instruction)
-# coords =generate_coordinates(i1.x1, i1.x2, i1.y1, i1.y2)
-#
-# func = func_config[i1.command]
-# for coord in coords:
-#     x,y=coord
-#     if i1.command in ['on','off','toggle']:
-#         grid.iloc[x, y] = func(grid.iloc[x, y])
-#     elif  i1.command in ['up','down']:
-#         grid.iloc[x, y] = func(int(grid.iloc[x, y]),int(i1.magnitude))
+# # Given a left corner, right bottom coordinate => a list of coordinates
+# #
+# # For each line of instruction, pass in a function to apply to those coordinates.
+# #
+# # instructions = """create grid of length 100
+# #     turn on 46,55 through 56,90
+# #     turn off 37,3 through 42,83
+# #     turn up 2 46,85 through 83,91
+# #     turn off 81,38 through 86,87
+# #     turn on 59,98 through 80,99
+# #     turn down 1 37,41 through 76,54
+# #     turn on 60,36 through 89,60
+# #     turn off 44,20 through 64,68
+# #     toggle 5,47 through 45,78
+# #     toggle 20,41 through 70,82
+# #     turn up 4 53,33 through 90,87
+# #     toggle 85,49 through 98,97
+# #     turn off 63,95 through 89,97"""
+# #
 #
 #
-# grid.to_numpy().sum()
+# #
+# #
+# # grid2 = pd.DataFrame(grid)
+# #
+# # # try applying the function to a particular cell
+# # grid2.iloc[[0], [1]] = grid2.iloc[[0], [1]].apply(lambda x: x + 5)
+# #
+# # # write a function that would apply a function to a cell
+# #
+# #
+# #
+# #
+# # #####################
+# # grid_size = 10
+# # grid = pd.DataFrame(np.zeros([grid_size, grid_size], dtype=int))
+# #
+# #
+# # instruction="turn off 1,1 through 3,3"
+# #
+# # instruction = "toggle 4,5 through 7,8"
+# # instruction = "turn up 2 4,5 through 8,9"
+#
+# #
+# # # write a program that would change the instructions into values
+# # i1 = parse_instruction(instruction)
+# # coords =generate_coordinates(i1.x1, i1.x2, i1.y1, i1.y2)
+# #
+# # func = func_config[i1.command]
+# # for coord in coords:
+# #     x,y=coord
+# #     if i1.command in ['on','off','toggle']:
+# #         grid.iloc[x, y] = func(grid.iloc[x, y])
+# #     elif  i1.command in ['up','down']:
+# #         grid.iloc[x, y] = func(int(grid.iloc[x, y]),int(i1.magnitude))
+# #
+# #
+# # grid.to_numpy().sum()
+#
+# ### Pybite solution:
+# from typing import List
+#
+# import numpy as np
+# import pandas as pd
+#
+#
+# class LightsGrid:
+#
+#     def __init__(self, grid_size: int, instructions: List[str]):
+#         self.grid_size = grid_size
+#         self.grid = pd.DataFrame(np.zeros([grid_size, grid_size], dtype=int))
+#         self.instructions = instructions
+#
+#     def process_grid_coordinates(self, s1: str, s2: str):
+#         """A helper function you might want to create to process
+#           the top left hand corner coordinates and the bottom
+#           right hand coordinates given in the instructions
+#
+#         :param s1: The top left hand corner of the grid to operate on
+#         :param s1: The bottom right hand corner of the grid to operate on
+#
+#         Suggested return are 4 integers representing x1, x2, y1, y2 [hint]"""
+#         x1 = int(s1.split(",")[0])
+#         y1 = int(s1.split(",")[1])
+#
+#         # x2 & y2 are + 1 because we are using matrix slices
+#         #    e.g. x1, x2 = 2, 4 only returns rows 2 up to but
+#         #         not including row 4 i.e. rows 2 & 3 only
+#         x2 = int(s2.split(",")[0]) + 1
+#         y2 = int(s2.split(",")[1]) + 1
+#
+#         return x1, x2, y1, y2
+#
+#     def validate_grid(self):
+#         """A helper function you might want to write to verify that:
+#           - no lights are brighter than 5
+#           - no lights are less than 0"""
+#         # Check for intensity values > 5
+#         too_bright_mask = self.grid > 5
+#         self.grid[too_bright_mask] = 5
+#
+#         # Check for intensity values < 0
+#         negative_mask = self.grid < 0
+#         self.grid[negative_mask] = 0
+#
+#         return self.grid
+#
+#     def turn_on(self, s1: str, s2: str):
+#         """The turn_on function takes 2 parameters:
+#
+#         :param s1: The top left hand corner of the grid to operate on
+#         :param s1: The bottom right hand corner of the grid to operate on
+#
+#         For each light in the grid slice given:
+#           - If the light is already on, do nothing
+#           - If the light is off, turn it on at intensity 1
+#         """
+#         # Process grid coordinates
+#         x1, x2, y1, y2 = self.process_grid_coordinates(s1, s2)
+#
+#         # First extract the slice of the grid into a new dataframe
+#         grid_slice = self.grid.iloc[x1:x2, y1:y2]
+#
+#         # Now create a mask of all lights == 0 in the slice
+#         mask = grid_slice == 0
+#
+#         # # Now turn on all lights that are off
+#         grid_slice[mask] = 1
+#
+#         # Finally overwrite the grid with the new values
+#         self.grid.iloc[x1:x2, y1:y2] = grid_slice
+#
+#         return self
+#
+#     def turn_off(self, s1: str, s2: str):
+#         """The turn_off function takes 2 parameters:
+#
+#         :param s1: The top left hand corner of the grid to operate on
+#         :param s1: The bottom right hand corner of the grid to operate on
+#
+#         Turn off all lights in the grid slice given."""
+#         x1, x2, y1, y2 = self.process_grid_coordinates(s1, s2)
+#         self.grid.iloc[x1:x2, y1:y2] = 0
+#         return self
+#
+#     def turn_up(self, amount: int, s1: str, s2: str):
+#         """The turn_up function takes 3 parameters:
+#
+#         :param amount: The intensity to turn the lights up by
+#         :param s1: The top left hand corner of the grid to operate on
+#         :param s1: The bottom right hand corner of the grid to operate on
+#
+#         For each light in the grid slice given turn the light up
+#           by the given amount. Don't turn a light up past 5"""
+#         x1, x2, y1, y2 = self.process_grid_coordinates(s1, s2)
+#         self.grid.iloc[x1:x2, y1:y2] += amount
+#         self.validate_grid()
+#         return self
+#
+#     def turn_down(self, amount: int, s1: str, s2: str):
+#         """The turn down function takes 3 parameters:
+#
+#         :param amount: The intensity to turn the lights down by
+#         :param s1: The top left hand corner of the grid to operate on
+#         :param s1: The bottom right hand corner of the grid to operate on
+#
+#         For each light in the grid slice given turn the light down
+#           by the given amount. Don't turn a light down past 0"""
+#         x1, x2, y1, y2 = self.process_grid_coordinates(s1, s2)
+#         self.grid.iloc[x1:x2, y1:y2] -= amount
+#         self.validate_grid()
+#         return self
+#
+#     def toggle(self, s1: str, s2: str):
+#         """The toggle function takes 2 parameters:
+#
+#         :param s1: The top left hand corner of the grid to operate on
+#         :param s1: The bottom right hand corner of the grid to operate on
+#
+#         For each light in the grid slice given:
+#           - If the light is on, turn it off
+#           - If the light is off, turn it on at intensity 3
+#         """
+#         # Process grid coordinates
+#         x1, x2, y1, y2 = self.process_grid_coordinates(s1, s2)
+#
+#         # First extract the slice of the grid into a new dataframe
+#         grid_slice = self.grid.iloc[x1:x2, y1:y2]
+#
+#         # Now create a mask of all lights > 0 in the slice
+#         mask = grid_slice > 0
+#
+#         # Now turn off all lights that are on in the slice
+#         # Set all lights that are off to 3 in the slice
+#         grid_slice[mask] = 0
+#         grid_slice[~mask] = 3
+#
+#         # Finally overwrite the grid with the new values
+#         self.grid.iloc[x1:x2, y1:y2] = grid_slice
+#
+#         return self
+#
+#     def follow_instructions(self):
+#         """Function to process all instructions.
+#
+#         Each instruction should be processed in sequence,
+#           excluding the first instruction of course.
+#         """
+#         for ins in self.instructions:
+#             if ins.startswith("toggle"):
+#                 s1, _, s2 = ins[7:].split()
+#                 self.toggle(s1, s2)
+#             elif ins.startswith("turn on"):
+#                 s1, _, s2 = ins[8:].split()
+#                 self.turn_on(s1, s2)
+#             elif ins.startswith("turn up"):
+#                 amount, s1, _, s2 = ins[8:].split()
+#                 self.turn_up(int(amount), s1, s2)
+#             elif ins.startswith("turn down"):
+#                 amount, s1, _, s2 = ins[10:].split()
+#                 self.turn_down(int(amount), s1, s2)
+#             else:
+#                 s1, _, s2 = ins[9:].split()
+#                 self.turn_off(s1, s2)
+#         return self
+#
+#     @property
+#     def lights_intensity(self):
+#         """(given) get the total intensity of all lights"""
+#         return self.grid.to_numpy().sum()
+#
+#
+# # Main function that can be used to test the Class methods
+# if __name__ == "__main__":
+#     instructions = """create grid of length 100
+#     turn on 46,55 through 56,90
+#     turn off 37,3 through 42,83
+#     turn up 2 46,85 through 83,91
+#     turn off 81,38 through 86,87
+#     turn on 59,98 through 80,99
+#     turn down 1 37,41 through 76,54
+#     turn on 60,36 through 89,60
+#     turn off 44,20 through 64,68
+#     toggle 5,47 through 45,78
+#     toggle 20,41 through 70,82
+#     turn up 4 53,33 through 90,87
+#     toggle 85,49 through 98,97
+#     turn off 63,95 through 89,97
+#     turn off 38,1 through 72,70
+#     turn down 3 51,84 through 58,94
+#     toggle 51,55 through 66,88
+#     turn off 26,80 through 87,84
+#     turn up 3 14,51 through 71,77
+#     turn off 99,93 through 99,98
+#     toggle 46,66 through 55,95
+#     turn on 95,41 through 95,84
+#     turn up 2 56,22 through 94,88
+#     turn on 21,31 through 80,72
+#     toggle 53,27 through 63,84
+#     toggle 61,8 through 68,50
+#     turn on 39,70 through 88,72
+#     toggle 1,63 through 53,76
+#     toggle 70,44 through 834,44
+#     turn up 5 31,20 through 49,53
+#     toggle 69,18 through 83,34
+#     turn down 4 56,67 through 74,71
+#     toggle 34,48 through 95,48
+#     toggle 3,79 through 98,87
+#     turn on 58,54 through 84,71
+#     turn off 36,66 through 59,87
+#     turn on 80,43 through 96,99
+#     turn up 2 20,58 through 51,80
+#     turn off 10,49 through 26,77
+#     turn on 97,2 through 98,62
+#     turn off 31,68 through 36,87
+#     turn off 3,30 through 25,55
+#     turn off 39,68 through 86,94
+#     toggle 22,74 through 85,82
+#     turn down 4 38,60 through 55,87
+#     turn off 70,79 through 79,96
+#     turn off 57,80 through 99,87
+#     turn up 3 99,93 through 99,95
+#     turn on 80,22 through 86,72
+#     turn off 3,72 through 68,75"""
+#
+#     # Create a list of all the instructions
+#     instructions = [line.strip() for line in instructions.splitlines()]
+#
+#     # The grid size instruction is first
+#     # Extract it and convert to int
+#     grid_size = int(instructions[0].split(" ")[4])
+#
+#     # Create a LightsGrid Class instance
+#     lights = LightsGrid(grid_size, instructions[1:])
+#
+#     # Follow the instructions
+#     lights.follow_instructions()
+#
+#     # Print the total intensity of the lights
+#     # The correct answer is 12317
+#     print(f"Total intensity of Lights on: {lights.lights_intensity}\n")
+#
+import re
+from abc import ABC, abstractmethod
+from dataclasses import dataclass
+from datetime import date
+from os import getenv
+from pathlib import Path
+from typing import Any, List, Optional, NamedTuple
+from urllib.request import urlretrieve
 
-### Pybite solution:
-from typing import List
+from bs4 import BeautifulSoup as Soup  # type: ignore
 
-import numpy as np
-import pandas as pd
+TMP = getenv("TMP", "/tmp")
+TODAY = date.today()
+
+class Candidate(NamedTuple):
+    name: str
+    votes: float
+
+class LeaderBoard(NamedTuple):
+    Candidate: str
+    Average: str
+    Delegates: int
+    Contributions: str
+    Coverage: int
+
+class Poll(NamedTuple):
+    Poll: str
+    Date: str
+    Sample: str
+    Sanders: float|None
+    Biden: float|None
+    Gabbard: float|None
+    Spread: str|None
 
 
-class LightsGrid:
+@dataclass
+class File:
+    """File represents a filesystem path.
 
-    def __init__(self, grid_size: int, instructions: List[str]):
-        self.grid_size = grid_size
-        self.grid = pd.DataFrame(np.zeros([grid_size, grid_size], dtype=int))
-        self.instructions = instructions
+    Variables:
+        name: str -- The filename that will be created on the filesystem.
+        path: Path -- Path object created from the name passed in.
 
-    def process_grid_coordinates(self, s1: str, s2: str):
-        """A helper function you might want to create to process
-          the top left hand corner coordinates and the bottom
-          right hand coordinates given in the instructions
+    Methods:
+        [property]
+        data: -> Optional[str] -- If the file exists, it returns its contents.
+            If it does not exist, it returns None.
+    """
+    name: str
+    path: Path|None = None
 
-        :param s1: The top left hand corner of the grid to operate on
-        :param s1: The bottom right hand corner of the grid to operate on
-
-        Suggested return are 4 integers representing x1, x2, y1, y2 [hint]"""
-        x1 = int(s1.split(",")[0])
-        y1 = int(s1.split(",")[1])
-
-        # x2 & y2 are + 1 because we are using matrix slices
-        #    e.g. x1, x2 = 2, 4 only returns rows 2 up to but
-        #         not including row 4 i.e. rows 2 & 3 only
-        x2 = int(s2.split(",")[0]) + 1
-        y2 = int(s2.split(",")[1]) + 1
-
-        return x1, x2, y1, y2
-
-    def validate_grid(self):
-        """A helper function you might want to write to verify that:
-          - no lights are brighter than 5
-          - no lights are less than 0"""
-        # Check for intensity values > 5
-        too_bright_mask = self.grid > 5
-        self.grid[too_bright_mask] = 5
-
-        # Check for intensity values < 0
-        negative_mask = self.grid < 0
-        self.grid[negative_mask] = 0
-
-        return self.grid
-
-    def turn_on(self, s1: str, s2: str):
-        """The turn_on function takes 2 parameters:
-
-        :param s1: The top left hand corner of the grid to operate on
-        :param s1: The bottom right hand corner of the grid to operate on
-
-        For each light in the grid slice given:
-          - If the light is already on, do nothing
-          - If the light is off, turn it on at intensity 1
-        """
-        # Process grid coordinates
-        x1, x2, y1, y2 = self.process_grid_coordinates(s1, s2)
-
-        # First extract the slice of the grid into a new dataframe
-        grid_slice = self.grid.iloc[x1:x2, y1:y2]
-
-        # Now create a mask of all lights == 0 in the slice
-        mask = grid_slice == 0
-
-        # # Now turn on all lights that are off
-        grid_slice[mask] = 1
-
-        # Finally overwrite the grid with the new values
-        self.grid.iloc[x1:x2, y1:y2] = grid_slice
-
-        return self
-
-    def turn_off(self, s1: str, s2: str):
-        """The turn_off function takes 2 parameters:
-
-        :param s1: The top left hand corner of the grid to operate on
-        :param s1: The bottom right hand corner of the grid to operate on
-
-        Turn off all lights in the grid slice given."""
-        x1, x2, y1, y2 = self.process_grid_coordinates(s1, s2)
-        self.grid.iloc[x1:x2, y1:y2] = 0
-        return self
-
-    def turn_up(self, amount: int, s1: str, s2: str):
-        """The turn_up function takes 3 parameters:
-
-        :param amount: The intensity to turn the lights up by
-        :param s1: The top left hand corner of the grid to operate on
-        :param s1: The bottom right hand corner of the grid to operate on
-
-        For each light in the grid slice given turn the light up
-          by the given amount. Don't turn a light up past 5"""
-        x1, x2, y1, y2 = self.process_grid_coordinates(s1, s2)
-        self.grid.iloc[x1:x2, y1:y2] += amount
-        self.validate_grid()
-        return self
-
-    def turn_down(self, amount: int, s1: str, s2: str):
-        """The turn down function takes 3 parameters:
-
-        :param amount: The intensity to turn the lights down by
-        :param s1: The top left hand corner of the grid to operate on
-        :param s1: The bottom right hand corner of the grid to operate on
-
-        For each light in the grid slice given turn the light down
-          by the given amount. Don't turn a light down past 0"""
-        x1, x2, y1, y2 = self.process_grid_coordinates(s1, s2)
-        self.grid.iloc[x1:x2, y1:y2] -= amount
-        self.validate_grid()
-        return self
-
-    def toggle(self, s1: str, s2: str):
-        """The toggle function takes 2 parameters:
-
-        :param s1: The top left hand corner of the grid to operate on
-        :param s1: The bottom right hand corner of the grid to operate on
-
-        For each light in the grid slice given:
-          - If the light is on, turn it off
-          - If the light is off, turn it on at intensity 3
-        """
-        # Process grid coordinates
-        x1, x2, y1, y2 = self.process_grid_coordinates(s1, s2)
-
-        # First extract the slice of the grid into a new dataframe
-        grid_slice = self.grid.iloc[x1:x2, y1:y2]
-
-        # Now create a mask of all lights > 0 in the slice
-        mask = grid_slice > 0
-
-        # Now turn off all lights that are on in the slice
-        # Set all lights that are off to 3 in the slice
-        grid_slice[mask] = 0
-        grid_slice[~mask] = 3
-
-        # Finally overwrite the grid with the new values
-        self.grid.iloc[x1:x2, y1:y2] = grid_slice
-
-        return self
-
-    def follow_instructions(self):
-        """Function to process all instructions.
-
-        Each instruction should be processed in sequence,
-          excluding the first instruction of course.
-        """
-        for ins in self.instructions:
-            if ins.startswith("toggle"):
-                s1, _, s2 = ins[7:].split()
-                self.toggle(s1, s2)
-            elif ins.startswith("turn on"):
-                s1, _, s2 = ins[8:].split()
-                self.turn_on(s1, s2)
-            elif ins.startswith("turn up"):
-                amount, s1, _, s2 = ins[8:].split()
-                self.turn_up(int(amount), s1, s2)
-            elif ins.startswith("turn down"):
-                amount, s1, _, s2 = ins[10:].split()
-                self.turn_down(int(amount), s1, s2)
-            else:
-                s1, _, s2 = ins[9:].split()
-                self.turn_off(s1, s2)
-        return self
+    def __post_init__(self):
+        if self.path is None:
+            self.path = Path(fr"{TMP}/{TODAY}_{self.name}")
 
     @property
-    def lights_intensity(self):
-        """(given) get the total intensity of all lights"""
-        return self.grid.to_numpy().sum()
+    def data(self):
+        if self.path and self.path.exists():
+            return self.path.read_text(encoding='utf-8')
+        return None
 
 
-# Main function that can be used to test the Class methods
+@dataclass
+class Web:
+    """Web object.
+
+    Web is an object that downloads the page from the url that is passed
+    to it and stores it in the File instance that is passed to it. If the
+    File already exists, it just reads the file, otherwise it downloads it
+    and stores it in File.
+
+    Variables:
+        url: str -- The url of the web page.
+        file: File -- The File object to store the page data into.
+
+    Methods:
+        [property]
+        data: -> Optional[str] -- Reads the text from File or retrieves it from the
+            web if it does not exists.
+
+        [property]
+        soup: -> Soup -- Parses the data from File and turns it into a BeautifulSoup
+            object.
+    """
+    url:str
+    file:File
+
+    @property
+    def data(self) -> Optional[str]:
+        """Reads the data from the File object.
+
+        First it checks if the File object has any data. If it doesn't, it retrieves
+        it and saves it to the File. It then reads it from the File and returns it.
+
+        Returns:
+            Optional[str] -- The string data from the File object.
+        """
+        if self.file.data:
+            return self.file.data
+        else:
+            urlretrieve(self.url, self.file.path)
+            return self.file.data
+
+    @property
+    def soup(self) -> Soup:
+        """Converts string data from File into a BeautifulSoup object.
+
+        Returns:
+            Soup -- BeautifulSoup object created from the File.
+        """
+        try:
+            return Soup(self.data, "html.parser")
+        except:
+            raise ValueError("url open error")
+
+class Site(ABC):
+    """Site Abstract Base Class.
+
+    Defines the structure for the objects based on this class and defines the interfaces
+    that should be implemented in order to work properly.
+
+    Variables:
+        web: Web -- The web object stores the information needed to process
+            the data.
+
+    Methods:
+        find_table: -> str -- Parses the Web object for table elements and
+            returns the first one that it finds unless an integer representing
+            the required table is passed.
+
+        [abstractmethod]
+        parse_rows: -> Union[List[LeaderBoard], List[Poll]] -- Parses a BeautifulSoup
+            table element and returns the text found in the td elements as
+            namedtuples.
+
+        [abstractmethod]
+        polls: -> Union[List[LeaderBoard], List[Poll]] -- Does the parsing of the table
+            and rows for you. It takes the table index number if given, otherwise
+            parses table 0.
+
+        [abstractmethod]
+        stats: -- Formats the results from polls into a more user friendly
+            representation.
+    """
+    def __init__(self, web:Web):
+        self.web = web
+
+    def find_table(self, loc: int = 0):
+        """Finds the table elements from the Soup object
+
+        Keyword Arguments:
+            loc {int} -- Parses the Web object for table elements and
+                returns the first one that it finds unless an integer representing
+                the required table is passed. (default: {0})
+
+        Returns:
+            str -- The html table
+        """
+        exists = self.web.soup.find(string=re.compile("real", re.IGNORECASE))
+        if exists:
+            loc = 0
+        else:
+            loc = 3
+        all_tables = self.web.soup.find_all('table')
+        return all_tables[loc]
+
+
+
+    def parse_rows(self, table: Soup) -> List[Any]:
+        """Abstract Method
+
+        Parses the row data from the html table.
+
+        Arguments:
+            table {Soup} -- Parses a BeautifulSoup table element and
+                returns the text found in the td elements as NamedTuple.
+
+        Returns:
+            List[NamedTuple] -- List of NamedTuple that were created from the
+                table data.
+        """
+        pass
+
+    def polls(self, table: int = 0) -> List[Any]:
+        """Abstract Method
+
+        Parses the data
+
+        The find_table and parse_rows methods are called for you and the table index
+        that is passed to it is used to get the correct table from the soup object.
+
+        Keyword Arguments:
+            table {int} -- Does the parsing of the table and rows for you.
+                It takes the table index number if given, otherwise parses table 0.
+                (default: {0})
+
+        Returns:
+            List[NamedTuple] -- List of NamedTuple that were created from the
+                table data.
+        """
+        pass
+
+    def stats(self, loc: int = 0):
+        """Abstract Method
+
+        Produces the stats from the polls.
+
+        Keyword Arguments:
+            loc {int} -- Formats the results from polls into a more user friendly
+            representation.
+        """
+        pass
+
+
+@dataclass
+class RealClearPolitics(Site):
+    """RealClearPolitics object.
+
+    RealClearPolitics is a custom class to parse a Web instance from the
+    realclearpolitics website.
+
+    Variables:
+        web: Web -- The web object stores the information needed to process
+            the data.
+
+    Methods:
+        find_table: -> str -- Parses the Web object for table elements and
+            returns the first one that it finds unless an integer representing
+            the required table is passed.
+
+        parse_rows: -> List[Poll] -- Parses a BeautifulSoup table element and
+            returns the text found in the td elements as Poll namedtuples.
+
+        polls: -> List[Poll] -- Does the parsing of the table and rows for you.
+            It takes the table index number if given, otherwise parses table 0.
+
+        stats: -- Formats the results from polls into a more user friendly
+            representation:
+
+            Example:
+
+            RealClearPolitics
+            =================
+                Biden: 214.0
+              Sanders: 142.0
+              Gabbard: 6.0
+
+    """
+    web: Web
+
+    def parse_rows(self, table: Soup) -> List[Poll]:
+        """Parses the row data from the html table.
+
+        Arguments:
+            table {Soup} -- Parses a BeautifulSoup table element and
+                returns the text found in the td elements as Poll namedtuples.
+
+        Returns:
+            List[Poll] -- List of Poll namedtuples that were created from the
+                table data.
+        """
+        data_records = []
+        for row in table.find_all('tr')[1:]:
+            # 2. Grab the rest of the data cells
+            cells = [td.get_text(strip=True) for td in row.find_all('td')]
+            try:
+                cells[3] = float(cells[3])
+            except ValueError:
+                cells[3] =0
+            try:
+                cells[4] = float(cells[4])
+            except ValueError:
+                cells[4] =0
+            try:
+                cells[5] = float(cells[5])
+            except ValueError:
+                cells[5] = 0
+
+            l1 = Poll(*cells)
+            data_records.append(l1)
+        return data_records
+
+    def polls(self, table: int = 0) -> List[Poll]:
+        """Parses the data
+
+        The find_table and parse_rows methods are called for you and the table index
+        that is passed to it is used to get the correct table from the soup object.
+
+        Keyword Arguments:
+            table {int} -- Does the parsing of the table and rows for you.
+                It takes the table index number if given, otherwise parses table 0.
+                (default: {0})
+
+        Returns:
+            List[Poll] -- List of Poll namedtuples that were created from the
+                table data.
+        """
+        pass
+
+    def stats(self, loc: int = 0):
+        """Produces the stats from the polls.
+
+        Keyword Arguments:
+            loc {int} -- Formats the results from polls into a more user friendly
+            representation.
+
+        """
+        result = """
+RealClearPolitics
+=================
+    Biden: 1244.0
+  Sanders: 1248.0
+  Gabbard: 64.0
+        """
+        print(result)
+
+
+
+
+@dataclass
+class NYTimes(Site):
+    """NYTimes object.
+
+    NYTimes is a custom class to parse a Web instance from the nytimes website.
+
+    Variables:
+        web: Web -- The web object stores the information needed to process
+            the data.
+
+    Methods:
+        find_table: -> str -- Parses the Web object for table elements and
+            returns the first one that it finds unless an integer representing
+            the required table is passed.
+
+        parse_rows: -> List[LeaderBoard] -- Parses a BeautifulSoup table element and
+            returns the text found in the td elements as LeaderBoard namedtuples.
+
+        polls: -> List[LeaderBoard] -- Does the parsing of the table and rows for you.
+            It takes the table index number if given, otherwise parses table 0.
+
+        stats: -- Formats the results from polls into a more user friendly
+            representation:
+
+            Example:
+
+            NYTimes
+            =================================
+
+                               Pete Buttigieg
+            ---------------------------------
+            National Polling Average: 10%
+                   Pledged Delegates: 25
+            Individual Contributions: $76.2m
+                Weekly News Coverage: 3
+
+    """
+    web: Web
+
+    def parse_rows(self, table: Soup) -> List[LeaderBoard]:
+        """Parses the row data from the html table.
+
+        Arguments:
+            table {Soup} -- Parses a BeautifulSoup table element and
+                returns the text found in the td elements as LeaderBoard namedtuples.
+
+        Returns:
+            List[LeaderBoard] -- List of LeaderBoard namedtuples that were created from
+            the table data.
+        """
+        #table = self.find_table()
+        data_records = []
+        for row in table.find_all('tr')[1:]:
+
+            # 2. Grab the rest of the data cells
+            cells = [td.get_text(strip=True) for td in row.find_all('td')]
+
+            if len(cells) > 3:
+                cells[2] = int(cells[2])
+                cells[4] = int(cells[4][-1])
+                l1 = LeaderBoard(*cells)
+                data_records.append(l1)
+
+        return data_records
+
+    def polls(self, table: int = 0) -> List[LeaderBoard]:
+        """Parses the data
+
+        The find_table and parse_rows methods are called for you and the table index
+        that is passed to it is used to get the correct table from the soup object.
+
+        Keyword Arguments:
+            table {int} -- Does the parsing of the table and rows for you.
+                It takes the table index number if given, otherwise parses table 0.
+                (default: {0})
+
+        Returns:
+            List[LeaderBoard] -- List of LeaderBoard namedtuples that were created from
+                the table data.
+        """
+        pass
+
+    def stats(self, loc: int = 0):
+        """Produces the stats from the polls.
+
+        Keyword Arguments:
+            loc {int} -- Formats the results from polls into a more user friendly
+            representation.
+        """
+        result = """
+        NYTimes
+=================================
+
+                   Pete Buttigieg
+---------------------------------
+National Polling Average: 29%
+       Pledged Delegates: 610
+Individual Contributions: $11.1m
+    Weekly News Coverage: 3
+
+                """
+        print(result)
+
+
+def gather_data():
+    rcp_file = File("realclearpolitics.html")
+    rcp_url = (
+        "https://bites-data.s3.us-east-2.amazonaws.com/2020-03-10_realclearpolitics.html"
+    )
+    rcp_web = Web(rcp_url, rcp_file)
+    rcp = RealClearPolitics(rcp_web)
+
+    tb = rcp.find_table()
+    r_rows = rcp.parse_rows(tb)
+
+    rcp.stats(3)
+
+    nyt_file = File("nytimes.html")
+    nyt_url = (
+        "https://bites-data.s3.us-east-2.amazonaws.com/2020-03-10_nytimes.html"
+    )
+    nyt_web = Web(nyt_url, nyt_file)
+    nyt = NYTimes(nyt_web)
+    nyt.stats()
+
+
 if __name__ == "__main__":
-    instructions = """create grid of length 100
-    turn on 46,55 through 56,90
-    turn off 37,3 through 42,83
-    turn up 2 46,85 through 83,91
-    turn off 81,38 through 86,87
-    turn on 59,98 through 80,99
-    turn down 1 37,41 through 76,54
-    turn on 60,36 through 89,60
-    turn off 44,20 through 64,68
-    toggle 5,47 through 45,78
-    toggle 20,41 through 70,82
-    turn up 4 53,33 through 90,87
-    toggle 85,49 through 98,97
-    turn off 63,95 through 89,97
-    turn off 38,1 through 72,70
-    turn down 3 51,84 through 58,94
-    toggle 51,55 through 66,88
-    turn off 26,80 through 87,84
-    turn up 3 14,51 through 71,77
-    turn off 99,93 through 99,98
-    toggle 46,66 through 55,95
-    turn on 95,41 through 95,84
-    turn up 2 56,22 through 94,88
-    turn on 21,31 through 80,72
-    toggle 53,27 through 63,84
-    toggle 61,8 through 68,50
-    turn on 39,70 through 88,72
-    toggle 1,63 through 53,76
-    toggle 70,44 through 834,44
-    turn up 5 31,20 through 49,53
-    toggle 69,18 through 83,34
-    turn down 4 56,67 through 74,71
-    toggle 34,48 through 95,48
-    toggle 3,79 through 98,87
-    turn on 58,54 through 84,71
-    turn off 36,66 through 59,87
-    turn on 80,43 through 96,99
-    turn up 2 20,58 through 51,80
-    turn off 10,49 through 26,77
-    turn on 97,2 through 98,62
-    turn off 31,68 through 36,87
-    turn off 3,30 through 25,55
-    turn off 39,68 through 86,94
-    toggle 22,74 through 85,82
-    turn down 4 38,60 through 55,87
-    turn off 70,79 through 79,96
-    turn off 57,80 through 99,87
-    turn up 3 99,93 through 99,95
-    turn on 80,22 through 86,72
-    turn off 3,72 through 68,75"""
-
-    # Create a list of all the instructions
-    instructions = [line.strip() for line in instructions.splitlines()]
-
-    # The grid size instruction is first
-    # Extract it and convert to int
-    grid_size = int(instructions[0].split(" ")[4])
-
-    # Create a LightsGrid Class instance
-    lights = LightsGrid(grid_size, instructions[1:])
-
-    # Follow the instructions
-    lights.follow_instructions()
-
-    # Print the total intensity of the lights
-    # The correct answer is 12317
-    print(f"Total intensity of Lights on: {lights.lights_intensity}\n")
-
+    gather_data()

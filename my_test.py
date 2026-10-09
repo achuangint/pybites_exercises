@@ -385,12 +385,12 @@
 # def test_users(input_, expected):
 #     assert get_users(input_) == expected
 #
-"""
-Tests for gc_content.py
-Uses various DNA sequences retrieved from NCBI as input
-Compares user function with calculated GC content
-Inputs are modified to check how the function deals with unknown characters
-"""
+# """
+# Tests for gc_content.py
+# Uses various DNA sequences retrieved from NCBI as input
+# Compares user function with calculated GC content
+# Inputs are modified to check how the function deals with unknown characters
+# """
 #
 # import pytest
 # from wc import calculate_gc_content
@@ -17778,214 +17778,338 @@ Inputs are modified to check how the function deals with unknown characters
 # def test_modified_links(url, expected):
 #     assert redirect(url) == expected
 #
+#
+# import pytest
+#
+# from wc import LightsGrid
+#
+#
+# @pytest.mark.parametrize(
+#     "arg, expected",
+#     [
+#         # Turn on all lights
+#         (["turn on 0,0 through 9,9"], 100),
+#         # Turn on all lights
+#         # Turn off selection of lights
+#         # Turn on all lights again, intensity should be 100
+#         (
+#             [
+#                 "turn on 0,0 through 9,9",
+#                 "turn off 0,0 through 4,4",
+#                 "turn on 0,0 through 9,9",
+#             ],
+#             100,
+#         ),
+#         # Turn on all lights
+#         # Turn off 50 of the lights, intensity decreases 50
+#         # Turn on 1/4 the lights again, intensity increases 25
+#         (
+#             [
+#                 "turn on 0,0 through 9,9",
+#                 "turn off 0,0 through 4,9",
+#                 "turn on 0,0 through 4,4",
+#             ],
+#             75,
+#         ),
+#         # Turn on all lights 3 times
+#         # Intensity should not go above 100
+#         (
+#             [
+#                 "turn on 0,0 through 9,9",
+#                 "turn on 0,0 through 9,9",
+#                 "turn on 0,0 through 9,9",
+#             ],
+#             100,
+#         ),
+#     ],
+# )
+# def test_turn_on_lights(arg, expected):
+#     lights = LightsGrid(10, arg)
+#     lights.follow_instructions()
+#     assert lights.lights_intensity == expected
+#
+#
+# @pytest.mark.parametrize(
+#     "arg, expected",
+#     [
+#         # Turn off all lights even though they are not on
+#         (["turn off 0,0 through 9,9"], 0),
+#         # Turn on all lights
+#         # Turn off all lights
+#         (["turn on 0,0 through 9,9", "turn off 0,0 through 9,9"], 0),
+#         # Turn on all lights
+#         # Turn up all lights again intensity should increase 100
+#         # Turn off 1/4 of all lights, intensity should decrease 50
+#         (
+#             [
+#                 "turn on 0,0 through 9,9",
+#                 "turn up 1 0,0 through 9,9",
+#                 "turn off 0,0 through 4,4",
+#             ],
+#             150,
+#         ),
+#         # Turn on all lights
+#         # Turn up all lights again intensity should increase 100
+#         # Turn off 1/4 of all lights, decrease 50
+#         # Turn off an over lapping sect10n, decrease 50
+#         (
+#             [
+#                 "turn on 0,0 through 9,9",
+#                 "turn up 1 0,0 through 9,9",
+#                 "turn off 0,0 through 4,4",
+#                 "turn off 3,3 through 5,5",
+#             ],
+#             140,
+#         ),
+#     ],
+# )
+# def test_turn_off_lights(arg, expected):
+#     lights = LightsGrid(10, arg)
+#     lights.follow_instructions()
+#     assert lights.lights_intensity == expected
+#
+#
+# @pytest.mark.parametrize(
+#     "arg, expected",
+#     [
+#         # Toggle all lights
+#         (["toggle 0,0 through 9,9"], 300),
+#         # Turn on all lights
+#         # Toggle all light
+#         (["turn on 0,0 through 9,9", "toggle 0,0 through 9,9"], 0),
+#         # Turn on all lights in grid
+#         # Turn off some lights
+#         # Toggle some off lights on
+#         (
+#             [
+#                 "turn on 0,0 through 9,9",
+#                 "turn off 0,0 through 4,4",
+#                 "toggle 3,3 through 6,6",
+#             ],
+#             75,
+#         ),
+#     ],
+# )
+# def test_toggle_lights(arg, expected):
+#     lights = LightsGrid(10, arg)
+#     lights.follow_instructions()
+#     assert lights.lights_intensity == expected
+#
+#
+# @pytest.mark.parametrize(
+#     "arg, expected",
+#     [
+#         # Turn on all lights
+#         # Turn up all light 1
+#         (["turn on 0,0 through 9,9", "turn up 1 0,0 through 9,9"], 200),
+#         # Turn on all lights
+#         # Turn off some lights
+#         # turn up some lights 3
+#         (
+#             [
+#                 "turn on 0,0 through 9,9",
+#                 "turn off 0,0 through 4,4",
+#                 "turn up 3 0,0 through 4,9",
+#             ],
+#             225,
+#         ),
+#         # Turn on all lights
+#         # Turn off some lights
+#         # turn up all lights 5
+#         (
+#             [
+#                 "turn on 0,0 through 9,9",
+#                 "turn off 0,0 through 4,4",
+#                 "turn up 5 0,0 through 9,9",
+#             ],
+#             500,
+#         ),
+#     ],
+# )
+# def test_turn_up_lights(arg, expected):
+#     lights = LightsGrid(10, arg)
+#     lights.follow_instructions()
+#     assert lights.lights_intensity == expected
+#
+#
+# @pytest.mark.parametrize(
+#     "arg, expected",
+#     [
+#         # Turn on all lights
+#         # Turn down 1 all light
+#         (["turn on 0,0 through 9,9", "turn down 1 0,0 through 9,9"], 0),
+#         # Turn on all lights
+#         # Turn off some lights
+#         # turn up some lights 3
+#         # Turn down 2 some lights
+#         (
+#             [
+#                 "turn on 0,0 through 9,9",
+#                 "turn off 0,0 through 4,4",
+#                 "turn up 3 0,0 through 4,9",
+#                 "turn down 2 0,5 through 4,9",
+#             ],
+#             175,
+#         ),
+#         # Turn on all lights
+#         # turn down 2 all lights
+#         (["turn on 0,0 through 9,9", "turn down 2 0,0 through 9,9"], 0),
+#     ],
+# )
+# def test_turn_down_lights(arg, expected):
+#     lights = LightsGrid(10, arg)
+#     lights.follow_instructions()
+#     assert lights.lights_intensity == expected
+#
+#
+# @pytest.mark.parametrize(
+#     "arg, expected",
+#     [
+#         # Create grid of length 5 - intensity 0
+#         # Turn on 1,1 through 3,3 - intensity 9
+#         # Turn off 2,2 through 2,2 - intensity 8
+#         # Turn up 3 0,2 through 4,2 - intensity 23
+#         # Toggle 2,0 through 2,4 - intensity 24
+#         # Turn down 2 2,2 through 3,4 - intensity 19
+#         (
+#             [
+#                 "turn on 1,1 through 3,3",
+#                 "turn off 2,2 through 2,2",
+#                 "turn up 3 0,2 through 4,2",
+#                 "toggle 2,0 through 2,4",
+#                 "turn down 2 2,2 through 3,4",
+#             ],
+#             19,
+#         )
+#     ],
+# )
+# def test_example_with_bite(arg, expected):
+#     lights = LightsGrid(5, arg)
+#     lights.follow_instructions()
+#     assert lights.lights_intensity == expected
+#
 
-import pytest
+from abc import ABCMeta
+from dataclasses import dataclass
+from urllib.error import URLError
 
-from wc import LightsGrid
+import pytest  # type: ignore
 
-
-@pytest.mark.parametrize(
-    "arg, expected",
-    [
-        # Turn on all lights
-        (["turn on 0,0 through 9,9"], 100),
-        # Turn on all lights
-        # Turn off selection of lights
-        # Turn on all lights again, intensity should be 100
-        (
-            [
-                "turn on 0,0 through 9,9",
-                "turn off 0,0 through 4,4",
-                "turn on 0,0 through 9,9",
-            ],
-            100,
-        ),
-        # Turn on all lights
-        # Turn off 50 of the lights, intensity decreases 50
-        # Turn on 1/4 the lights again, intensity increases 25
-        (
-            [
-                "turn on 0,0 through 9,9",
-                "turn off 0,0 through 4,9",
-                "turn on 0,0 through 4,4",
-            ],
-            75,
-        ),
-        # Turn on all lights 3 times
-        # Intensity should not go above 100
-        (
-            [
-                "turn on 0,0 through 9,9",
-                "turn on 0,0 through 9,9",
-                "turn on 0,0 through 9,9",
-            ],
-            100,
-        ),
-    ],
+from wc import (
+    TMP,
+    TODAY,
+    File,
+    LeaderBoard,
+    NYTimes,
+    Poll,
+    RealClearPolitics,
+    Site,
+    Soup,
+    Web,
 )
-def test_turn_on_lights(arg, expected):
-    lights = LightsGrid(10, arg)
-    lights.follow_instructions()
-    assert lights.lights_intensity == expected
+
+CLEAN_UP = False
 
 
-@pytest.mark.parametrize(
-    "arg, expected",
-    [
-        # Turn off all lights even though they are not on
-        (["turn off 0,0 through 9,9"], 0),
-        # Turn on all lights
-        # Turn off all lights
-        (["turn on 0,0 through 9,9", "turn off 0,0 through 9,9"], 0),
-        # Turn on all lights
-        # Turn up all lights again intensity should increase 100
-        # Turn off 1/4 of all lights, intensity should decrease 50
-        (
-            [
-                "turn on 0,0 through 9,9",
-                "turn up 1 0,0 through 9,9",
-                "turn off 0,0 through 4,4",
-            ],
-            150,
-        ),
-        # Turn on all lights
-        # Turn up all lights again intensity should increase 100
-        # Turn off 1/4 of all lights, decrease 50
-        # Turn off an over lapping sect10n, decrease 50
-        (
-            [
-                "turn on 0,0 through 9,9",
-                "turn up 1 0,0 through 9,9",
-                "turn off 0,0 through 4,4",
-                "turn off 3,3 through 5,5",
-            ],
-            140,
-        ),
-    ],
-)
-def test_turn_off_lights(arg, expected):
-    lights = LightsGrid(10, arg)
-    lights.follow_instructions()
-    assert lights.lights_intensity == expected
+@pytest.fixture(scope="module")
+def test_file():
+    file = File("test.html")
+    yield file
+    if CLEAN_UP:
+        if file.path.exists():
+            file.path.unlink()
 
 
-@pytest.mark.parametrize(
-    "arg, expected",
-    [
-        # Toggle all lights
-        (["toggle 0,0 through 9,9"], 300),
-        # Turn on all lights
-        # Toggle all light
-        (["turn on 0,0 through 9,9", "toggle 0,0 through 9,9"], 0),
-        # Turn on all lights in grid
-        # Turn off some lights
-        # Toggle some off lights on
-        (
-            [
-                "turn on 0,0 through 9,9",
-                "turn off 0,0 through 4,4",
-                "toggle 3,3 through 6,6",
-            ],
-            75,
-        ),
-    ],
-)
-def test_toggle_lights(arg, expected):
-    lights = LightsGrid(10, arg)
-    lights.follow_instructions()
-    assert lights.lights_intensity == expected
+@pytest.fixture(scope="module")
+def rcp():
+    rcp_file = File("realclearpolitics.html")
+    rcp_url = (
+        "https://bites-data.s3.us-east-2.amazonaws.com/"
+        "2020-03-10_realclearpolitics.html"
+    )
+    rcp_web = Web(rcp_url, rcp_file)
+    yield RealClearPolitics(rcp_web)
+    if CLEAN_UP:
+        if rcp_web.file.path.exists():
+            rcp_web.file.path.unlink()
 
 
-@pytest.mark.parametrize(
-    "arg, expected",
-    [
-        # Turn on all lights
-        # Turn up all light 1
-        (["turn on 0,0 through 9,9", "turn up 1 0,0 through 9,9"], 200),
-        # Turn on all lights
-        # Turn off some lights
-        # turn up some lights 3
-        (
-            [
-                "turn on 0,0 through 9,9",
-                "turn off 0,0 through 4,4",
-                "turn up 3 0,0 through 4,9",
-            ],
-            225,
-        ),
-        # Turn on all lights
-        # Turn off some lights
-        # turn up all lights 5
-        (
-            [
-                "turn on 0,0 through 9,9",
-                "turn off 0,0 through 4,4",
-                "turn up 5 0,0 through 9,9",
-            ],
-            500,
-        ),
-    ],
-)
-def test_turn_up_lights(arg, expected):
-    lights = LightsGrid(10, arg)
-    lights.follow_instructions()
-    assert lights.lights_intensity == expected
+@pytest.fixture(scope="module")
+def nyt():
+    nyt_file = File("nytimes.html")
+    nyt_url = ("https://bites-data.s3.us-east-2.amazonaws.com/"
+               "2020-03-10_nytimes.html")
+    nyt_web = Web(nyt_url, nyt_file)
+    yield NYTimes(nyt_web)
+    if CLEAN_UP:
+        if nyt_web.file.path.exists():
+            nyt_web.file.path.unlink()
 
 
-@pytest.mark.parametrize(
-    "arg, expected",
-    [
-        # Turn on all lights
-        # Turn down 1 all light
-        (["turn on 0,0 through 9,9", "turn down 1 0,0 through 9,9"], 0),
-        # Turn on all lights
-        # Turn off some lights
-        # turn up some lights 3
-        # Turn down 2 some lights
-        (
-            [
-                "turn on 0,0 through 9,9",
-                "turn off 0,0 through 4,4",
-                "turn up 3 0,0 through 4,9",
-                "turn down 2 0,5 through 4,9",
-            ],
-            175,
-        ),
-        # Turn on all lights
-        # turn down 2 all lights
-        (["turn on 0,0 through 9,9", "turn down 2 0,0 through 9,9"], 0),
-    ],
-)
-def test_turn_down_lights(arg, expected):
-    lights = LightsGrid(10, arg)
-    lights.follow_instructions()
-    assert lights.lights_intensity == expected
+def test_file_class():
+    file = File("empty.html")
+    assert str(file.path) == f"{TMP}/{TODAY}_{file.name}"
+    assert file.data is None
 
 
-@pytest.mark.parametrize(
-    "arg, expected",
-    [
-        # Create grid of length 5 - intensity 0
-        # Turn on 1,1 through 3,3 - intensity 9
-        # Turn off 2,2 through 2,2 - intensity 8
-        # Turn up 3 0,2 through 4,2 - intensity 23
-        # Toggle 2,0 through 2,4 - intensity 24
-        # Turn down 2 2,2 through 3,4 - intensity 19
-        (
-            [
-                "turn on 1,1 through 3,3",
-                "turn off 2,2 through 2,2",
-                "turn up 3 0,2 through 4,2",
-                "toggle 2,0 through 2,4",
-                "turn down 2 2,2 through 3,4",
-            ],
-            19,
-        )
-    ],
-)
-def test_example_with_bite(arg, expected):
-    lights = LightsGrid(5, arg)
-    lights.follow_instructions()
-    assert lights.lights_intensity == expected
+def test_web(test_file):
+    url = "https://projects.fivethirtyeight.com/polls/"
+    test_web = Web(url, test_file)
+    assert test_web.url == url
+    assert isinstance(test_web.file, File)
+    assert isinstance(test_web.soup, Soup)
 
 
+def test_web_bad_url():
+    file = File("clamytoe.html")
+    url = "https://clamytoe.dev"
+    test_web = Web(url, file)
+    with pytest.raises(URLError) as e:
+        test_web.data
+    error = str(e.value)
+    assert 'urlopen error' in error
+
+
+def test_poll(rcp):
+    table = rcp.find_table()
+    rows = rcp.parse_rows(table)
+    poll = rows[0]
+    assert isinstance(rows, list)
+    assert isinstance(poll, Poll)
+    assert isinstance(poll.Sanders, float)
+
+
+def test_leaderboard(nyt):
+    table = nyt.find_table()
+    rows = nyt.parse_rows(table)
+    leaderboard = rows[0]
+    assert isinstance(rows, list)
+    assert isinstance(leaderboard, LeaderBoard)
+    assert isinstance(leaderboard.Delegates, int)
+    assert isinstance(leaderboard.Coverage, int)
+
+
+def test_rcp_stats(rcp, capfd):
+    expected = {"Biden": 1244.0, "Sanders": 1248.0, "Gabbard": 64.0}
+    rcp.stats(3)
+    output = capfd.readouterr()[0].splitlines()
+    assert "RealClearPolitics" in output
+    assert f"{'=' * 17}" in output
+    candidates = {}
+    for candidate in output[3:-1]:
+        name, votes = candidate.strip().split(": ")
+        candidates[name] = float(votes)
+    assert candidates["Biden"] == expected["Biden"]
+    assert candidates["Sanders"] == expected["Sanders"]
+    assert candidates["Gabbard"] == expected["Gabbard"]
+
+
+def test_nyt(nyt, capfd):
+    nyt.stats()
+    output = capfd.readouterr()[0].splitlines()
+    assert f"{'=' * 33}" in output
+    assert f"{'-' * 33}" in output
+    assert "National Polling Average: 29%" in output
+    assert "       Pledged Delegates: 610" in output
+    assert "Individual Contributions: $11.1m" in output
+    assert "    Weekly News Coverage: 3" in output
