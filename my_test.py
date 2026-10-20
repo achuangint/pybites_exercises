@@ -17988,128 +17988,200 @@
 #     lights.follow_instructions()
 #     assert lights.lights_intensity == expected
 #
+#
+# from abc import ABCMeta
+# from dataclasses import dataclass
+# from urllib.error import URLError
+#
+# import pytest  # type: ignore
+#
+# from wc import (
+#     TMP,
+#     TODAY,
+#     File,
+#     LeaderBoard,
+#     NYTimes,
+#     Poll,
+#     RealClearPolitics,
+#     Site,
+#     Soup,
+#     Web,
+# )
+#
+# CLEAN_UP = False
+#
+#
+# @pytest.fixture(scope="module")
+# def test_file():
+#     file = File("test.html")
+#     yield file
+#     if CLEAN_UP:
+#         if file.path.exists():
+#             file.path.unlink()
+#
+#
+# @pytest.fixture(scope="module")
+# def rcp():
+#     rcp_file = File("realclearpolitics.html")
+#     rcp_url = (
+#         "https://bites-data.s3.us-east-2.amazonaws.com/"
+#         "2020-03-10_realclearpolitics.html"
+#     )
+#     rcp_web = Web(rcp_url, rcp_file)
+#     yield RealClearPolitics(rcp_web)
+#     if CLEAN_UP:
+#         if rcp_web.file.path.exists():
+#             rcp_web.file.path.unlink()
+#
+#
+# @pytest.fixture(scope="module")
+# def nyt():
+#     nyt_file = File("nytimes.html")
+#     nyt_url = ("https://bites-data.s3.us-east-2.amazonaws.com/"
+#                "2020-03-10_nytimes.html")
+#     nyt_web = Web(nyt_url, nyt_file)
+#     yield NYTimes(nyt_web)
+#     if CLEAN_UP:
+#         if nyt_web.file.path.exists():
+#             nyt_web.file.path.unlink()
+#
+#
+# def test_file_class():
+#     file = File("empty.html")
+#     assert str(file.path) == f"{TMP}/{TODAY}_{file.name}"
+#     assert file.data is None
+#
+#
+# def test_web(test_file):
+#     url = "https://projects.fivethirtyeight.com/polls/"
+#     test_web = Web(url, test_file)
+#     assert test_web.url == url
+#     assert isinstance(test_web.file, File)
+#     assert isinstance(test_web.soup, Soup)
+#
+#
+# def test_web_bad_url():
+#     file = File("clamytoe.html")
+#     url = "https://clamytoe.dev"
+#     test_web = Web(url, file)
+#     with pytest.raises(URLError) as e:
+#         test_web.data
+#     error = str(e.value)
+#     assert 'urlopen error' in error
+#
+#
+# def test_poll(rcp):
+#     table = rcp.find_table()
+#     rows = rcp.parse_rows(table)
+#     poll = rows[0]
+#     assert isinstance(rows, list)
+#     assert isinstance(poll, Poll)
+#     assert isinstance(poll.Sanders, float)
+#
+#
+# def test_leaderboard(nyt):
+#     table = nyt.find_table()
+#     rows = nyt.parse_rows(table)
+#     leaderboard = rows[0]
+#     assert isinstance(rows, list)
+#     assert isinstance(leaderboard, LeaderBoard)
+#     assert isinstance(leaderboard.Delegates, int)
+#     assert isinstance(leaderboard.Coverage, int)
+#
+#
+# def test_rcp_stats(rcp, capfd):
+#     expected = {"Biden": 1244.0, "Sanders": 1248.0, "Gabbard": 64.0}
+#     rcp.stats(3)
+#     output = capfd.readouterr()[0].splitlines()
+#     assert "RealClearPolitics" in output
+#     assert f"{'=' * 17}" in output
+#     candidates = {}
+#     for candidate in output[3:-1]:
+#         name, votes = candidate.strip().split(": ")
+#         candidates[name] = float(votes)
+#     assert candidates["Biden"] == expected["Biden"]
+#     assert candidates["Sanders"] == expected["Sanders"]
+#     assert candidates["Gabbard"] == expected["Gabbard"]
+#
+#
+# def test_nyt(nyt, capfd):
+#     nyt.stats()
+#     output = capfd.readouterr()[0].splitlines()
+#     assert f"{'=' * 33}" in output
+#     assert f"{'-' * 33}" in output
+#     assert "National Polling Average: 29%" in output
+#     assert "       Pledged Delegates: 610" in output
+#     assert "Individual Contributions: $11.1m" in output
+#     assert "    Weekly News Coverage: 3" in output
 
-from abc import ABCMeta
-from dataclasses import dataclass
-from urllib.error import URLError
+import pytest
 
-import pytest  # type: ignore
+from wc import Bracket, Taxed, Taxes
 
-from wc import (
-    TMP,
-    TODAY,
-    File,
-    LeaderBoard,
-    NYTimes,
-    Poll,
-    RealClearPolitics,
-    Site,
-    Soup,
-    Web,
-)
-
-CLEAN_UP = False
+bracket_2020 = [
+    Bracket(9_875, 0.1),
+    Bracket(40_125, 0.12),
+    Bracket(85_525, 0.22),
+    Bracket(163_300, 0.24),
+    Bracket(207_350, 0.32),
+    Bracket(518_400, 0.35),
+    Bracket(518_401, 0.37),
+]
 
 
 @pytest.fixture(scope="module")
-def test_file():
-    file = File("test.html")
-    yield file
-    if CLEAN_UP:
-        if file.path.exists():
-            file.path.unlink()
+def taxes_2019():
+    income = 40_000
+    return Taxes(income)
 
 
 @pytest.fixture(scope="module")
-def rcp():
-    rcp_file = File("realclearpolitics.html")
-    rcp_url = (
-        "https://bites-data.s3.us-east-2.amazonaws.com/"
-        "2020-03-10_realclearpolitics.html"
-    )
-    rcp_web = Web(rcp_url, rcp_file)
-    yield RealClearPolitics(rcp_web)
-    if CLEAN_UP:
-        if rcp_web.file.path.exists():
-            rcp_web.file.path.unlink()
+def taxes_2020_low():
+    income = 8_000
+    return Taxes(income, bracket_2020)
 
 
 @pytest.fixture(scope="module")
-def nyt():
-    nyt_file = File("nytimes.html")
-    nyt_url = ("https://bites-data.s3.us-east-2.amazonaws.com/"
-               "2020-03-10_nytimes.html")
-    nyt_web = Web(nyt_url, nyt_file)
-    yield NYTimes(nyt_web)
-    if CLEAN_UP:
-        if nyt_web.file.path.exists():
-            nyt_web.file.path.unlink()
+def taxes_2020_over():
+    income = 1_000_000
+    return Taxes(income, bracket_2020)
 
 
-def test_file_class():
-    file = File("empty.html")
-    assert str(file.path) == f"{TMP}/{TODAY}_{file.name}"
-    assert file.data is None
+def test_values(taxes_2019):
+    assert taxes_2019.income == 40_000
+    assert taxes_2019.total == 4_658.50
+    assert taxes_2019.tax_rate == 11.65
+    assert isinstance(taxes_2019.bracket, list)
+    assert isinstance(taxes_2019.bracket[0], Bracket)
 
 
-def test_web(test_file):
-    url = "https://projects.fivethirtyeight.com/polls/"
-    test_web = Web(url, test_file)
-    assert test_web.url == url
-    assert isinstance(test_web.file, File)
-    assert isinstance(test_web.soup, Soup)
+def test_taxes(taxes_2019):
+
+    assert len(taxes_2019.tax_amounts) == 3
+    assert isinstance(taxes_2019.tax_amounts[0], Taxed)
+    assert taxes_2019.tax_amounts[2].tax == 115.50
 
 
-def test_web_bad_url():
-    file = File("clamytoe.html")
-    url = "https://clamytoe.dev"
-    test_web = Web(url, file)
-    with pytest.raises(URLError) as e:
-        test_web.data
-    error = str(e.value)
-    assert 'urlopen error' in error
+def test_summary(taxes_2019):
+    output = str(taxes_2019).splitlines()
+    assert len(output) == 5
+    assert "Summary Report" in output[0]
 
 
-def test_poll(rcp):
-    table = rcp.find_table()
-    rows = rcp.parse_rows(table)
-    poll = rows[0]
-    assert isinstance(rows, list)
-    assert isinstance(poll, Poll)
-    assert isinstance(poll.Sanders, float)
+def test_low_income(taxes_2020_low):
+    assert taxes_2020_low.taxes == 800.00
 
 
-def test_leaderboard(nyt):
-    table = nyt.find_table()
-    rows = nyt.parse_rows(table)
-    leaderboard = rows[0]
-    assert isinstance(rows, list)
-    assert isinstance(leaderboard, LeaderBoard)
-    assert isinstance(leaderboard.Delegates, int)
-    assert isinstance(leaderboard.Coverage, int)
-
-
-def test_rcp_stats(rcp, capfd):
-    expected = {"Biden": 1244.0, "Sanders": 1248.0, "Gabbard": 64.0}
-    rcp.stats(3)
-    output = capfd.readouterr()[0].splitlines()
-    assert "RealClearPolitics" in output
-    assert f"{'=' * 17}" in output
-    candidates = {}
-    for candidate in output[3:-1]:
-        name, votes = candidate.strip().split(": ")
-        candidates[name] = float(votes)
-    assert candidates["Biden"] == expected["Biden"]
-    assert candidates["Sanders"] == expected["Sanders"]
-    assert candidates["Gabbard"] == expected["Gabbard"]
-
-
-def test_nyt(nyt, capfd):
-    nyt.stats()
-    output = capfd.readouterr()[0].splitlines()
-    assert f"{'=' * 33}" in output
-    assert f"{'-' * 33}" in output
-    assert "National Polling Average: 29%" in output
-    assert "       Pledged Delegates: 610" in output
-    assert "Individual Contributions: $11.1m" in output
-    assert "    Weekly News Coverage: 3" in output
+def test_report(taxes_2020_over, capfd):
+    taxes_2020_over.report()
+    output = capfd.readouterr()[0].strip().splitlines()
+    print("Output:")
+    print(output)
+    assert len(output) == 17
+    assert "Summary Report" in output[0]
+    assert "Taxes Breakdown" in output[6]
+    assert "=" in output[1]
+    assert len(output[1]) == 34
+    assert "-" in output[-2]
+    assert "14,096.00" in output[-5]
+    assert "0.24" in output[-6]

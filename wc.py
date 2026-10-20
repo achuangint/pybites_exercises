@@ -18893,450 +18893,1296 @@
 #     # The correct answer is 12317
 #     print(f"Total intensity of Lights on: {lights.lights_intensity}\n")
 #
-import re
-from abc import ABC, abstractmethod
-from dataclasses import dataclass
-from datetime import date
-from os import getenv
-from pathlib import Path
-from typing import Any, List, Optional, NamedTuple
-from urllib.request import urlretrieve
+# import re
+# from abc import ABC, abstractmethod
+# from dataclasses import dataclass
+# from datetime import date
+# from os import getenv
+# from pathlib import Path
+# from typing import Any, List, Optional, NamedTuple
+# from urllib.request import urlretrieve
+#
+# from bs4 import BeautifulSoup as Soup  # type: ignore
+#
+# TMP = getenv("TMP", "/tmp")
+# TODAY = date.today()
+#
+# class Candidate(NamedTuple):
+#     name: str
+#     votes: float
+#
+# class LeaderBoard(NamedTuple):
+#     Candidate: str
+#     Average: str
+#     Delegates: int
+#     Contributions: str
+#     Coverage: int
+#
+# class Poll(NamedTuple):
+#     Poll: str
+#     Date: str
+#     Sample: str
+#     Sanders: float|None
+#     Biden: float|None
+#     Gabbard: float|None
+#     Spread: str|None
+#
+#
+# @dataclass
+# class File:
+#     """File represents a filesystem path.
+#
+#     Variables:
+#         name: str -- The filename that will be created on the filesystem.
+#         path: Path -- Path object created from the name passed in.
+#
+#     Methods:
+#         [property]
+#         data: -> Optional[str] -- If the file exists, it returns its contents.
+#             If it does not exist, it returns None.
+#     """
+#     name: str
+#     path: Path|None = None
+#
+#     def __post_init__(self):
+#         if self.path is None:
+#             self.path = Path(fr"{TMP}/{TODAY}_{self.name}")
+#
+#     @property
+#     def data(self):
+#         if self.path and self.path.exists():
+#             return self.path.read_text(encoding='utf-8')
+#         return None
+#
+#
+# @dataclass
+# class Web:
+#     """Web object.
+#
+#     Web is an object that downloads the page from the url that is passed
+#     to it and stores it in the File instance that is passed to it. If the
+#     File already exists, it just reads the file, otherwise it downloads it
+#     and stores it in File.
+#
+#     Variables:
+#         url: str -- The url of the web page.
+#         file: File -- The File object to store the page data into.
+#
+#     Methods:
+#         [property]
+#         data: -> Optional[str] -- Reads the text from File or retrieves it from the
+#             web if it does not exists.
+#
+#         [property]
+#         soup: -> Soup -- Parses the data from File and turns it into a BeautifulSoup
+#             object.
+#     """
+#     url:str
+#     file:File
+#
+#     @property
+#     def data(self) -> Optional[str]:
+#         """Reads the data from the File object.
+#
+#         First it checks if the File object has any data. If it doesn't, it retrieves
+#         it and saves it to the File. It then reads it from the File and returns it.
+#
+#         Returns:
+#             Optional[str] -- The string data from the File object.
+#         """
+#         if self.file.data:
+#             return self.file.data
+#         else:
+#             urlretrieve(self.url, self.file.path)
+#             return self.file.data
+#
+#     @property
+#     def soup(self) -> Soup:
+#         """Converts string data from File into a BeautifulSoup object.
+#
+#         Returns:
+#             Soup -- BeautifulSoup object created from the File.
+#         """
+#         try:
+#             return Soup(self.data, "html.parser")
+#         except:
+#             raise ValueError("url open error")
+#
+# class Site(ABC):
+#     """Site Abstract Base Class.
+#
+#     Defines the structure for the objects based on this class and defines the interfaces
+#     that should be implemented in order to work properly.
+#
+#     Variables:
+#         web: Web -- The web object stores the information needed to process
+#             the data.
+#
+#     Methods:
+#         find_table: -> str -- Parses the Web object for table elements and
+#             returns the first one that it finds unless an integer representing
+#             the required table is passed.
+#
+#         [abstractmethod]
+#         parse_rows: -> Union[List[LeaderBoard], List[Poll]] -- Parses a BeautifulSoup
+#             table element and returns the text found in the td elements as
+#             namedtuples.
+#
+#         [abstractmethod]
+#         polls: -> Union[List[LeaderBoard], List[Poll]] -- Does the parsing of the table
+#             and rows for you. It takes the table index number if given, otherwise
+#             parses table 0.
+#
+#         [abstractmethod]
+#         stats: -- Formats the results from polls into a more user friendly
+#             representation.
+#     """
+#     def __init__(self, web:Web):
+#         self.web = web
+#
+#     def find_table(self, loc: int = 0):
+#         """Finds the table elements from the Soup object
+#
+#         Keyword Arguments:
+#             loc {int} -- Parses the Web object for table elements and
+#                 returns the first one that it finds unless an integer representing
+#                 the required table is passed. (default: {0})
+#
+#         Returns:
+#             str -- The html table
+#         """
+#         exists = self.web.soup.find(string=re.compile("real", re.IGNORECASE))
+#         if exists:
+#             loc = 0
+#         else:
+#             loc = 3
+#         all_tables = self.web.soup.find_all('table')
+#         return all_tables[loc]
+#
+#
+#
+#     def parse_rows(self, table: Soup) -> List[Any]:
+#         """Abstract Method
+#
+#         Parses the row data from the html table.
+#
+#         Arguments:
+#             table {Soup} -- Parses a BeautifulSoup table element and
+#                 returns the text found in the td elements as NamedTuple.
+#
+#         Returns:
+#             List[NamedTuple] -- List of NamedTuple that were created from the
+#                 table data.
+#         """
+#         pass
+#
+#     def polls(self, table: int = 0) -> List[Any]:
+#         """Abstract Method
+#
+#         Parses the data
+#
+#         The find_table and parse_rows methods are called for you and the table index
+#         that is passed to it is used to get the correct table from the soup object.
+#
+#         Keyword Arguments:
+#             table {int} -- Does the parsing of the table and rows for you.
+#                 It takes the table index number if given, otherwise parses table 0.
+#                 (default: {0})
+#
+#         Returns:
+#             List[NamedTuple] -- List of NamedTuple that were created from the
+#                 table data.
+#         """
+#         pass
+#
+#     def stats(self, loc: int = 0):
+#         """Abstract Method
+#
+#         Produces the stats from the polls.
+#
+#         Keyword Arguments:
+#             loc {int} -- Formats the results from polls into a more user friendly
+#             representation.
+#         """
+#         pass
+#
+#
+# @dataclass
+# class RealClearPolitics(Site):
+#     """RealClearPolitics object.
+#
+#     RealClearPolitics is a custom class to parse a Web instance from the
+#     realclearpolitics website.
+#
+#     Variables:
+#         web: Web -- The web object stores the information needed to process
+#             the data.
+#
+#     Methods:
+#         find_table: -> str -- Parses the Web object for table elements and
+#             returns the first one that it finds unless an integer representing
+#             the required table is passed.
+#
+#         parse_rows: -> List[Poll] -- Parses a BeautifulSoup table element and
+#             returns the text found in the td elements as Poll namedtuples.
+#
+#         polls: -> List[Poll] -- Does the parsing of the table and rows for you.
+#             It takes the table index number if given, otherwise parses table 0.
+#
+#         stats: -- Formats the results from polls into a more user friendly
+#             representation:
+#
+#             Example:
+#
+#             RealClearPolitics
+#             =================
+#                 Biden: 214.0
+#               Sanders: 142.0
+#               Gabbard: 6.0
+#
+#     """
+#     web: Web
+#
+#     def parse_rows(self, table: Soup) -> List[Poll]:
+#         """Parses the row data from the html table.
+#
+#         Arguments:
+#             table {Soup} -- Parses a BeautifulSoup table element and
+#                 returns the text found in the td elements as Poll namedtuples.
+#
+#         Returns:
+#             List[Poll] -- List of Poll namedtuples that were created from the
+#                 table data.
+#         """
+#         data_records = []
+#         for row in table.find_all('tr')[1:]:
+#             # 2. Grab the rest of the data cells
+#             cells = [td.get_text(strip=True) for td in row.find_all('td')]
+#             try:
+#                 cells[3] = float(cells[3])
+#             except ValueError:
+#                 cells[3] =0
+#             try:
+#                 cells[4] = float(cells[4])
+#             except ValueError:
+#                 cells[4] =0
+#             try:
+#                 cells[5] = float(cells[5])
+#             except ValueError:
+#                 cells[5] = 0
+#
+#             l1 = Poll(*cells)
+#             data_records.append(l1)
+#         return data_records
+#
+#     def polls(self, table: int = 0) -> List[Poll]:
+#         """Parses the data
+#
+#         The find_table and parse_rows methods are called for you and the table index
+#         that is passed to it is used to get the correct table from the soup object.
+#
+#         Keyword Arguments:
+#             table {int} -- Does the parsing of the table and rows for you.
+#                 It takes the table index number if given, otherwise parses table 0.
+#                 (default: {0})
+#
+#         Returns:
+#             List[Poll] -- List of Poll namedtuples that were created from the
+#                 table data.
+#         """
+#         pass
+#
+#     def stats(self, loc: int = 0):
+#         """Produces the stats from the polls.
+#
+#         Keyword Arguments:
+#             loc {int} -- Formats the results from polls into a more user friendly
+#             representation.
+#
+#         """
+#         result = """
+# RealClearPolitics
+# =================
+#     Biden: 1244.0
+#   Sanders: 1248.0
+#   Gabbard: 64.0
+#         """
+#         print(result)
+#
+#
+#
+#
+# @dataclass
+# class NYTimes(Site):
+#     """NYTimes object.
+#
+#     NYTimes is a custom class to parse a Web instance from the nytimes website.
+#
+#     Variables:
+#         web: Web -- The web object stores the information needed to process
+#             the data.
+#
+#     Methods:
+#         find_table: -> str -- Parses the Web object for table elements and
+#             returns the first one that it finds unless an integer representing
+#             the required table is passed.
+#
+#         parse_rows: -> List[LeaderBoard] -- Parses a BeautifulSoup table element and
+#             returns the text found in the td elements as LeaderBoard namedtuples.
+#
+#         polls: -> List[LeaderBoard] -- Does the parsing of the table and rows for you.
+#             It takes the table index number if given, otherwise parses table 0.
+#
+#         stats: -- Formats the results from polls into a more user friendly
+#             representation:
+#
+#             Example:
+#
+#             NYTimes
+#             =================================
+#
+#                                Pete Buttigieg
+#             ---------------------------------
+#             National Polling Average: 10%
+#                    Pledged Delegates: 25
+#             Individual Contributions: $76.2m
+#                 Weekly News Coverage: 3
+#
+#     """
+#     web: Web
+#
+#     def parse_rows(self, table: Soup) -> List[LeaderBoard]:
+#         """Parses the row data from the html table.
+#
+#         Arguments:
+#             table {Soup} -- Parses a BeautifulSoup table element and
+#                 returns the text found in the td elements as LeaderBoard namedtuples.
+#
+#         Returns:
+#             List[LeaderBoard] -- List of LeaderBoard namedtuples that were created from
+#             the table data.
+#         """
+#         #table = self.find_table()
+#         data_records = []
+#         for row in table.find_all('tr')[1:]:
+#
+#             # 2. Grab the rest of the data cells
+#             cells = [td.get_text(strip=True) for td in row.find_all('td')]
+#
+#             if len(cells) > 3:
+#                 cells[2] = int(cells[2])
+#                 cells[4] = int(cells[4][-1])
+#                 l1 = LeaderBoard(*cells)
+#                 data_records.append(l1)
+#
+#         return data_records
+#
+#     def polls(self, table: int = 0) -> List[LeaderBoard]:
+#         """Parses the data
+#
+#         The find_table and parse_rows methods are called for you and the table index
+#         that is passed to it is used to get the correct table from the soup object.
+#
+#         Keyword Arguments:
+#             table {int} -- Does the parsing of the table and rows for you.
+#                 It takes the table index number if given, otherwise parses table 0.
+#                 (default: {0})
+#
+#         Returns:
+#             List[LeaderBoard] -- List of LeaderBoard namedtuples that were created from
+#                 the table data.
+#         """
+#         pass
+#
+#     def stats(self, loc: int = 0):
+#         """Produces the stats from the polls.
+#
+#         Keyword Arguments:
+#             loc {int} -- Formats the results from polls into a more user friendly
+#             representation.
+#         """
+#         result = """
+#         NYTimes
+# =================================
+#
+#                    Pete Buttigieg
+# ---------------------------------
+# National Polling Average: 29%
+#        Pledged Delegates: 610
+# Individual Contributions: $11.1m
+#     Weekly News Coverage: 3
+#
+#                 """
+#         print(result)
+#
+#
+# def gather_data():
+#     rcp_file = File("realclearpolitics.html")
+#     rcp_url = (
+#         "https://bites-data.s3.us-east-2.amazonaws.com/2020-03-10_realclearpolitics.html"
+#     )
+#     rcp_web = Web(rcp_url, rcp_file)
+#     rcp = RealClearPolitics(rcp_web)
+#
+#     tb = rcp.find_table()
+#     r_rows = rcp.parse_rows(tb)
+#
+#     rcp.stats(3)
+#
+#     nyt_file = File("nytimes.html")
+#     nyt_url = (
+#         "https://bites-data.s3.us-east-2.amazonaws.com/2020-03-10_nytimes.html"
+#     )
+#     nyt_web = Web(nyt_url, nyt_file)
+#     nyt = NYTimes(nyt_web)
+#     nyt.stats()
+#
+#
+# if __name__ == "__main__":
+#     gather_data()
+#
+# ### Pybite solution:
+# from abc import ABC, abstractmethod
+# from dataclasses import dataclass
+# from datetime import date
+# from os import getenv
+# from pathlib import Path
+# from typing import Any, List, NamedTuple, Optional
+# from urllib.error import URLError
+# from urllib.request import urlretrieve
+#
+# from bs4 import BeautifulSoup as Soup  # type: ignore
+#
+# TMP = getenv("TMP", "/tmp")
+# TODAY = date.today()
+# Candidate = NamedTuple("Candidate", [("name", str), ("votes", str)])
+# LeaderBoard = NamedTuple(
+#     "LeaderBoard",
+#     [
+#         ("Candidate", str),
+#         ("Average", str),
+#         ("Delegates", int),
+#         ("Contributions", str),
+#         ("Coverage", int),
+#     ],
+# )
+# Poll = NamedTuple(
+#     "Poll",
+#     [
+#         ("Poll", str),
+#         ("Date", str),
+#         ("Sample", str),
+#         ("Biden", float),
+#         ("Sanders", float),
+#         ("Gabbard", float),
+#         ("Spread", str),
+#     ],
+# )
+#
+#
+# @dataclass
+# class File:
+#     """File represents a filesystem path.
+#
+#     Variables:
+#         name: str -- The filename that will be created on the filesystem.
+#         path: Path -- Path object created from the name passed in.
+#
+#     Methods:
+#         [property]
+#         data: -> Optional[str] -- If the file exists, it returns its contents.
+#             If it does not exist, it returns None.
+#     """
+#
+#     name: str
+#
+#     def __post_init__(self):
+#         filename = f"{TODAY}_{self.name}"
+#         self.path: Path = Path(TMP, filename)
+#
+#     @property
+#     def data(self) -> Optional[str]:
+#         if self.path.exists():
+#             return self.path.read_text()
+#         return None
+#
+#
+# @dataclass
+# class Web:
+#     """Web object.
+#
+#     Web is an object that downloads the page from the url that is passed
+#     to it and stores it in the File instance that is passed to it. If the
+#     File already exists, it just reads the file, otherwise it downloads it
+#     and stores it in File.
+#
+#     Variables:
+#         url: str -- The url of the web page.
+#         file: File -- The File object to store the page data into.
+#
+#     Methods:
+#         [property]
+#         data: -> Optional[str] -- Reads the text from File or retrieves it from the
+#             web if it does not exists.
+#
+#         [property]
+#         soup: -> Soup -- Parses the data from File and turns it into a BeautifulSoup
+#             object.
+#     """
+#
+#     url: str
+#     file: File
+#
+#     @property
+#     def data(self) -> Optional[str]:
+#         """Reads the data from the File object.
+#
+#         First it checks if the File object has any data. If it doesn't, it retrieves
+#         it and saves it to the File. It then reads it from the File and returns it.
+#
+#         Returns:
+#             Optional[str] -- The string data from the File object.
+#         """
+#         if self.file.data is None:
+#             try:
+#                 urlretrieve(self.url, self.file.path)
+#             except URLError:
+#                 raise
+#         return self.file.data
+#
+#     @property
+#     def soup(self) -> Soup:
+#         """Converts string data from File into a BeautifulSoup object.
+#
+#         Returns:
+#             Soup -- BeautifulSoup object created from the File.
+#         """
+#         return Soup(self.data, "html.parser")
+#
+#
+# class Site(ABC):
+#     """Site Abstract Base Class.
+#
+#     Defines the structure for the objects based on this class and defines the interfaces
+#     that should implemented in order to work properly.
+#
+#     Variables:
+#         web: Web -- The web object stores the information needed to process
+#             the data.
+#
+#     Methods:
+#         find_table: -> str -- Parses the Web object for table elements and
+#             returns the first one that it finds unless an integer representing
+#             the required table is passed.
+#
+#         [abstractmethod]
+#         parse_rows: -> Union[List[LeaderBoard], List[Poll]] -- Parses a BeautifulSoup
+#             table element and returns the text found in the td elements as
+#             namedtuples.
+#
+#         [abstractmethod]
+#         polls: -> Union[List[LeaderBoard], List[Poll]] -- Does the parsing of the table
+#             and rows for you. It takes the table index number if given, otherwise
+#             parses table 0.
+#
+#         [abstractmethod]
+#         stats: -- Formats the results from polls into a more user friendly
+#             representation.
+#     """
+#
+#     web: Web
+#
+#     def find_table(self, loc: int = 0) -> str:
+#         """Finds the table elements from the Soup object
+#
+#         Keyword Arguments:
+#             loc {int} -- Parses the Web object for table elements and
+#                 returns the first one that it finds unless an integer representing
+#                 the required table is passed. (default: {0})
+#
+#         Returns:
+#             str -- The html table
+#         """
+#         return self.web.soup.find_all("table")[loc]
+#
+#     @abstractmethod
+#     def parse_rows(self, table: Soup) -> List[Any]:
+#         """Parses the row data from the html table.
+#
+#         Arguments:
+#             table {Soup} -- Parses a BeautifulSoup table element and
+#                 returns the text found in the td elements as NamedTuple.
+#
+#         Returns:
+#             List[NamedTuple] -- List of NamedTuple that were created from the
+#                 table data.
+#         """
+#         pass
+#
+#     @abstractmethod
+#     def polls(self, table: int = 0) -> List[Any]:
+#         """Parses the data
+#
+#         The find_table and parse_rows methods are called for you and the table index
+#         that is passed to it is used to get the correct table from the soup object.
+#
+#         Keyword Arguments:
+#             table {int} -- Does the parsing of the table and rows for you.
+#                 It takes the table index number if given, otherwise parses table 0.
+#                 (default: {0})
+#
+#         Returns:
+#             List[NamedTuple] -- List of NamedTuple that were created from the
+#                 table data.
+#         """
+#         pass
+#
+#     @abstractmethod
+#     def stats(self, loc: int = 0):
+#         """Produces the stats from the polls.
+#
+#         Keyword Arguments:
+#             loc {int} -- Formats the results from polls into a more user friendly
+#             representation.
+#         """
+#         pass
+#
+#
+# @dataclass
+# class RealClearPolitics(Site):
+#     """RealClearPolitics object.
+#
+#     RealClearPolitics is a custom class to parse a Web instance from the
+#     realclearpolitics website.
+#
+#     Variables:
+#         web: Web -- The web object stores the information needed to process
+#             the data.
+#
+#     Methods:
+#         find_table: -> str -- Parses the Web object for table elements and
+#             returns the first one that it finds unless an integer representing
+#             the required table is passed.
+#
+#         parse_rows: -> List[Poll] -- Parses a BeautifulSoup table element and
+#             returns the text found in the td elements as Poll namedtuples.
+#
+#         polls: -> List[Poll] -- Does the parsing of the table and rows for you.
+#             It takes the table index number if given, otherwise parses table 0.
+#
+#         stats: -- Formats the results from polls into a more user friendly
+#             representation:
+#
+#             Example:
+#
+#             RealClearPolitics
+#             =================
+#                 Biden: 214.0
+#               Sanders: 142.0
+#               Gabbard: 6.0
+#
+#     """
+#
+#     web: Web
+#
+#     def parse_rows(self, table: Soup) -> List[Poll]:
+#         """Parses the row data from the html table.
+#
+#         Arguments:
+#             table {Soup} -- Parses a BeautifulSoup table element and
+#                 returns the text found in the td elements as Poll namedtuples.
+#
+#         Returns:
+#             List[Poll] -- List of Poll namedtuples that were created from the
+#                 table data.
+#         """
+#         rows = [[cell.text for cell in row("td")] for row in table("tr")]
+#         return [
+#             Poll(
+#                 t[0],
+#                 t[1],
+#                 t[2],
+#                 float(t[3]) if t[3].isdigit() else 0.0,
+#                 float(t[4]) if t[4].isdigit() else 0.0,
+#                 float(t[5]) if t[5].isdigit() else 0.0,
+#                 t[6],
+#             )
+#             for t in rows
+#             if len(t) > 0 and "RCP\xa0Average" not in t[0]
+#         ]
+#
+#     def polls(self, table: int = 0) -> List[Poll]:
+#         """Parses the data
+#
+#         The find_table and parse_rows methods are called for you and the table index
+#         that is passed to it is used to get the correct table from the soup object.
+#
+#         Keyword Arguments:
+#             table {int} -- Does the parsing of the table and rows for you.
+#                 It takes the table index number if given, otherwise parses table 0.
+#                 (default: {0})
+#
+#         Returns:
+#             List[Poll] -- List of Poll namedtuples that were created from the
+#                 table data.
+#         """
+#         return self.parse_rows(self.find_table(table))
+#
+#     def stats(self, loc: int = 0):
+#         """Produces the stats from the polls.
+#
+#         Keyword Arguments:
+#             loc {int} -- Formats the results from polls into a more user friendly
+#             representation.
+#
+#         """
+#         info = self.polls(loc)
+#         biden = sum(data.Biden for data in info)
+#         sanders = sum(data.Sanders for data in info)
+#         gabbard = sum(data.Gabbard for data in info)
+#         results = f"\n{self.__class__.__name__}\n"
+#         results += f"{'=' * len(results.strip())}\n"
+#         results += f"    Biden: {biden}\n"
+#         results += f"  Sanders: {sanders}\n"
+#         results += f"  Gabbard: {gabbard}\n"
+#         print(results)
+#
+#
+# @dataclass
+# class NYTimes(Site):
+#     """NYTimes object.
+#
+#     NYTimes is a custom class to parse a Web instance from the nytimes website.
+#
+#     Variables:
+#         web: Web -- The web object stores the information needed to process
+#             the data.
+#
+#     Methods:
+#         find_table: -> str -- Parses the Web object for table elements and
+#             returns the first one that it finds unless an integer representing
+#             the required table is passed.
+#
+#         parse_rows: -> List[LeaderBoard] -- Parses a BeautifulSoup table element and
+#             returns the text found in the td elements as LeaderBoard namedtuples.
+#
+#         polls: -> List[LeaderBoard] -- Does the parsing of the table and rows for you.
+#             It takes the table index number if given, otherwise parses table 0.
+#
+#         stats: -- Formats the results from polls into a more user friendly
+#             representation:
+#
+#             Example:
+#
+#             NYTimes
+#             =================================
+#
+#                                Pete Buttigieg
+#             ---------------------------------
+#             National Polling Average: 10%
+#                    Pledged Delegates: 25
+#             Individual Contributions: $76.2m
+#                 Weekly News Coverage: 3
+#
+#     """
+#
+#     web: Web
+#
+#     def parse_rows(self, table: Soup) -> List[LeaderBoard]:
+#         """Parses the row data from the html table.
+#
+#         Arguments:
+#             table {Soup} -- Parses a BeautifulSoup table element and
+#                 returns the text found in the td elements as LeaderBoard namedtuples.
+#
+#         Returns:
+#             List[LeaderBoard] -- List of LeaderBoard namedtuples that were created from
+#             the table data.
+#         """
+#         names = ("Sanders", "Biden", "Bloomberg", "Warren", "Buttigieg", "Gabbard")
+#         rows = [[cell.text for cell in row("td")] for row in table("tr")]
+#         lb = []
+#         for t in rows:
+#             if len(t) == 5:
+#                 name, polling, pledges, spent, news = t
+#                 name = name.strip()
+#                 for n in names:
+#                     if n in name:
+#                         name = name.replace(f"{n}{n}", n)
+#                         name = name.replace(f"Jr.{n}", "Jr.")
+#                         break
+#                 polling = polling.strip()
+#                 pledges = int(pledges.strip().replace("—", "0"))
+#                 spent = spent.strip()
+#                 news = int(news.split()[0].replace("#", ""))
+#                 lb.append(LeaderBoard(name, polling, pledges, spent, news))
+#         return lb
+#
+#     def polls(self, table: int = 0) -> List[LeaderBoard]:
+#         """Parses the data
+#
+#         The find_table and parse_rows methods are called for you and the table index
+#         that is passed to it is used to get the correct table from the soup object.
+#
+#         Keyword Arguments:
+#             table {int} -- Does the parsing of the table and rows for you.
+#                 It takes the table index number if given, otherwise parses table 0.
+#                 (default: {0})
+#
+#         Returns:
+#             List[LeaderBoard] -- List of LeaderBoard namedtuples that were created from
+#                 the table data.
+#         """
+#         return self.parse_rows(self.find_table(table))
+#
+#     def stats(self, loc: int = 0):
+#         """Produces the stats from the polls.
+#
+#         Keyword Arguments:
+#             loc {int} -- Formats the results from polls into a more user friendly
+#             representation.
+#         """
+#         spacing = 33
+#         info = self.polls(loc)
+#         results = f"\n{self.__class__.__name__}\n"
+#         results += f"{'=' * spacing}\n"
+#         for c in info[:5]:
+#             results += f"\n{c.Candidate.rjust(spacing)}\n"
+#             results += f"{'-' * spacing}\n"
+#             results += f"National Polling Average: {c.Average}\n"
+#             results += f"       Pledged Delegates: {c.Delegates}\n"
+#             results += f"Individual Contributions: {c.Contributions}\n"
+#             results += f"    Weekly News Coverage: {c.Coverage}\n"
+#         print(results)
 
-from bs4 import BeautifulSoup as Soup  # type: ignore
 
-TMP = getenv("TMP", "/tmp")
-TODAY = date.today()
+"""Tax Bracket Calculator
 
-class Candidate(NamedTuple):
-    name: str
-    votes: float
+Here is the break-down on how much a US citizen's income was
+taxed in 2019
 
-class LeaderBoard(NamedTuple):
-    Candidate: str
-    Average: str
-    Delegates: int
-    Contributions: str
-    Coverage: int
+      $0 - $9,700   10%
+  $9,701 - $39,475  12%
+ $39,476 - $84,200  22%
+ $84,201 - $160,725 24%
+$160,726 - $204,100 32%
+$204,101 - $510,300 35%
+$510,301 +          37%
 
-class Poll(NamedTuple):
-    Poll: str
-    Date: str
-    Sample: str
-    Sanders: float|None
-    Biden: float|None
-    Gabbard: float|None
-    Spread: str|None
+For example someone earning $40,000 would
+pay $4,658.50, not $40,000 x 22% = $8,800!
+
+    9,700.00 x 0.10 =       970.00
+   29,775.00 x 0.12 =     3,573.00
+      525.00 x 0.22 =       115.50
+----------------------------------
+              Total =     4,658.50
+
+More detail can be found here:
+https://www.nerdwallet.com/blog/taxes/federal-income-tax-brackets/
+
+Sample output from running the code in the if/main clause:
+
+          Summary Report
+==================================
+ Taxable Income:        40,000.00
+     Taxes Owed:         4,658.50
+       Tax Rate:           11.65%
+
+         Taxes Breakdown
+==================================
+    9,700.00 x 0.10 =       970.00
+   29,775.00 x 0.12 =     3,573.00
+      525.00 x 0.22 =       115.50
+----------------------------------
+              Total =     4,658.50
+"""
+from dataclasses import dataclass, field
+from typing import List, NamedTuple
+import pytest
+
+class Bracket(NamedTuple):
+    end: int|float
+    rate: float
+
+class Taxed(NamedTuple):
+    amount: float
+    rate: float
+    tax: float
+
+BRACKET = [
+    Bracket(9_700, 0.1),
+    Bracket(39_475, 0.12),
+    Bracket(84_200, 0.22),
+    Bracket(160_725, 0.24),
+    Bracket(204_100, 0.32),
+    Bracket(510_300, 0.35),
+    Bracket(510_301, 0.37),
+]
+
+import bisect
 
 
-@dataclass
-class File:
-    """File represents a filesystem path.
+def get_bracket_index( amount:float, bracket:list[Bracket]=BRACKET )->int:
+    break_points = [b.end for b in bracket]
+    break_points.pop()
+    return bisect.bisect_left(break_points, amount)
 
-    Variables:
-        name: str -- The filename that will be created on the filesystem.
-        path: Path -- Path object created from the name passed in.
+@pytest.mark.parametrize(
+    "brackets, amount, expected",
+    [
+        (BRACKET, 5, 0),
+        (BRACKET, 30000,1),
+        (BRACKET, 50000,2),
+        (BRACKET, 510000, 5),
+        (BRACKET, 600000, 6),
 
-    Methods:
-        [property]
-        data: -> Optional[str] -- If the file exists, it returns its contents.
-            If it does not exist, it returns None.
-    """
-    name: str
-    path: Path|None = None
-
-    def __post_init__(self):
-        if self.path is None:
-            self.path = Path(fr"{TMP}/{TODAY}_{self.name}")
-
-    @property
-    def data(self):
-        if self.path and self.path.exists():
-            return self.path.read_text(encoding='utf-8')
-        return None
+    ]
+)
+def test_get_bracket_index(brackets:list[Bracket],amount:float, expected:float):
+    assert get_bracket_index(amount, brackets) ==expected
 
 
-@dataclass
-class Web:
-    """Web object.
+# transform
+def clean_bracket(bracket:list[Bracket]):
+    new_bracket = [b for b in bracket]
+    last_element = new_bracket.pop()
+    new_element = Bracket(float("inf"), last_element.rate)
+    new_bracket.append(new_element)
+    return new_bracket
 
-    Web is an object that downloads the page from the url that is passed
-    to it and stores it in the File instance that is passed to it. If the
-    File already exists, it just reads the file, otherwise it downloads it
-    and stores it in File.
+def build_cumulative_bracket_tax(brackets:List[Bracket]):
+    # make a cumulative tax dictionary
+    # clean the bracket to take out the last element
+    bk1 = clean_bracket(brackets)
+    bk1.pop()
+    last_bracket_ceiling = 0
 
-    Variables:
-        url: str -- The url of the web page.
-        file: File -- The File object to store the page data into.
+    # calculate tax of each bracket
+    bracket_tax = {}
+    for index, b in enumerate(bk1):
+        print(index, b)
+        bracket_tax[index] = (b.end - last_bracket_ceiling) * b.rate
+        last_bracket_ceiling = b.end
 
-    Methods:
-        [property]
-        data: -> Optional[str] -- Reads the text from File or retrieves it from the
-            web if it does not exists.
-
-        [property]
-        soup: -> Soup -- Parses the data from File and turns it into a BeautifulSoup
-            object.
-    """
-    url:str
-    file:File
-
-    @property
-    def data(self) -> Optional[str]:
-        """Reads the data from the File object.
-
-        First it checks if the File object has any data. If it doesn't, it retrieves
-        it and saves it to the File. It then reads it from the File and returns it.
-
-        Returns:
-            Optional[str] -- The string data from the File object.
-        """
-        if self.file.data:
-            return self.file.data
+    # calculate cumulative tax
+    cumulative_tax = {}
+    for key,val in bracket_tax.items():
+        print(key,val)
+        if key == 0:
+            previous_sum = 0
         else:
-            urlretrieve(self.url, self.file.path)
-            return self.file.data
+            previous_sum = cumulative_tax[key-1]
+        cumulative_tax[key] = bracket_tax[key] + previous_sum
+    return cumulative_tax
 
-    @property
-    def soup(self) -> Soup:
-        """Converts string data from File into a BeautifulSoup object.
 
-        Returns:
-            Soup -- BeautifulSoup object created from the File.
-        """
-        try:
-            return Soup(self.data, "html.parser")
-        except:
-            raise ValueError("url open error")
 
-class Site(ABC):
-    """Site Abstract Base Class.
 
-    Defines the structure for the objects based on this class and defines the interfaces
-    that should be implemented in order to work properly.
-
-    Variables:
-        web: Web -- The web object stores the information needed to process
-            the data.
-
-    Methods:
-        find_table: -> str -- Parses the Web object for table elements and
-            returns the first one that it finds unless an integer representing
-            the required table is passed.
-
-        [abstractmethod]
-        parse_rows: -> Union[List[LeaderBoard], List[Poll]] -- Parses a BeautifulSoup
-            table element and returns the text found in the td elements as
-            namedtuples.
-
-        [abstractmethod]
-        polls: -> Union[List[LeaderBoard], List[Poll]] -- Does the parsing of the table
-            and rows for you. It takes the table index number if given, otherwise
-            parses table 0.
-
-        [abstractmethod]
-        stats: -- Formats the results from polls into a more user friendly
-            representation.
+class Taxes:
+    """Taxes class
+    Given a taxable income and optional tax bracket, it will
+    calculate how much taxes are owed to Uncle Sam.
     """
-    def __init__(self, web:Web):
-        self.web = web
+    def __init__(self, income:int, brackets:list[Bracket] = BRACKET):
+        self.income =  income
+        self.bracket = brackets
+        self.tax_amounts = []
+        self.taxes
 
-    def find_table(self, loc: int = 0):
-        """Finds the table elements from the Soup object
+    def _clean_bracket(self):
+        new_bracket = [b for b in self.brackets]
+        last_element = new_bracket.pop()
+        new_element = Bracket(float("inf"), last_element.rate)
+        new_bracket.append(new_element)
+        self.clean_bracket = new_bracket
+        return new_bracket
 
-        Keyword Arguments:
-            loc {int} -- Parses the Web object for table elements and
-                returns the first one that it finds unless an integer representing
-                the required table is passed. (default: {0})
-
-        Returns:
-            str -- The html table
-        """
-        exists = self.web.soup.find(string=re.compile("real", re.IGNORECASE))
-        if exists:
-            loc = 0
-        else:
-            loc = 3
-        all_tables = self.web.soup.find_all('table')
-        return all_tables[loc]
-
-
-
-    def parse_rows(self, table: Soup) -> List[Any]:
-        """Abstract Method
-
-        Parses the row data from the html table.
-
-        Arguments:
-            table {Soup} -- Parses a BeautifulSoup table element and
-                returns the text found in the td elements as NamedTuple.
+    def __str__(self) -> str:
+        """Summary Report
 
         Returns:
-            List[NamedTuple] -- List of NamedTuple that were created from the
-                table data.
-        """
-        pass
-
-    def polls(self, table: int = 0) -> List[Any]:
-        """Abstract Method
-
-        Parses the data
-
-        The find_table and parse_rows methods are called for you and the table index
-        that is passed to it is used to get the correct table from the soup object.
-
-        Keyword Arguments:
-            table {int} -- Does the parsing of the table and rows for you.
-                It takes the table index number if given, otherwise parses table 0.
-                (default: {0})
-
-        Returns:
-            List[NamedTuple] -- List of NamedTuple that were created from the
-                table data.
-        """
-        pass
-
-    def stats(self, loc: int = 0):
-        """Abstract Method
-
-        Produces the stats from the polls.
-
-        Keyword Arguments:
-            loc {int} -- Formats the results from polls into a more user friendly
-            representation.
-        """
-        pass
-
-
-@dataclass
-class RealClearPolitics(Site):
-    """RealClearPolitics object.
-
-    RealClearPolitics is a custom class to parse a Web instance from the
-    realclearpolitics website.
-
-    Variables:
-        web: Web -- The web object stores the information needed to process
-            the data.
-
-    Methods:
-        find_table: -> str -- Parses the Web object for table elements and
-            returns the first one that it finds unless an integer representing
-            the required table is passed.
-
-        parse_rows: -> List[Poll] -- Parses a BeautifulSoup table element and
-            returns the text found in the td elements as Poll namedtuples.
-
-        polls: -> List[Poll] -- Does the parsing of the table and rows for you.
-            It takes the table index number if given, otherwise parses table 0.
-
-        stats: -- Formats the results from polls into a more user friendly
-            representation:
+            str -- Summary report
 
             Example:
 
-            RealClearPolitics
-            =================
-                Biden: 214.0
-              Sanders: 142.0
-              Gabbard: 6.0
+                      Summary Report
+            ==================================
+             Taxable Income:        40,000.00
+                 Taxes Owed:         4,658.50
+                   Tax Rate:           11.65%
+        """
 
-    """
-    web: Web
+        summary_str = f""" Summary Report
+==================================
+             Taxable Income:         {self.income}
+                 Taxes Owed:         {self._total}
+                   Tax Rate:         {self.tax_rate}%"""
+        return summary_str
 
-    def parse_rows(self, table: Soup) -> List[Poll]:
-        """Parses the row data from the html table.
 
-        Arguments:
-            table {Soup} -- Parses a BeautifulSoup table element and
-                returns the text found in the td elements as Poll namedtuples.
+    def report(self):
+        """Prints taxes breakdown report"""
+        report_header = f"""
+        Taxes Breakdown
+        =================================="""
+
+        bracket_list = [f"{b.amount} x {b.rate} =    {b.tax:,.2f}" for b in self.tax_amounts]
+        bracket_str = "\n".join(bracket_list)
+
+        report_footer = f"""----------------------------------
+              Total =     {self.total}"""
+
+        report_str = (str(self) + "\n" +
+                      report_header + '\n' +
+                      bracket_str + '\n' +
+                      report_footer)
+        print(report_str)
+
+
+    @property
+    def taxes(self) -> float:
+        """Calculates the taxes owed
+
+        As it's calculating the taxes, it is also populating the tax_amounts list
+        which stores the Taxed named tuples.
 
         Returns:
-            List[Poll] -- List of Poll namedtuples that were created from the
-                table data.
+            float -- The amount of taxes owed
         """
-        data_records = []
-        for row in table.find_all('tr')[1:]:
-            # 2. Grab the rest of the data cells
-            cells = [td.get_text(strip=True) for td in row.find_all('td')]
-            try:
-                cells[3] = float(cells[3])
-            except ValueError:
-                cells[3] =0
-            try:
-                cells[4] = float(cells[4])
-            except ValueError:
-                cells[4] =0
-            try:
-                cells[5] = float(cells[5])
-            except ValueError:
-                cells[5] = 0
 
-            l1 = Poll(*cells)
-            data_records.append(l1)
-        return data_records
+        amount = self.income
+        bk1 = clean_bracket(self.bracket)
+        last_bracket_ceiling = 0
+        bracket_index = get_bracket_index(amount)
+        # calculate tax of each bracket
+        bracket_tax = []
+        for i in range(bracket_index):
+            bracket_ceiling = bk1[i].end
+            bracket_rate = bk1[i].rate
+            b_tax = Taxed((bracket_ceiling - last_bracket_ceiling), bracket_rate,
+                          (bracket_ceiling - last_bracket_ceiling) * bracket_rate)
+            bracket_tax.append(b_tax)
+            last_bracket_ceiling = bracket_ceiling
 
-    def polls(self, table: int = 0) -> List[Poll]:
-        """Parses the data
+        # calculate the last bracket
+        left_over = amount - last_bracket_ceiling
+        bracket_rate = bk1[bracket_index].rate
+        b_tax = Taxed(left_over, bracket_rate, left_over * bracket_rate)
+        bracket_tax.append(b_tax)
+        self.tax_amounts = [Taxed(t.amount, t.rate, t.tax) for t in bracket_tax]
+        self._total = sum([b.tax for b in bracket_tax])
+        return self.total
 
-        The find_table and parse_rows methods are called for you and the table index
-        that is passed to it is used to get the correct table from the soup object.
-
-        Keyword Arguments:
-            table {int} -- Does the parsing of the table and rows for you.
-                It takes the table index number if given, otherwise parses table 0.
-                (default: {0})
+    @property
+    def total(self) -> float:
+        """Calculates total taxes owed
 
         Returns:
-            List[Poll] -- List of Poll namedtuples that were created from the
-                table data.
+            float -- Total taxes owed
         """
-        pass
+        return self._total
 
-    def stats(self, loc: int = 0):
-        """Produces the stats from the polls.
-
-        Keyword Arguments:
-            loc {int} -- Formats the results from polls into a more user friendly
-            representation.
-
-        """
-        result = """
-RealClearPolitics
-=================
-    Biden: 1244.0
-  Sanders: 1248.0
-  Gabbard: 64.0
-        """
-        print(result)
-
-
-
-
-@dataclass
-class NYTimes(Site):
-    """NYTimes object.
-
-    NYTimes is a custom class to parse a Web instance from the nytimes website.
-
-    Variables:
-        web: Web -- The web object stores the information needed to process
-            the data.
-
-    Methods:
-        find_table: -> str -- Parses the Web object for table elements and
-            returns the first one that it finds unless an integer representing
-            the required table is passed.
-
-        parse_rows: -> List[LeaderBoard] -- Parses a BeautifulSoup table element and
-            returns the text found in the td elements as LeaderBoard namedtuples.
-
-        polls: -> List[LeaderBoard] -- Does the parsing of the table and rows for you.
-            It takes the table index number if given, otherwise parses table 0.
-
-        stats: -- Formats the results from polls into a more user friendly
-            representation:
-
-            Example:
-
-            NYTimes
-            =================================
-
-                               Pete Buttigieg
-            ---------------------------------
-            National Polling Average: 10%
-                   Pledged Delegates: 25
-            Individual Contributions: $76.2m
-                Weekly News Coverage: 3
-
-    """
-    web: Web
-
-    def parse_rows(self, table: Soup) -> List[LeaderBoard]:
-        """Parses the row data from the html table.
-
-        Arguments:
-            table {Soup} -- Parses a BeautifulSoup table element and
-                returns the text found in the td elements as LeaderBoard namedtuples.
+    @property
+    def tax_rate(self) -> float:
+        """Calculates the actual tax rate
 
         Returns:
-            List[LeaderBoard] -- List of LeaderBoard namedtuples that were created from
-            the table data.
+            float -- Tax rate
         """
-        #table = self.find_table()
-        data_records = []
-        for row in table.find_all('tr')[1:]:
-
-            # 2. Grab the rest of the data cells
-            cells = [td.get_text(strip=True) for td in row.find_all('td')]
-
-            if len(cells) > 3:
-                cells[2] = int(cells[2])
-                cells[4] = int(cells[4][-1])
-                l1 = LeaderBoard(*cells)
-                data_records.append(l1)
-
-        return data_records
-
-    def polls(self, table: int = 0) -> List[LeaderBoard]:
-        """Parses the data
-
-        The find_table and parse_rows methods are called for you and the table index
-        that is passed to it is used to get the correct table from the soup object.
-
-        Keyword Arguments:
-            table {int} -- Does the parsing of the table and rows for you.
-                It takes the table index number if given, otherwise parses table 0.
-                (default: {0})
-
-        Returns:
-            List[LeaderBoard] -- List of LeaderBoard namedtuples that were created from
-                the table data.
-        """
-        pass
-
-    def stats(self, loc: int = 0):
-        """Produces the stats from the polls.
-
-        Keyword Arguments:
-            loc {int} -- Formats the results from polls into a more user friendly
-            representation.
-        """
-        result = """
-        NYTimes
-=================================
-
-                   Pete Buttigieg
----------------------------------
-National Polling Average: 29%
-       Pledged Delegates: 610
-Individual Contributions: $11.1m
-    Weekly News Coverage: 3
-
-                """
-        print(result)
-
-
-def gather_data():
-    rcp_file = File("realclearpolitics.html")
-    rcp_url = (
-        "https://bites-data.s3.us-east-2.amazonaws.com/2020-03-10_realclearpolitics.html"
-    )
-    rcp_web = Web(rcp_url, rcp_file)
-    rcp = RealClearPolitics(rcp_web)
-
-    tb = rcp.find_table()
-    r_rows = rcp.parse_rows(tb)
-
-    rcp.stats(3)
-
-    nyt_file = File("nytimes.html")
-    nyt_url = (
-        "https://bites-data.s3.us-east-2.amazonaws.com/2020-03-10_nytimes.html"
-    )
-    nyt_web = Web(nyt_url, nyt_file)
-    nyt = NYTimes(nyt_web)
-    nyt.stats()
+        return round(((self._total / self.income) * 100),2)
 
 
 if __name__ == "__main__":
-    gather_data()
+    salary = 40_000
+    t = Taxes(salary)
+    t.report()
+
+
+### Pybite solution:
+"""Tax Bracket Calculator
+
+Here is the break-down on how much a US citizen's income was
+taxed in 2019.
+
+      $0 - $9,700   10%
+  $9,701 - $39,475  12%
+ $39,476 - $84,200  22%
+ $84,201 - $160,725 24%
+$160,726 - $204,100 32%
+$204,101 - $510,300 35%
+$510,301 +          37%
+
+For example someone earning $40,000 would
+pay $4,658.50, not $40,000 x 22% = $8,800!
+
+    9,700.00 x 0.10 =       970.00
+   29,775.00 x 0.12 =     3,573.00
+      525.00 x 0.22 =       115.50
+----------------------------------
+              Total =     4,658.50
+
+More detail can be found here:
+https://www.nerdwallet.com/blog/taxes/federal-income-tax-brackets/
+
+Sample output from running the code in the if/main clause:
+
+          Summary Report
+==================================
+ Taxable Income:        40,000.00
+     Taxes Owed:         4,658.50
+       Tax Rate:           11.65%
+
+         Taxes Breakdown
+==================================
+    9,700.00 x 0.10 =       970.00
+   29,775.00 x 0.12 =     3,573.00
+      525.00 x 0.22 =       115.50
+----------------------------------
+              Total =     4,658.50
+"""
+from dataclasses import dataclass, field
+from typing import List, NamedTuple
+
+Bracket = NamedTuple("Bracket", [("end", int), ("rate", float)])
+Taxed = NamedTuple("Taxed", [("amount", float), ("rate", float), ("tax", float)])
+BRACKET = [
+    Bracket(9_700, 0.1),
+    Bracket(39_475, 0.12),
+    Bracket(84_200, 0.22),
+    Bracket(160_725, 0.24),
+    Bracket(204_100, 0.32),
+    Bracket(510_300, 0.35),
+    Bracket(510_301, 0.37),
+]
+
+
+@dataclass
+class Taxes:
+    """Taxes class
+
+    Given a taxable income and optional tax bracket, it will
+    calculate how much taxes are owed to Uncle Sam.
+
+    """
+
+    income: float
+    bracket: List[Bracket] = field(default_factory=list)
+
+    def __post_init__(self):
+        """Initiates default values"""
+        if not self.bracket:
+            self.bracket = BRACKET
+        self.tax_amounts: List[Taxed] = []
+
+    def __str__(self) -> str:
+        """Summary Report
+
+        Returns:
+            str -- Summary report
+
+            Example:
+
+                      Summary Report
+            ==================================
+             Taxable Income:        40,000.00
+                 Taxes Owed:         4,658.50
+                   Tax Rate:           11.65%
+        """
+        desc = f"{'Summary Report':^34}\n"
+        desc += f"{'=' * 34}\n"
+        desc += f"{'Taxable Income':>15}: {self.income:16,.2f}\n"
+        desc += f"{'Taxes Owed':>15}: {self.taxes:16,.2f}\n"
+        desc += f"{'Tax Rate':>15}: {self.tax_rate:15.2f}%"
+        return desc
+
+    def _record(self, amount: float, rate: float):
+        """Helper function to record tax amounts and rates
+
+        Arguments:
+            amount {float} -- Amount being taxed
+            rate {float} -- The rate that the amount is being taxed at
+        """
+        taxed = round(amount * rate, 2)
+        t = Taxed(amount, rate, taxed)
+        self.tax_amounts.append(t)
+
+    def report(self):
+        """Prints taxes breakdown report"""
+        desc = f"{str(self)}\n"
+        desc += f"\n{'Taxes Breakdown':^34}\n"
+        desc += f"{'=' * 34}\n"
+        for tax in self.tax_amounts:
+            desc += f"{tax.amount:12,.2f} x {tax.rate:4.2f} = {tax.tax:12,.2f}\n"
+        desc += f"{'-' * 34}\n"
+        desc += f"{'Total =':>21} {self.taxes:12,.2f}"
+        print(desc.rstrip())
+
+    @property
+    def taxes(self) -> float:
+        """Calculates the taxes owed
+
+        As it's calculating the taxes, it is also populating the tax_amounts list
+        which stores the Taxed named tuples.
+
+        Returns:
+            float -- The amount of taxes owed
+        """
+        if not self.tax_amounts:
+            for n, b in enumerate(self.bracket):
+                # if the taxable income is less than the first bracket
+                # tax the income amount and break out of the loop
+                if n == 0:
+                    if self.income > b.end:
+                        self._record(b.end, b.rate)
+                    else:
+                        self._record(self.income, b.rate)
+                        break
+                # if we've gotten to the last bracket just tax the amount
+                # that's above it
+                elif n == len(self.bracket) - 1:
+                    amount = self.income - self.bracket[n - 1].end
+                    self._record(amount, b.rate)
+                else:
+                    # check to see if the taxable income is below the end
+                    # of the current bracket and tax that amount
+                    if self.income <= b.end:
+                        amount = self.income - self.bracket[n - 1].end
+                    else:
+                        amount = b.end - self.bracket[n - 1].end
+                    self._record(amount, b.rate)
+                    # if the taxable income is below the end of the current
+                    # bracket break out of the loop
+                    if self.income <= b.end:
+                        break
+        return self.total
+
+    @property
+    def total(self) -> float:
+        """Calculates total taxes owed
+
+        Returns:
+            float -- Total taxes owed
+        """
+        if not self.tax_amounts:
+            return self.taxes
+        else:
+            return round(sum(t.tax for t in self.tax_amounts), 2)
+
+    @property
+    def tax_rate(self) -> float:
+        """Calculates the actual tax rate
+
+        Returns:
+            float -- Tax rate
+        """
+        return round((self.total / self.income) * 100, 2)
+
+
+# if __name__ == "__main__":
+#     salary = float(input("Taxable income: "))
+#     t = Taxes(salary)
+#     t.report()
+
+
+
