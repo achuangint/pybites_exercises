@@ -18185,16 +18185,47 @@
 #     assert "-" in output[-2]
 #     assert "14,096.00" in output[-5]
 #     assert "0.24" in output[-6]
+#
+# import pytest
+#
+# from wc import num_ops
+#
+#
+# @pytest.mark.parametrize('test_input, expected', [
+#     (10, 6), (12, 9), (15, 17),
+#     (33, 18), (55, 24), (102, 25),
+#     (1985, 42), (2020, 24), (3012, 22)
+# ])
+# def test_num_ops(test_input, expected):
+#     assert num_ops(test_input) == expected
 
-import pytest
+from wc import shortest_path
 
-from wc import num_ops
+simple = {
+          'a': {'b': 2, 'c': 4, 'e': 1},
+          'b': {'a': 2, 'd': 3},
+          'c': {'a': 4, 'd': 6},
+          'd': {'c': 6, 'b': 3, 'e': 2},
+          'e': {'a': 1, 'd': 2}
+          }
+
+major = {
+          'a': {'w': 14, 'x': 7, 'y': 9},
+          'b': {'w': 9, 'z': 6},
+          'w': {'a': 14, 'b': 9, 'y': 2},
+          'x': {'a': 7,  'y': 10, 'z': 15},
+          'y': {'a': 9,  'w': 2, 'x': 10, 'z': 11},
+          'z': {'b': 6,  'x': 15, 'y': 11},
+        }
 
 
-@pytest.mark.parametrize('test_input, expected', [
-    (10, 6), (12, 9), (15, 17),
-    (33, 18), (55, 24), (102, 25),
-    (1985, 42), (2020, 24), (3012, 22)
-])
-def test_num_ops(test_input, expected):
-    assert num_ops(test_input) == expected
+def test_graph_simple():
+    actual = shortest_path(simple, 'a', 'd')
+    expected = (3, ['a', 'e', 'd'])
+    assert actual == expected
+
+
+def test_graph_major():
+    actual = shortest_path(major, 'a', 'b')
+    expected = (20, ['a', 'y', 'w', 'b'])
+    assert actual == expected

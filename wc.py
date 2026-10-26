@@ -20183,45 +20183,45 @@
 # #     salary = float(input("Taxable income: "))
 # #     t = Taxes(salary)
 # #     t.report()
-
-from collections import deque
-
-def num_ops(n):
-    """
-    Input: an integer number, the target number
-    Output: the minimum number of operations required to reach to n from 1.
-
-    Two operations rules:
-    1.  multiply by 2
-    2.  int. divide by 3
-
-    The base number is 1. Meaning the operation will always start with 1
-    These rules can be run in any order, and can be run independently.
-
-    [Hint] the data structure is the key to solve it efficiently.
-    """
-    start = 1
-    visited = {start}
-    queue = deque([(start, 0)])
-
-    while queue:
-        node, cost = queue.popleft()
-
-        if node == n:
-            return cost
-
-        div3 = node // 3
-        mul2 = node * 2
-        possible_path = [div3, mul2]
-
-        for node_val in possible_path:
-
-            if node_val not in visited:
-                visited.add(node_val)
-                queue.append((node_val, cost + 1))
-
-
-    return None
+#
+# from collections import deque
+#
+# def num_ops(n):
+#     """
+#     Input: an integer number, the target number
+#     Output: the minimum number of operations required to reach to n from 1.
+#
+#     Two operations rules:
+#     1.  multiply by 2
+#     2.  int. divide by 3
+#
+#     The base number is 1. Meaning the operation will always start with 1
+#     These rules can be run in any order, and can be run independently.
+#
+#     [Hint] the data structure is the key to solve it efficiently.
+#     """
+#     start = 1
+#     visited = {start}
+#     queue = deque([(start, 0)])
+#
+#     while queue:
+#         node, cost = queue.popleft()
+#
+#         if node == n:
+#             return cost
+#
+#         div3 = node // 3
+#         mul2 = node * 2
+#         possible_path = [div3, mul2]
+#
+#         for node_val in possible_path:
+#
+#             if node_val not in visited:
+#                 visited.add(node_val)
+#                 queue.append((node_val, cost + 1))
+#
+#
+#     return None
 
 #
 # def num_ops(n):
@@ -20304,3 +20304,61 @@ def num_ops(n):
 #
 # print(f"The shortest path from {start_node} to {end_node} is: {shortest_path}")
 
+import heapq
+
+def shortest_path(graph, start, end):
+    """
+       Input: graph: a dictionary of dictionary
+              start: starting city   Ex. a
+              end:   target city     Ex. b
+
+       Output: tuple of (distance, [path of cites])
+       Ex.   (distance, ['a', 'c', 'd', 'b])
+    """
+
+    # priority queue to determine which ones to process
+
+    # initialize distance
+    distances_dict = {node: (float('inf'),[]) for node in graph}
+    distances_dict[start] = (0, [start])
+
+    # Keep track of distances
+    pq = [(0, start)]
+
+    while pq:
+        current_distance, current_node = heapq.heappop(pq)
+        print(f"distances_dict:{distances_dict}")
+        dist, path = distances_dict[current_node]
+        if current_distance > dist:
+            continue
+
+        for neighbor, weight in graph[current_node].items():
+            distance = current_distance + weight
+
+            if distance < distances_dict[neighbor][0]:
+                path_copy = path.copy()
+                path_copy.append(neighbor)
+                distances_dict[neighbor] = (distance, path_copy)
+                heapq.heappush(pq, (distance, neighbor))
+
+    return distances_dict[end]
+
+# Pybites solutions
+from heapq import heappop, heappush
+
+
+def shortest_path(graph, start, end):
+    q, seen = [(0, start, [])], set()
+
+    while True:
+        cost, v, path = heappop(q)
+
+        if v not in seen:
+            path = path + [v]
+            seen.add(v)
+
+            if v == end:           # reach the end v
+                return cost, path
+
+            for (nxt, c) in graph[v].items():
+                heappush(q, (cost+c, nxt, path))
