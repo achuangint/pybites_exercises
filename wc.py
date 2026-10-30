@@ -20303,62 +20303,242 @@
 # shortest_path = find_shortest_path(start_node, end_node)
 #
 # print(f"The shortest path from {start_node} to {end_node} is: {shortest_path}")
+#
+# import heapq
+#
+# def shortest_path(graph, start, end):
+#     """
+#        Input: graph: a dictionary of dictionary
+#               start: starting city   Ex. a
+#               end:   target city     Ex. b
+#
+#        Output: tuple of (distance, [path of cites])
+#        Ex.   (distance, ['a', 'c', 'd', 'b])
+#     """
+#
+#     # priority queue to determine which ones to process
+#
+#     # initialize distance
+#     distances_dict = {node: (float('inf'),[]) for node in graph}
+#     distances_dict[start] = (0, [start])
+#
+#     # Keep track of distances
+#     pq = [(0, start)]
+#
+#     while pq:
+#         current_distance, current_node = heapq.heappop(pq)
+#         print(f"distances_dict:{distances_dict}")
+#         dist, path = distances_dict[current_node]
+#         if current_distance > dist:
+#             continue
+#
+#         for neighbor, weight in graph[current_node].items():
+#             distance = current_distance + weight
+#
+#             if distance < distances_dict[neighbor][0]:
+#                 path_copy = path.copy()
+#                 path_copy.append(neighbor)
+#                 distances_dict[neighbor] = (distance, path_copy)
+#                 heapq.heappush(pq, (distance, neighbor))
+#
+#     return distances_dict[end]
+#
+# # Pybites solutions
+# from heapq import heappop, heappush
+#
+#
+# def shortest_path(graph, start, end):
+#     q, seen = [(0, start, [])], set()
+#
+#     while True:
+#         cost, v, path = heappop(q)
+#
+#         if v not in seen:
+#             path = path + [v]
+#             seen.add(v)
+#
+#             if v == end:           # reach the end v
+#                 return cost, path
+#
+#             for (nxt, c) in graph[v].items():
+#                 heappush(q, (cost+c, nxt, path))
 
-import heapq
 
-def shortest_path(graph, start, end):
+import os
+from pathlib import Path
+from urllib.request import urlretrieve
+from collections import defaultdict
+from dateutil.parser import parse
+
+# get the data
+TMP = Path(os.getenv("TMP", "/tmp"))
+base_url = 'https://bites-data.s3.us-east-2.amazonaws.com/'
+
+fathers_days_countries = TMP / 'fathers-day-countries.txt'
+fathers_days_recurring = TMP / 'fathers-day-recurring.txt'
+
+for file_ in (fathers_days_countries, fathers_days_recurring):
+    if not file_.exists():
+        urlretrieve(base_url + file_.name, file_)
+
+
+def _parse_father_days_per_country(year, filename=fathers_days_countries):
+    """Helper to parse fathers_days_countries"""
+
+    with open(filename, "r", encoding="utf-8") as file:
+        content = file.read()
+    splits = content.split("*")
+    year_date_country_dict = defaultdict(lambda:defaultdict(list))
+
+    for country_date_str in splits[1:]:
+        elements = country_date_str.split('\n')
+        countries = elements[0].strip()
+
+        for dates in elements[1:]:
+            if dates:
+                for country in countries.split(','):
+                    date_str = dates.split(":")
+                    yr = date_str[0]
+                    date = date_str[1].strip()
+                    if 'and ' in country:
+                        clean_country = country.split('and ')[1].strip()
+                    else:
+                        clean_country = country.strip()
+                    year_date_country_dict[int(yr)][date].append(clean_country)
+
+    return year_date_country_dict[year]
+
+
+
+def _parse_recurring_father_days(filename=fathers_days_recurring)->dict:
+    """Helper to parse fathers_days_recurring"""
+    with open(filename, "r", encoding="utf-8") as file:
+        content = file.read()
+    splits = content.split("*")
+    date_country_dict = {}
+    for date_str in splits[1:]:
+        countries =  date_str.strip().split('\n')
+        date_country_dict[''.join(countries[0:1])]=countries[1:]
+    return date_country_dict
+
+
+
+def get_father_days(year=2020):
+    """Returns a dictionary of keys = dates and values = lists
+       of countries that celebrate Father's day that date
+
+       Consider using the the 2 _parse* helpers.
     """
-       Input: graph: a dictionary of dictionary
-              start: starting city   Ex. a
-              end:   target city     Ex. b
+    recurring_dict = _parse_recurring_father_days()
+    shifting_dict = _parse_father_days_per_country(year)
+    for day, country_list in recurring_dict.items():
+        shifting_dict[day]=country_list
+    return shifting_dict
 
-       Output: tuple of (distance, [path of cites])
-       Ex.   (distance, ['a', 'c', 'd', 'b])
+
+
+
+def generate_father_day_planning(father_days=None):
+    """Prints all father days in order, example in tests and
+       Bite description
     """
+    if father_days is None:
+        father_days = get_father_days()
 
-    # priority queue to determine which ones to process
+    # you code
+    sorted_dict = dict(sorted(father_days.items(), key=lambda x:parse(x[0])))
+    for day, countries in sorted_dict.items():
+        print(f"{day}")
+        for country in countries:
+            print(f"- {country}")
+        print("")
 
-    # initialize distance
-    distances_dict = {node: (float('inf'),[]) for node in graph}
-    distances_dict[start] = (0, [start])
+# Pybite solutions
+import os
+from pathlib import Path
+from urllib.request import urlretrieve
+from collections import defaultdict
+from dateutil.parser import parse
 
-    # Keep track of distances
-    pq = [(0, start)]
+# get the data
+TMP = Path(os.getenv("TMP", "/tmp"))
+base_url = 'https://bites-data.s3.us-east-2.amazonaws.com/'
 
-    while pq:
-        current_distance, current_node = heapq.heappop(pq)
-        print(f"distances_dict:{distances_dict}")
-        dist, path = distances_dict[current_node]
-        if current_distance > dist:
-            continue
+fathers_days_countries = TMP / 'fathers-day-countries.txt'
+fathers_days_recurring = TMP / 'fathers-day-recurring.txt'
 
-        for neighbor, weight in graph[current_node].items():
-            distance = current_distance + weight
-
-            if distance < distances_dict[neighbor][0]:
-                path_copy = path.copy()
-                path_copy.append(neighbor)
-                distances_dict[neighbor] = (distance, path_copy)
-                heapq.heappush(pq, (distance, neighbor))
-
-    return distances_dict[end]
-
-# Pybites solutions
-from heapq import heappop, heappush
+for file_ in (fathers_days_countries, fathers_days_recurring):
+    if not file_.exists():
+        urlretrieve(base_url + file_.name, file_)
 
 
-def shortest_path(graph, start, end):
-    q, seen = [(0, start, [])], set()
+def _parse_father_days_per_country(year, filename=fathers_days_countries):
+    """Helper to parse fathers_days_countries"""
 
-    while True:
-        cost, v, path = heappop(q)
+    with open(filename, "r", encoding="utf-8") as file:
+        content = file.read()
+    splits = content.split("*")
+    year_date_country_dict = defaultdict(lambda:defaultdict(list))
 
-        if v not in seen:
-            path = path + [v]
-            seen.add(v)
+    for country_date_str in splits[1:]:
+        elements = country_date_str.split('\n')
+        countries = elements[0].strip()
 
-            if v == end:           # reach the end v
-                return cost, path
+        for dates in elements[1:]:
+            if dates:
+                for country in countries.split(','):
+                    date_str = dates.split(":")
+                    yr = date_str[0]
+                    date = date_str[1].strip()
+                    if 'and ' in country:
+                        clean_country = country.split('and ')[1].strip()
+                    else:
+                        clean_country = country.strip()
+                    year_date_country_dict[int(yr)][date].append(clean_country)
 
-            for (nxt, c) in graph[v].items():
-                heappush(q, (cost+c, nxt, path))
+    return year_date_country_dict[year]
+
+
+
+def _parse_recurring_father_days(filename=fathers_days_recurring)->dict:
+    """Helper to parse fathers_days_recurring"""
+    with open(filename, "r", encoding="utf-8") as file:
+        content = file.read()
+    splits = content.split("*")
+    date_country_dict = {}
+    for date_str in splits[1:]:
+        countries =  date_str.strip().split('\n')
+        date_country_dict[''.join(countries[0:1])]=countries[1:]
+    return date_country_dict
+
+
+
+def get_father_days(year=2020):
+    """Returns a dictionary of keys = dates and values = lists
+       of countries that celebrate Father's day that date
+
+       Consider using the the 2 _parse* helpers.
+    """
+    recurring_dict = _parse_recurring_father_days()
+    shifting_dict = _parse_father_days_per_country(year)
+    for day, country_list in recurring_dict.items():
+        shifting_dict[day]=country_list
+    return shifting_dict
+
+
+
+
+def generate_father_day_planning(father_days=None):
+    """Prints all father days in order, example in tests and
+       Bite description
+    """
+    if father_days is None:
+        father_days = get_father_days()
+
+    # you code
+    sorted_dict = dict(sorted(father_days.items(), key=lambda x:parse(x[0])))
+    for day, countries in sorted_dict.items():
+        print(f"{day}")
+        for country in countries:
+            print(f"- {country}")
+        print("")

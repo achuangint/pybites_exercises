@@ -18198,34 +18198,132 @@
 # ])
 # def test_num_ops(test_input, expected):
 #     assert num_ops(test_input) == expected
+#
+# from wc import shortest_path
+#
+# simple = {
+#           'a': {'b': 2, 'c': 4, 'e': 1},
+#           'b': {'a': 2, 'd': 3},
+#           'c': {'a': 4, 'd': 6},
+#           'd': {'c': 6, 'b': 3, 'e': 2},
+#           'e': {'a': 1, 'd': 2}
+#           }
+#
+# major = {
+#           'a': {'w': 14, 'x': 7, 'y': 9},
+#           'b': {'w': 9, 'z': 6},
+#           'w': {'a': 14, 'b': 9, 'y': 2},
+#           'x': {'a': 7,  'y': 10, 'z': 15},
+#           'y': {'a': 9,  'w': 2, 'x': 10, 'z': 11},
+#           'z': {'b': 6,  'x': 15, 'y': 11},
+#         }
+#
+#
+# def test_graph_simple():
+#     actual = shortest_path(simple, 'a', 'd')
+#     expected = (3, ['a', 'e', 'd'])
+#     assert actual == expected
+#
+#
+# def test_graph_major():
+#     actual = shortest_path(major, 'a', 'b')
+#     expected = (20, ['a', 'y', 'w', 'b'])
+#     assert actual == expected
 
-from wc import shortest_path
+from wc import get_father_days, generate_father_day_planning
 
-simple = {
-          'a': {'b': 2, 'c': 4, 'e': 1},
-          'b': {'a': 2, 'd': 3},
-          'c': {'a': 4, 'd': 6},
-          'd': {'c': 6, 'b': 3, 'e': 2},
-          'e': {'a': 1, 'd': 2}
-          }
+CALENDAR_OUTPUT = """February 23
+- Russia
 
-major = {
-          'a': {'w': 14, 'x': 7, 'y': 9},
-          'b': {'w': 9, 'z': 6},
-          'w': {'a': 14, 'b': 9, 'y': 2},
-          'x': {'a': 7,  'y': 10, 'z': 15},
-          'y': {'a': 9,  'w': 2, 'x': 10, 'z': 11},
-          'z': {'b': 6,  'x': 15, 'y': 11},
-        }
+March 19
+- Andora
+- Bolivia
+- Honduras
+- Italy
+- Liechtenstein
+- Portugal
+- Spain
+
+May 10
+- Romania
+
+May 21
+- Germany
+
+June 7
+- Austria
+- Belgium
+
+June 14
+- U.S.
+- Canada
+- U.K.
+
+June 17
+- El Salvador
+- Guatemala
+
+June 21
+- Egypt
+- Jordan
+- Lebanon
+- Syria
+- Uganda
+
+June 23
+- Nicaragua
+- Poland
+
+August 9
+- Samoa
+- Brazil
+
+September 6
+- Fiji
+- New Guinea
+- Australia
+- New Zealand
+
+November 8
+- Estonia
+- Finland
+- Iceland
+- Norway
+- Sweden"""
 
 
-def test_graph_simple():
-    actual = shortest_path(simple, 'a', 'd')
-    expected = (3, ['a', 'e', 'd'])
-    assert actual == expected
+def test_get_father_days_default():
+    father_days = get_father_days()
+    assert len(father_days) == 12
+    number_countries = sum(len(val) for val in father_days.values())
+    assert number_countries == 35
+    assert father_days['June 14'] == ['U.S.', 'Canada', 'U.K.']
+    assert father_days['March 19'] == [
+        'Andora', 'Bolivia', 'Honduras', 'Italy',
+        'Liechtenstein', 'Portugal', 'Spain']
+    assert father_days['June 23'] == ['Nicaragua', 'Poland']
+    assert father_days['August 9'] == ['Samoa', 'Brazil']
+    assert father_days['June 7'] == ['Austria', 'Belgium']
+    assert father_days['May 21'] == ['Germany']
 
 
-def test_graph_major():
-    actual = shortest_path(major, 'a', 'b')
-    expected = (20, ['a', 'y', 'w', 'b'])
-    assert actual == expected
+def test_get_father_days_other_years():
+    father_days = get_father_days(year=2021)
+    # changing dates
+    assert father_days['June 20'] == ['U.S.', 'Canada', 'U.K.']
+    assert father_days['August 8'] == ['Samoa', 'Brazil']
+    assert father_days['May 13'] == ['Germany']
+    assert father_days['June 13'] == ['Austria', 'Belgium']
+    father_days = get_father_days(year=2022)
+    assert father_days['May 26'] == ['Germany']
+    assert father_days['June 12'] == ['Austria', 'Belgium']
+    # remains the same
+    assert father_days['March 19'] == [
+        'Andora', 'Bolivia', 'Honduras', 'Italy',
+        'Liechtenstein', 'Portugal', 'Spain']
+
+
+def test_generate_father_day_planning(capfd):
+    generate_father_day_planning()
+    actual = capfd.readouterr()[0]
+    assert actual.strip() == CALENDAR_OUTPUT
