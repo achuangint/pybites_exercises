@@ -18229,101 +18229,247 @@
 #     actual = shortest_path(major, 'a', 'b')
 #     expected = (20, ['a', 'y', 'w', 'b'])
 #     assert actual == expected
+#
+# from wc import get_father_days, generate_father_day_planning
+#
+# CALENDAR_OUTPUT = """February 23
+# - Russia
+#
+# March 19
+# - Andora
+# - Bolivia
+# - Honduras
+# - Italy
+# - Liechtenstein
+# - Portugal
+# - Spain
+#
+# May 10
+# - Romania
+#
+# May 21
+# - Germany
+#
+# June 7
+# - Austria
+# - Belgium
+#
+# June 14
+# - U.S.
+# - Canada
+# - U.K.
+#
+# June 17
+# - El Salvador
+# - Guatemala
+#
+# June 21
+# - Egypt
+# - Jordan
+# - Lebanon
+# - Syria
+# - Uganda
+#
+# June 23
+# - Nicaragua
+# - Poland
+#
+# August 9
+# - Samoa
+# - Brazil
+#
+# September 6
+# - Fiji
+# - New Guinea
+# - Australia
+# - New Zealand
+#
+# November 8
+# - Estonia
+# - Finland
+# - Iceland
+# - Norway
+# - Sweden"""
+#
+#
+# def test_get_father_days_default():
+#     father_days = get_father_days()
+#     assert len(father_days) == 12
+#     number_countries = sum(len(val) for val in father_days.values())
+#     assert number_countries == 35
+#     assert father_days['June 14'] == ['U.S.', 'Canada', 'U.K.']
+#     assert father_days['March 19'] == [
+#         'Andora', 'Bolivia', 'Honduras', 'Italy',
+#         'Liechtenstein', 'Portugal', 'Spain']
+#     assert father_days['June 23'] == ['Nicaragua', 'Poland']
+#     assert father_days['August 9'] == ['Samoa', 'Brazil']
+#     assert father_days['June 7'] == ['Austria', 'Belgium']
+#     assert father_days['May 21'] == ['Germany']
+#
+#
+# def test_get_father_days_other_years():
+#     father_days = get_father_days(year=2021)
+#     # changing dates
+#     assert father_days['June 20'] == ['U.S.', 'Canada', 'U.K.']
+#     assert father_days['August 8'] == ['Samoa', 'Brazil']
+#     assert father_days['May 13'] == ['Germany']
+#     assert father_days['June 13'] == ['Austria', 'Belgium']
+#     father_days = get_father_days(year=2022)
+#     assert father_days['May 26'] == ['Germany']
+#     assert father_days['June 12'] == ['Austria', 'Belgium']
+#     # remains the same
+#     assert father_days['March 19'] == [
+#         'Andora', 'Bolivia', 'Honduras', 'Italy',
+#         'Liechtenstein', 'Portugal', 'Spain']
+#
+#
+# def test_generate_father_day_planning(capfd):
+#     generate_father_day_planning()
+#     actual = capfd.readouterr()[0]
+#     assert actual.strip() == CALENDAR_OUTPUT
+#
+# import pytest
+#
+# from wc import make_changes
+#
+# british = [1, 2, 5, 10, 20, 50]
+# usa = [1, 5, 10, 25, 50]
+#
+#
+# @pytest.mark.parametrize("change, country, expected", [
+#     (3, british, 2), (5, british, 4),
+#     (11, british, 12), (15, british, 22),
+#     (20, british, 41), (36, british, 175),
+#     (52, british, 508), (57, british, 670),
+#     (77, british, 1802), (3, usa, 1),   # usa 1
+#     (5, usa, 2), (12, usa, 4),
+#     (15, usa, 6), (20, usa, 9),
+#     (36, usa, 24), (57, usa, 62),
+#     (77, usa, 134), (100, usa, 292),
+#     (107, usa, 335),
+# ])
+# def test_coin(change, country, expected):
+#     assert make_changes(change, country) == expected
 
-from wc import get_father_days, generate_father_day_planning
+import pytest
+from typing import List
 
-CALENDAR_OUTPUT = """February 23
-- Russia
-
-March 19
-- Andora
-- Bolivia
-- Honduras
-- Italy
-- Liechtenstein
-- Portugal
-- Spain
-
-May 10
-- Romania
-
-May 21
-- Germany
-
-June 7
-- Austria
-- Belgium
-
-June 14
-- U.S.
-- Canada
-- U.K.
-
-June 17
-- El Salvador
-- Guatemala
-
-June 21
-- Egypt
-- Jordan
-- Lebanon
-- Syria
-- Uganda
-
-June 23
-- Nicaragua
-- Poland
-
-August 9
-- Samoa
-- Brazil
-
-September 6
-- Fiji
-- New Guinea
-- Australia
-- New Zealand
-
-November 8
-- Estonia
-- Finland
-- Iceland
-- Norway
-- Sweden"""
+from wc import (
+    count_n_repetitions,
+    count_n_reps_or_n_chars_following,
+    check_surrounding_chars,
+)
 
 
-def test_get_father_days_default():
-    father_days = get_father_days()
-    assert len(father_days) == 12
-    number_countries = sum(len(val) for val in father_days.values())
-    assert number_countries == 35
-    assert father_days['June 14'] == ['U.S.', 'Canada', 'U.K.']
-    assert father_days['March 19'] == [
-        'Andora', 'Bolivia', 'Honduras', 'Italy',
-        'Liechtenstein', 'Portugal', 'Spain']
-    assert father_days['June 23'] == ['Nicaragua', 'Poland']
-    assert father_days['August 9'] == ['Samoa', 'Brazil']
-    assert father_days['June 7'] == ['Austria', 'Belgium']
-    assert father_days['May 21'] == ['Germany']
+@pytest.mark.parametrize(
+    "n, text, expected",
+    [
+        (1, "", 0),
+        (1, "1", 0),
+        (1, "11", 1),
+        (2, "1", 0),
+        (2, "111", 1),
+        (2, "1122", 0),
+        (2, "1112345", 1),
+    ],
+)
+def test_count_n_repetitions_digits(n, text, expected):
+    assert count_n_repetitions(text, n=n) == expected
 
 
-def test_get_father_days_other_years():
-    father_days = get_father_days(year=2021)
-    # changing dates
-    assert father_days['June 20'] == ['U.S.', 'Canada', 'U.K.']
-    assert father_days['August 8'] == ['Samoa', 'Brazil']
-    assert father_days['May 13'] == ['Germany']
-    assert father_days['June 13'] == ['Austria', 'Belgium']
-    father_days = get_father_days(year=2022)
-    assert father_days['May 26'] == ['Germany']
-    assert father_days['June 12'] == ['Austria', 'Belgium']
-    # remains the same
-    assert father_days['March 19'] == [
-        'Andora', 'Bolivia', 'Honduras', 'Italy',
-        'Liechtenstein', 'Portugal', 'Spain']
+@pytest.mark.parametrize(
+    "n, text, expected",
+    [
+        (1, "a", 0),
+        (1, "aa", 1),
+        (1, "????{{{?}}}", 7),
+        (2, "b", 0),
+        (2, "ccc", 1),
+        (2, "ZZaa", 0),
+        (2, "ZZzz", 0),
+        (2, "zzZZ", 0),
+        (2, r" \\\ ", 1),
+        (2, "   Spaces are fun", 1),
+        (2, "\n\n\nAs are newlines\n\n\n", 2),
+        (2, "As \t\t\t are tabs\t\t", 1),
+    ],
+)
+def test_count_n_repetitions_chars(n, text, expected):
+    assert count_n_repetitions(text, n=n) == expected
 
 
-def test_generate_father_day_planning(capfd):
-    generate_father_day_planning()
-    actual = capfd.readouterr()[0]
-    assert actual.strip() == CALENDAR_OUTPUT
+@pytest.mark.parametrize(
+    "n, text, expected",
+    [
+        (1, "Ä", 0),
+        (1, "ÄÄ", 1),
+        (1, "※※※ - Monster Hunter - ※※※", 4),
+        (2, "Ö", 0),
+        (2, "ßßß", 1),
+        (2, "ZZÄÄ", 0),
+        (2, "Greek: εζεζεζεηηηη", 2),
+    ],
+)
+def test_count_n_repetitions_unicode(n, text, expected):
+    assert count_n_repetitions(text, n=n) == expected
+
+
+@pytest.mark.parametrize(
+    "n, char, text, expected",
+    [
+        (1, "", "", 0),
+        (2, "", "1112345", 1),
+        (1, "", "????{{{?}}}", 7),
+        (2, "", "\n\n\nAs are newlines\n\n\n", 2),
+    ],
+)
+def test_count_n_reps_or_n_chars_following_no_char(n, char, text, expected):
+    assert count_n_reps_or_n_chars_following(text, n=n, char=char) == expected
+
+
+@pytest.mark.parametrize(
+    "n, char, text, expected",
+    [
+        (1, "z", "", 0),
+        (2, "z", "1112345", 1),
+        (1, "z", "????{{{?}}}", 7),
+        (2, "z", "\n\n\nAs are newlines\n\n\n", 2),
+    ],
+)
+def test_count_n_reps_or_n_chars_following_no_containing_char(n, char, text, expected):
+    assert count_n_reps_or_n_chars_following(text, n=n, char=char) == expected
+
+
+@pytest.mark.parametrize(
+    "n, char, text, expected",
+    [
+        (1, "z", "zz Don't count double!", 1),
+        (1, "z", "9z", 1),
+        (1, "z", "9zz", 2),
+        (1, "Z", "9Zz", 1),
+        (1, "?", "????{{{?}}}", 8),
+        (1, "[", "????[[[?]]]", 8),
+        (1, "]", "????[[[?]]]", 8),
+        (1, "^", "Hello^there", 2),
+        (2, "z", "\n\n\nzz newlines\n\n", 2),
+        (2, "a", "Kai is mean...aarg", 2),
+        (2, "\t", "But bob isn't...\t\t", 2),
+    ],
+)
+def test_count_n_reps_or_n_chars_following_mix(n, char, text, expected):
+    assert count_n_reps_or_n_chars_following(text, n=n, char=char) == expected
+
+
+@pytest.mark.parametrize(
+    "surrounding_chars, text, expected",
+    [
+        (["Z", "A"], "ZZZZZ", 3),
+        (["Z", "A"], "ABCCBAAAZz", 2),
+        (["\n", "\t"], "\nK\nA\tI\t", 3),
+        (["R", "?", "^"], "SPECIAL^C^HARS?", 2),
+        (["^", "$"], "^S^tar$t$", 2),
+        ([":", "|"], "?:A:lmost|t|here", 2),
+    ],
+)
+def test_check_surrounding_chars_valid(surrounding_chars: List[str], text, expected):
+    assert check_surrounding_chars(text, surrounding_chars) == expected

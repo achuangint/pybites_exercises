@@ -20363,182 +20363,369 @@
 #             for (nxt, c) in graph[v].items():
 #                 heappush(q, (cost+c, nxt, path))
 
+#
+# import os
+# from pathlib import Path
+# from urllib.request import urlretrieve
+# from collections import defaultdict
+# from dateutil.parser import parse
+#
+# # get the data
+# TMP = Path(os.getenv("TMP", "/tmp"))
+# base_url = 'https://bites-data.s3.us-east-2.amazonaws.com/'
+#
+# fathers_days_countries = TMP / 'fathers-day-countries.txt'
+# fathers_days_recurring = TMP / 'fathers-day-recurring.txt'
+#
+# for file_ in (fathers_days_countries, fathers_days_recurring):
+#     if not file_.exists():
+#         urlretrieve(base_url + file_.name, file_)
+#
+#
+# def _parse_father_days_per_country(year, filename=fathers_days_countries):
+#     """Helper to parse fathers_days_countries"""
+#
+#     with open(filename, "r", encoding="utf-8") as file:
+#         content = file.read()
+#     splits = content.split("*")
+#     year_date_country_dict = defaultdict(lambda:defaultdict(list))
+#
+#     for country_date_str in splits[1:]:
+#         elements = country_date_str.split('\n')
+#         countries = elements[0].strip()
+#
+#         for dates in elements[1:]:
+#             if dates:
+#                 for country in countries.split(','):
+#                     date_str = dates.split(":")
+#                     yr = date_str[0]
+#                     date = date_str[1].strip()
+#                     if 'and ' in country:
+#                         clean_country = country.split('and ')[1].strip()
+#                     else:
+#                         clean_country = country.strip()
+#                     year_date_country_dict[int(yr)][date].append(clean_country)
+#
+#     return year_date_country_dict[year]
+#
+#
+#
+# def _parse_recurring_father_days(filename=fathers_days_recurring)->dict:
+#     """Helper to parse fathers_days_recurring"""
+#     with open(filename, "r", encoding="utf-8") as file:
+#         content = file.read()
+#     splits = content.split("*")
+#     date_country_dict = {}
+#     for date_str in splits[1:]:
+#         countries =  date_str.strip().split('\n')
+#         date_country_dict[''.join(countries[0:1])]=countries[1:]
+#     return date_country_dict
+#
+#
+#
+# def get_father_days(year=2020):
+#     """Returns a dictionary of keys = dates and values = lists
+#        of countries that celebrate Father's day that date
+#
+#        Consider using the the 2 _parse* helpers.
+#     """
+#     recurring_dict = _parse_recurring_father_days()
+#     shifting_dict = _parse_father_days_per_country(year)
+#     for day, country_list in recurring_dict.items():
+#         shifting_dict[day]=country_list
+#     return shifting_dict
+#
+#
+#
+#
+# def generate_father_day_planning(father_days=None):
+#     """Prints all father days in order, example in tests and
+#        Bite description
+#     """
+#     if father_days is None:
+#         father_days = get_father_days()
+#
+#     # you code
+#     sorted_dict = dict(sorted(father_days.items(), key=lambda x:parse(x[0])))
+#     for day, countries in sorted_dict.items():
+#         print(f"{day}")
+#         for country in countries:
+#             print(f"- {country}")
+#         print("")
+#
+# # Pybite solutions
+# import os
+# from pathlib import Path
+# from urllib.request import urlretrieve
+# from collections import defaultdict
+# from dateutil.parser import parse
+#
+# # get the data
+# TMP = Path(os.getenv("TMP", "/tmp"))
+# base_url = 'https://bites-data.s3.us-east-2.amazonaws.com/'
+#
+# fathers_days_countries = TMP / 'fathers-day-countries.txt'
+# fathers_days_recurring = TMP / 'fathers-day-recurring.txt'
+#
+# for file_ in (fathers_days_countries, fathers_days_recurring):
+#     if not file_.exists():
+#         urlretrieve(base_url + file_.name, file_)
+#
+#
+# def _parse_father_days_per_country(year, filename=fathers_days_countries):
+#     """Helper to parse fathers_days_countries"""
+#
+#     with open(filename, "r", encoding="utf-8") as file:
+#         content = file.read()
+#     splits = content.split("*")
+#     year_date_country_dict = defaultdict(lambda:defaultdict(list))
+#
+#     for country_date_str in splits[1:]:
+#         elements = country_date_str.split('\n')
+#         countries = elements[0].strip()
+#
+#         for dates in elements[1:]:
+#             if dates:
+#                 for country in countries.split(','):
+#                     date_str = dates.split(":")
+#                     yr = date_str[0]
+#                     date = date_str[1].strip()
+#                     if 'and ' in country:
+#                         clean_country = country.split('and ')[1].strip()
+#                     else:
+#                         clean_country = country.strip()
+#                     year_date_country_dict[int(yr)][date].append(clean_country)
+#
+#     return year_date_country_dict[year]
+#
+#
+#
+# def _parse_recurring_father_days(filename=fathers_days_recurring)->dict:
+#     """Helper to parse fathers_days_recurring"""
+#     with open(filename, "r", encoding="utf-8") as file:
+#         content = file.read()
+#     splits = content.split("*")
+#     date_country_dict = {}
+#     for date_str in splits[1:]:
+#         countries =  date_str.strip().split('\n')
+#         date_country_dict[''.join(countries[0:1])]=countries[1:]
+#     return date_country_dict
+#
+#
+#
+# def get_father_days(year=2020):
+#     """Returns a dictionary of keys = dates and values = lists
+#        of countries that celebrate Father's day that date
+#
+#        Consider using the the 2 _parse* helpers.
+#     """
+#     recurring_dict = _parse_recurring_father_days()
+#     shifting_dict = _parse_father_days_per_country(year)
+#     for day, country_list in recurring_dict.items():
+#         shifting_dict[day]=country_list
+#     return shifting_dict
+#
+#
+#
+#
+# def generate_father_day_planning(father_days=None):
+#     """Prints all father days in order, example in tests and
+#        Bite description
+#     """
+#     if father_days is None:
+#         father_days = get_father_days()
+#
+#     # you code
+#     sorted_dict = dict(sorted(father_days.items(), key=lambda x:parse(x[0])))
+#     for day, countries in sorted_dict.items():
+#         print(f"{day}")
+#         for country in countries:
+#             print(f"- {country}")
+#         print("")
+#
+# from typing import List
+#
+# changes_dict = {}
+# def make_changes(n: int, coins: List[int]) -> int:
+#     """
+#     Input: n - the changes amount
+#           coins - the coin denominations
+#     Output: how many ways to make this changes
+#     """
+#     coins = [c for c in coins if c<=n]
+#     if n==0 or coins == [1]:
+#         return 1
+#     elif n<1:
+#         return 0
+#     else:
+#         if (n,tuple(coins)) in changes_dict:
+#             return changes_dict[(n,tuple(coins))]
+#         else:
+#             one_less_coins = coins.copy()
+#             last_coin = one_less_coins.pop()
+#             use_last_coin = make_changes(n - last_coin, coins)
+#             no_last_coin = make_changes(n, one_less_coins)
+#             num_ways = use_last_coin + no_last_coin
+#             changes_dict[(n,tuple(coins))] = num_ways
+#             return num_ways
+#
+# # Pybite solution:
+# from typing import List
+#
+#
+# def make_changes(n: int, coins: List[int]) -> int:
+#     coins.sort()
+#     ways = [1] + [0] * n
+#
+#     for coin in coins:
+#         for i in range(coin, n + 1):
+#             ways[i] += ways[i - coin]
+#
+#     return ways[n]
 
-import os
-from pathlib import Path
-from urllib.request import urlretrieve
-from collections import defaultdict
-from dateutil.parser import parse
-
-# get the data
-TMP = Path(os.getenv("TMP", "/tmp"))
-base_url = 'https://bites-data.s3.us-east-2.amazonaws.com/'
-
-fathers_days_countries = TMP / 'fathers-day-countries.txt'
-fathers_days_recurring = TMP / 'fathers-day-recurring.txt'
-
-for file_ in (fathers_days_countries, fathers_days_recurring):
-    if not file_.exists():
-        urlretrieve(base_url + file_.name, file_)
+# Go through look-ahead and look-behind
+# regular expressions.
 
 
-def _parse_father_days_per_country(year, filename=fathers_days_countries):
-    """Helper to parse fathers_days_countries"""
-
-    with open(filename, "r", encoding="utf-8") as file:
-        content = file.read()
-    splits = content.split("*")
-    year_date_country_dict = defaultdict(lambda:defaultdict(list))
-
-    for country_date_str in splits[1:]:
-        elements = country_date_str.split('\n')
-        countries = elements[0].strip()
-
-        for dates in elements[1:]:
-            if dates:
-                for country in countries.split(','):
-                    date_str = dates.split(":")
-                    yr = date_str[0]
-                    date = date_str[1].strip()
-                    if 'and ' in country:
-                        clean_country = country.split('and ')[1].strip()
-                    else:
-                        clean_country = country.strip()
-                    year_date_country_dict[int(yr)][date].append(clean_country)
-
-    return year_date_country_dict[year]
+import re
 
 
-
-def _parse_recurring_father_days(filename=fathers_days_recurring)->dict:
-    """Helper to parse fathers_days_recurring"""
-    with open(filename, "r", encoding="utf-8") as file:
-        content = file.read()
-    splits = content.split("*")
-    date_country_dict = {}
-    for date_str in splits[1:]:
-        countries =  date_str.strip().split('\n')
-        date_country_dict[''.join(countries[0:1])]=countries[1:]
-    return date_country_dict
-
-
-
-def get_father_days(year=2020):
-    """Returns a dictionary of keys = dates and values = lists
-       of countries that celebrate Father's day that date
-
-       Consider using the the 2 _parse* helpers.
+def count_n_repetitions(text, n=1):
     """
-    recurring_dict = _parse_recurring_father_days()
-    shifting_dict = _parse_father_days_per_country(year)
-    for day, country_list in recurring_dict.items():
-        shifting_dict[day]=country_list
-    return shifting_dict
+    Counts how often characters are followed by themselves for
+    n times.
 
-
-
-
-def generate_father_day_planning(father_days=None):
-    """Prints all father days in order, example in tests and
-       Bite description
+    text: UTF-8 compliant input text
+    n: How often character should be repeated, defaults to 1
     """
-    if father_days is None:
-        father_days = get_father_days()
-
-    # you code
-    sorted_dict = dict(sorted(father_days.items(), key=lambda x:parse(x[0])))
-    for day, countries in sorted_dict.items():
-        print(f"{day}")
-        for country in countries:
-            print(f"- {country}")
-        print("")
-
-# Pybite solutions
-import os
-from pathlib import Path
-from urllib.request import urlretrieve
-from collections import defaultdict
-from dateutil.parser import parse
-
-# get the data
-TMP = Path(os.getenv("TMP", "/tmp"))
-base_url = 'https://bites-data.s3.us-east-2.amazonaws.com/'
-
-fathers_days_countries = TMP / 'fathers-day-countries.txt'
-fathers_days_recurring = TMP / 'fathers-day-recurring.txt'
-
-for file_ in (fathers_days_countries, fathers_days_recurring):
-    if not file_.exists():
-        urlretrieve(base_url + file_.name, file_)
+    pattern = fr'(?=(.)\1{{{n}}})'
+    matches = re.findall(pattern, text, flags=re.DOTALL)
+    return len(matches)
 
 
-def _parse_father_days_per_country(year, filename=fathers_days_countries):
-    """Helper to parse fathers_days_countries"""
-
-    with open(filename, "r", encoding="utf-8") as file:
-        content = file.read()
-    splits = content.split("*")
-    year_date_country_dict = defaultdict(lambda:defaultdict(list))
-
-    for country_date_str in splits[1:]:
-        elements = country_date_str.split('\n')
-        countries = elements[0].strip()
-
-        for dates in elements[1:]:
-            if dates:
-                for country in countries.split(','):
-                    date_str = dates.split(":")
-                    yr = date_str[0]
-                    date = date_str[1].strip()
-                    if 'and ' in country:
-                        clean_country = country.split('and ')[1].strip()
-                    else:
-                        clean_country = country.strip()
-                    year_date_country_dict[int(yr)][date].append(clean_country)
-
-    return year_date_country_dict[year]
-
-
-
-def _parse_recurring_father_days(filename=fathers_days_recurring)->dict:
-    """Helper to parse fathers_days_recurring"""
-    with open(filename, "r", encoding="utf-8") as file:
-        content = file.read()
-    splits = content.split("*")
-    date_country_dict = {}
-    for date_str in splits[1:]:
-        countries =  date_str.strip().split('\n')
-        date_country_dict[''.join(countries[0:1])]=countries[1:]
-    return date_country_dict
-
-
-
-def get_father_days(year=2020):
-    """Returns a dictionary of keys = dates and values = lists
-       of countries that celebrate Father's day that date
-
-       Consider using the the 2 _parse* helpers.
+def count_n_reps_or_n_chars_following(text, n=1, char=""):
     """
-    recurring_dict = _parse_recurring_father_days()
-    shifting_dict = _parse_father_days_per_country(year)
-    for day, country_list in recurring_dict.items():
-        shifting_dict[day]=country_list
-    return shifting_dict
+    Counts how often characters are repeated for n times, or
+    followed by char n times.
 
-
-
-
-def generate_father_day_planning(father_days=None):
-    """Prints all father days in order, example in tests and
-       Bite description
+    text: UTF-8 compliant input text
+    n: How often character should be repeated, defaults to 1
+    char: Character which also counts if repeated n times
     """
-    if father_days is None:
-        father_days = get_father_days()
 
-    # you code
-    sorted_dict = dict(sorted(father_days.items(), key=lambda x:parse(x[0])))
-    for day, countries in sorted_dict.items():
-        print(f"{day}")
-        for country in countries:
-            print(f"- {country}")
-        print("")
+    char = re.escape(char)
+    if char:
+        pattern2 = f'(.(?={char}{{{n}}}))'
+        matches2 = re.finditer(pattern2, text, flags=re.DOTALL)
+    else:
+        matches2 = []
+
+    indices = set()
+    for m in matches2:
+        indices.add(m.start())
+
+    pattern = f'(?=(.)\\1{{{n}}})'
+    matches = re.finditer(pattern, text, flags=re.DOTALL)
+    for m in matches:
+        indices.add(m.start())
+    return len(indices)
+
+def check_surrounding_chars(text, surrounding_chars):
+    """
+    Count the number of times a character is surrounded by
+    characters from the surrounding_chars list.
+
+    text: UTF-8 compliant input text
+    surrounding_chars: List of characters
+    """
+    char_set = ''.join([re.escape(c) for c in surrounding_chars])
+    pattern = fr"(?<=[{char_set}]).(?=[{char_set}])"
+    matches = re.findall(pattern,text, flags=re.DOTALL)
+    return len(matches)
+
+# Pybite solutions:
+import re
+
+
+def count_n_repetitions(text, n=1):
+    """
+    Counts how often characters are followed by themselves for
+    n times.
+
+    text: UTF-8 compliant input text
+    n: How often character should be repeated, defaults to 1
+    """
+
+    hits = re.findall(
+        rf"""
+        (.)  # Matches any character, with DOTALL even newlines
+        (?=  # Start look-ahead group
+            \1{{{n}}}  # match char n-times
+        )    # End look-ahead group
+        """,
+        text,
+        flags=re.DOTALL | re.VERBOSE,
+    )
+    return len(hits)
+
+
+def count_n_reps_or_n_chars_following(text, n=1, char=""):
+    """
+    Counts how often characters are repeated for n times, or
+    followed by char n times.
+
+    text: UTF-8 compliant input text
+    n: How often character should be repeated, defaults to 1
+    char: Character which also counts if repeated n times
+    """
+    # Functions could be merged together, but for easy reference, we keep them spearated
+    if char == "":
+        return count_n_repetitions(text, n)
+
+    # escape chars if necessary for usage in square regex brackets
+    escaped_chars = re.escape(char)
+
+    hits = re.findall(
+        rf"""
+        (.)  # Matches any character, with DOTALL even newlines
+        (?=  # Start look-ahead group
+            (?:  # Start non-capturing group -> () around or would be capturing group again
+                \1{{{n}}}  # matched char followed by repetitions
+                |    # OR
+                [{escaped_chars}]{{{n}}}  # followed by escaped char in square brackets n times
+            )    # End non capturing group
+        )    # End lookahead group
+        """,
+        text,
+        flags=re.DOTALL | re.VERBOSE,
+    )
+
+    return len(hits)
+
+# Pybite solutions:
+def check_surrounding_chars(text, surrounding_chars):
+    """
+    Count the number of times a character is surrounded by
+    characters from the surrounding_chars list.
+
+    text: UTF-8 compliant input text
+    surrounding_chars: List of characters
+    """
+    escaped_surround_chars = re.escape("".join(surrounding_chars))
+    surround_pattern = "[" + escaped_surround_chars + "]"
+    hits = re.findall(
+        rf"""
+        (?<=  # Start look-behind group
+            {surround_pattern} # include escaped surround pattern
+        )     # End look-behind group
+        (.)   # match all character
+        (?=  # Start look-ahead group
+            {surround_pattern} # include escaped surround pattern
+        )     # End look-ahead group
+        """,
+        text,
+        flags=re.DOTALL | re.VERBOSE,
+    )
+
+    return len(hits)
+
