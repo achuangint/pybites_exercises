@@ -18350,126 +18350,189 @@
 # ])
 # def test_coin(change, country, expected):
 #     assert make_changes(change, country) == expected
+#
+# import pytest
+# from typing import List
+#
+# from wc import (
+#     count_n_repetitions,
+#     count_n_reps_or_n_chars_following,
+#     check_surrounding_chars,
+# )
+#
+#
+# @pytest.mark.parametrize(
+#     "n, text, expected",
+#     [
+#         (1, "", 0),
+#         (1, "1", 0),
+#         (1, "11", 1),
+#         (2, "1", 0),
+#         (2, "111", 1),
+#         (2, "1122", 0),
+#         (2, "1112345", 1),
+#     ],
+# )
+# def test_count_n_repetitions_digits(n, text, expected):
+#     assert count_n_repetitions(text, n=n) == expected
+#
+#
+# @pytest.mark.parametrize(
+#     "n, text, expected",
+#     [
+#         (1, "a", 0),
+#         (1, "aa", 1),
+#         (1, "????{{{?}}}", 7),
+#         (2, "b", 0),
+#         (2, "ccc", 1),
+#         (2, "ZZaa", 0),
+#         (2, "ZZzz", 0),
+#         (2, "zzZZ", 0),
+#         (2, r" \\\ ", 1),
+#         (2, "   Spaces are fun", 1),
+#         (2, "\n\n\nAs are newlines\n\n\n", 2),
+#         (2, "As \t\t\t are tabs\t\t", 1),
+#     ],
+# )
+# def test_count_n_repetitions_chars(n, text, expected):
+#     assert count_n_repetitions(text, n=n) == expected
+#
+#
+# @pytest.mark.parametrize(
+#     "n, text, expected",
+#     [
+#         (1, "Ä", 0),
+#         (1, "ÄÄ", 1),
+#         (1, "※※※ - Monster Hunter - ※※※", 4),
+#         (2, "Ö", 0),
+#         (2, "ßßß", 1),
+#         (2, "ZZÄÄ", 0),
+#         (2, "Greek: εζεζεζεηηηη", 2),
+#     ],
+# )
+# def test_count_n_repetitions_unicode(n, text, expected):
+#     assert count_n_repetitions(text, n=n) == expected
+#
+#
+# @pytest.mark.parametrize(
+#     "n, char, text, expected",
+#     [
+#         (1, "", "", 0),
+#         (2, "", "1112345", 1),
+#         (1, "", "????{{{?}}}", 7),
+#         (2, "", "\n\n\nAs are newlines\n\n\n", 2),
+#     ],
+# )
+# def test_count_n_reps_or_n_chars_following_no_char(n, char, text, expected):
+#     assert count_n_reps_or_n_chars_following(text, n=n, char=char) == expected
+#
+#
+# @pytest.mark.parametrize(
+#     "n, char, text, expected",
+#     [
+#         (1, "z", "", 0),
+#         (2, "z", "1112345", 1),
+#         (1, "z", "????{{{?}}}", 7),
+#         (2, "z", "\n\n\nAs are newlines\n\n\n", 2),
+#     ],
+# )
+# def test_count_n_reps_or_n_chars_following_no_containing_char(n, char, text, expected):
+#     assert count_n_reps_or_n_chars_following(text, n=n, char=char) == expected
+#
+#
+# @pytest.mark.parametrize(
+#     "n, char, text, expected",
+#     [
+#         (1, "z", "zz Don't count double!", 1),
+#         (1, "z", "9z", 1),
+#         (1, "z", "9zz", 2),
+#         (1, "Z", "9Zz", 1),
+#         (1, "?", "????{{{?}}}", 8),
+#         (1, "[", "????[[[?]]]", 8),
+#         (1, "]", "????[[[?]]]", 8),
+#         (1, "^", "Hello^there", 2),
+#         (2, "z", "\n\n\nzz newlines\n\n", 2),
+#         (2, "a", "Kai is mean...aarg", 2),
+#         (2, "\t", "But bob isn't...\t\t", 2),
+#     ],
+# )
+# def test_count_n_reps_or_n_chars_following_mix(n, char, text, expected):
+#     assert count_n_reps_or_n_chars_following(text, n=n, char=char) == expected
+#
+#
+# @pytest.mark.parametrize(
+#     "surrounding_chars, text, expected",
+#     [
+#         (["Z", "A"], "ZZZZZ", 3),
+#         (["Z", "A"], "ABCCBAAAZz", 2),
+#         (["\n", "\t"], "\nK\nA\tI\t", 3),
+#         (["R", "?", "^"], "SPECIAL^C^HARS?", 2),
+#         (["^", "$"], "^S^tar$t$", 2),
+#         ([":", "|"], "?:A:lmost|t|here", 2),
+#     ],
+# )
+# def test_check_surrounding_chars_valid(surrounding_chars: List[str], text, expected):
+#     assert check_surrounding_chars(text, surrounding_chars) == expected
 
+import pandas as pd
 import pytest
-from typing import List
 
-from wc import (
-    count_n_repetitions,
-    count_n_reps_or_n_chars_following,
-    check_surrounding_chars,
-)
+from wc import get_data, process_data, summary_report, yearly_report, URL
 
 
-@pytest.mark.parametrize(
-    "n, text, expected",
-    [
-        (1, "", 0),
-        (1, "1", 0),
-        (1, "11", 1),
-        (2, "1", 0),
-        (2, "111", 1),
-        (2, "1122", 0),
-        (2, "1112345", 1),
-    ],
-)
-def test_count_n_repetitions_digits(n, text, expected):
-    assert count_n_repetitions(text, n=n) == expected
+@pytest.fixture(scope="function")
+def df():
+    return process_data(URL)
+
+
+def test_data(df):
+    assert isinstance(df, pd.DataFrame)
 
 
 @pytest.mark.parametrize(
-    "n, text, expected",
+    "line, expected",
     [
-        (1, "a", 0),
-        (1, "aa", 1),
-        (1, "????{{{?}}}", 7),
-        (2, "b", 0),
-        (2, "ccc", 1),
-        (2, "ZZaa", 0),
-        (2, "ZZzz", 0),
-        (2, "zzZZ", 0),
-        (2, r" \\\ ", 1),
-        (2, "   Spaces are fun", 1),
-        (2, "\n\n\nAs are newlines\n\n\n", 2),
-        (2, "As \t\t\t are tabs\t\t", 1),
+        (0, "sum          mean        max"),
+        (1, "year"),
+        (2, "2013  484247.51  40353.959167   81777.35"),
+        (3, "2014  470532.51  39211.042500   75972.56"),
+        (4, "2015  608473.83  50706.152500   97237.42"),
+        (5, "2016  733947.03  61162.252500  118447.83"),
     ],
 )
-def test_count_n_repetitions_chars(n, text, expected):
-    assert count_n_repetitions(text, n=n) == expected
+def test_summary_report(df, capfd, line, expected):
+    summary_report(df)
+    output = capfd.readouterr()[0].split("\n")
+    assert output[line].strip() == expected
 
 
 @pytest.mark.parametrize(
-    "n, text, expected",
-    [
-        (1, "Ä", 0),
-        (1, "ÄÄ", 1),
-        (1, "※※※ - Monster Hunter - ※※※", 4),
-        (2, "Ö", 0),
-        (2, "ßßß", 1),
-        (2, "ZZÄÄ", 0),
-        (2, "Greek: εζεζεζεηηηη", 2),
-    ],
+    "lst, expected", [(["median"], "median"), (["min", "max"], "min        max"),]
 )
-def test_count_n_repetitions_unicode(n, text, expected):
-    assert count_n_repetitions(text, n=n) == expected
+def test_summary_report_custom(df, capfd, lst, expected):
+    summary_report(df, lst)
+    output = capfd.readouterr()[0].split("\n")
+    assert output[0].strip() == expected
 
 
 @pytest.mark.parametrize(
-    "n, char, text, expected",
+    "year, expected",
     [
-        (1, "", "", 0),
-        (2, "", "1112345", 1),
-        (1, "", "????{{{?}}}", 7),
-        (2, "", "\n\n\nAs are newlines\n\n\n", 2),
+        (2013, "34595.13"),
+        (2014, "24797.29"),
+        (2015, "39430.44"),
+        (2016, "52981.73"),
     ],
 )
-def test_count_n_reps_or_n_chars_following_no_char(n, char, text, expected):
-    assert count_n_reps_or_n_chars_following(text, n=n, char=char) == expected
+def test_yearly_report(df, capfd, year, expected):
+    yearly_report(df, year)
+    output = capfd.readouterr()[0].split("\n")
+    assert output[9].split()[1].strip() == expected
 
 
-@pytest.mark.parametrize(
-    "n, char, text, expected",
-    [
-        (1, "z", "", 0),
-        (2, "z", "1112345", 1),
-        (1, "z", "????{{{?}}}", 7),
-        (2, "z", "\n\n\nAs are newlines\n\n\n", 2),
-    ],
-)
-def test_count_n_reps_or_n_chars_following_no_containing_char(n, char, text, expected):
-    assert count_n_reps_or_n_chars_following(text, n=n, char=char) == expected
-
-
-@pytest.mark.parametrize(
-    "n, char, text, expected",
-    [
-        (1, "z", "zz Don't count double!", 1),
-        (1, "z", "9z", 1),
-        (1, "z", "9zz", 2),
-        (1, "Z", "9Zz", 1),
-        (1, "?", "????{{{?}}}", 8),
-        (1, "[", "????[[[?]]]", 8),
-        (1, "]", "????[[[?]]]", 8),
-        (1, "^", "Hello^there", 2),
-        (2, "z", "\n\n\nzz newlines\n\n", 2),
-        (2, "a", "Kai is mean...aarg", 2),
-        (2, "\t", "But bob isn't...\t\t", 2),
-    ],
-)
-def test_count_n_reps_or_n_chars_following_mix(n, char, text, expected):
-    assert count_n_reps_or_n_chars_following(text, n=n, char=char) == expected
-
-
-@pytest.mark.parametrize(
-    "surrounding_chars, text, expected",
-    [
-        (["Z", "A"], "ZZZZZ", 3),
-        (["Z", "A"], "ABCCBAAAZz", 2),
-        (["\n", "\t"], "\nK\nA\tI\t", 3),
-        (["R", "?", "^"], "SPECIAL^C^HARS?", 2),
-        (["^", "$"], "^S^tar$t$", 2),
-        ([":", "|"], "?:A:lmost|t|here", 2),
-    ],
-)
-def test_check_surrounding_chars_valid(surrounding_chars: List[str], text, expected):
-    assert check_surrounding_chars(text, surrounding_chars) == expected
+@pytest.mark.parametrize("year", [1972, 2000, 2020])
+def test_yearly_report_with_invalid_year(df, year):
+    msg = f"<ExceptionInfo ValueError('The year {year} is not included in the report!') tblen=2>"
+    with pytest.raises(ValueError) as e:
+        yearly_report(df, year)
+    assert str(e) == msg

@@ -20585,147 +20585,377 @@
 
 # Go through look-ahead and look-behind
 # regular expressions.
+#
+# import re
+#
+# def count_n_repetitions(text, n=1):
+#     """
+#     Counts how often characters are followed by themselves for
+#     n times.
+#
+#     text: UTF-8 compliant input text
+#     n: How often character should be repeated, defaults to 1
+#     """
+#     pattern = fr'(?=(.)\1{{{n}}})'
+#     matches = re.findall(pattern, text, flags=re.DOTALL)
+#     return len(matches)
+#
+#
+# def count_n_reps_or_n_chars_following(text, n=1, char=""):
+#     """
+#     Counts how often characters are repeated for n times, or
+#     followed by char n times.
+#
+#     text: UTF-8 compliant input text
+#     n: How often character should be repeated, defaults to 1
+#     char: Character which also counts if repeated n times
+#     """
+#
+#     char = re.escape(char)
+#     if char:
+#         pattern2 = f'(.(?={char}{{{n}}}))'
+#         matches2 = re.finditer(pattern2, text, flags=re.DOTALL)
+#     else:
+#         matches2 = []
+#
+#     indices = set()
+#     for m in matches2:
+#         indices.add(m.start())
+#
+#     pattern = f'(?=(.)\\1{{{n}}})'
+#     matches = re.finditer(pattern, text, flags=re.DOTALL)
+#     for m in matches:
+#         indices.add(m.start())
+#     return len(indices)
+#
+# def check_surrounding_chars(text, surrounding_chars):
+#     """
+#     Count the number of times a character is surrounded by
+#     characters from the surrounding_chars list.
+#
+#     text: UTF-8 compliant input text
+#     surrounding_chars: List of characters
+#     """
+#     char_set = ''.join([re.escape(c) for c in surrounding_chars])
+#     pattern = fr"(?<=[{char_set}]).(?=[{char_set}])"
+#     matches = re.findall(pattern,text, flags=re.DOTALL)
+#     return len(matches)
+#
+# # Pybite solutions:
+# import re
+#
+#
+# def count_n_repetitions(text, n=1):
+#     """
+#     Counts how often characters are followed by themselves for
+#     n times.
+#
+#     text: UTF-8 compliant input text
+#     n: How often character should be repeated, defaults to 1
+#     """
+#
+#     hits = re.findall(
+#         rf"""
+#         (.)  # Matches any character, with DOTALL even newlines
+#         (?=  # Start look-ahead group
+#             \1{{{n}}}  # match char n-times
+#         )    # End look-ahead group
+#         """,
+#         text,
+#         flags=re.DOTALL | re.VERBOSE,
+#     )
+#     return len(hits)
+#
+#
+# def count_n_reps_or_n_chars_following(text, n=1, char=""):
+#     """
+#     Counts how often characters are repeated for n times, or
+#     followed by char n times.
+#
+#     text: UTF-8 compliant input text
+#     n: How often character should be repeated, defaults to 1
+#     char: Character which also counts if repeated n times
+#     """
+#     # Functions could be merged together, but for easy reference, we keep them spearated
+#     if char == "":
+#         return count_n_repetitions(text, n)
+#
+#     # escape chars if necessary for usage in square regex brackets
+#     escaped_chars = re.escape(char)
+#
+#     hits = re.findall(
+#         rf"""
+#         (.)  # Matches any character, with DOTALL even newlines
+#         (?=  # Start look-ahead group
+#             (?:  # Start non-capturing group -> () around or would be capturing group again
+#                 \1{{{n}}}  # matched char followed by repetitions
+#                 |    # OR
+#                 [{escaped_chars}]{{{n}}}  # followed by escaped char in square brackets n times
+#             )    # End non capturing group
+#         )    # End lookahead group
+#         """,
+#         text,
+#         flags=re.DOTALL | re.VERBOSE,
+#     )
+#
+#     return len(hits)
+#
+# # Pybite solutions:
+# def check_surrounding_chars(text, surrounding_chars):
+#     """
+#     Count the number of times a character is surrounded by
+#     characters from the surrounding_chars list.
+#
+#     text: UTF-8 compliant input text
+#     surrounding_chars: List of characters
+#     """
+#     escaped_surround_chars = re.escape("".join(surrounding_chars))
+#     surround_pattern = "[" + escaped_surround_chars + "]"
+#     hits = re.findall(
+#         rf"""
+#         (?<=  # Start look-behind group
+#             {surround_pattern} # include escaped surround pattern
+#         )     # End look-behind group
+#         (.)   # match all character
+#         (?=  # Start look-ahead group
+#             {surround_pattern} # include escaped surround pattern
+#         )     # End look-ahead group
+#         """,
+#         text,
+#         flags=re.DOTALL | re.VERBOSE,
+#     )
+#
+#     return len(hits)
+
+import json
+import os
+from pathlib import Path
+from typing import Dict, List, Union
+
+import pandas as pd  # type: ignore
+import requests
+
+URL: str = "https://bites-data.s3.us-east-2.amazonaws.com/MonthlySales.csv"
+STATS: List[str] = ["sum", "mean", "max"]
+TMP: Path = Path(os.getenv("TMP", "/tmp")) / "MonthlySales.csv"
 
 
-import re
+def get_data(url: str) -> Dict[str, str]:
+    """Get data from Github
 
+    Args:
+        url (str): The URL where the data is located.
 
-def count_n_repetitions(text, n=1):
+    Returns:
+        Dict[str, str]: The dictionary extracted from the data
     """
-    Counts how often characters are followed by themselves for
-    n times.
-
-    text: UTF-8 compliant input text
-    n: How often character should be repeated, defaults to 1
-    """
-    pattern = fr'(?=(.)\1{{{n}}})'
-    matches = re.findall(pattern, text, flags=re.DOTALL)
-    return len(matches)
-
-
-def count_n_reps_or_n_chars_following(text, n=1, char=""):
-    """
-    Counts how often characters are repeated for n times, or
-    followed by char n times.
-
-    text: UTF-8 compliant input text
-    n: How often character should be repeated, defaults to 1
-    char: Character which also counts if repeated n times
-    """
-
-    char = re.escape(char)
-    if char:
-        pattern2 = f'(.(?={char}{{{n}}}))'
-        matches2 = re.finditer(pattern2, text, flags=re.DOTALL)
+    if TMP.exists():
+        data = json.loads(TMP.read_text())
     else:
-        matches2 = []
+        response = requests.get(url)
+        response.raise_for_status()
+        data = json.loads(response.text)
+        with TMP.open("w") as tmp:
+            json.dump(data, tmp)
+    return data
 
-    indices = set()
-    for m in matches2:
-        indices.add(m.start())
 
-    pattern = f'(?=(.)\\1{{{n}}})'
-    matches = re.finditer(pattern, text, flags=re.DOTALL)
-    for m in matches:
-        indices.add(m.start())
-    return len(indices)
+def process_data(url: str) -> pd.DataFrame:
+    """Process the data from the Github API
 
-def check_surrounding_chars(text, surrounding_chars):
+    Args:
+        url (str): The URL where the data is located.
+
+    Returns:
+        pd.DataFrame: Pandas DataFrame generated from the processed data
     """
-    Count the number of times a character is surrounded by
-    characters from the surrounding_chars list.
+    #url = URL
+    data = get_data(url)
+    csv_html = data['download_url']
+    df = pd.read_csv(csv_html)
 
-    text: UTF-8 compliant input text
-    surrounding_chars: List of characters
+    def get_year(string):
+        return int(string.split('-')[0])
+    def get_month(string):
+        return int(string.split('-')[1])
+
+
+    df['year']= df['month'].apply(get_year)
+    df['only_month'] = df['month'].apply(get_month)
+    return df
+
+
+def summary_report(df: pd.DataFrame, stats: Union[List[str], None] = STATS) -> None:
+    """Summary report generated from the DataFrame and list of stats
+
+    Will aggregate statistics for sum, mean, and max by default.
+
+    Args:
+        df (pd.DataFrame): Pandas DataFrame of the Github API data
+        stats (List[str], optional): List of summaries to aggregate. Defaults to STATS.
+
+    Returns:
+        None (prints to standard output)
+
+        Example:
+                    sum          mean        max
+        year
+        2013  484247.51  40353.959167   81777.35
+        2014  470532.51  39211.042500   75972.56
+        2015  608473.83  50706.152500   97237.42
+        2016  733947.03  61162.252500  118447.83
     """
-    char_set = ''.join([re.escape(c) for c in surrounding_chars])
-    pattern = fr"(?<=[{char_set}]).(?=[{char_set}])"
-    matches = re.findall(pattern,text, flags=re.DOTALL)
-    return len(matches)
+    result = df.groupby('year')['sales'].agg(stats)
+    print(result)
 
-# Pybite solutions:
-import re
+def yearly_report(df: pd.DataFrame, year: int) -> None:
+    """Generate a sales report for the given year
 
+    Args:
+        df (pd.DataFrame): Pandas DataFrame of the Github API data
+        year (int): The year to generate the report for
 
-def count_n_repetitions(text, n=1):
+    Raises:
+        ValueError: Error raised if the year requested is not in the data.
+        Should be in the form of "The year YEAR is not included in the report!"
+
+    Returns:
+        None (prints to standard output)
+
+        Example:
+        2013
+                  sales
+        month
+        1      14236.90
+        2       4519.89
+        3      55691.01
+        4      28295.35
+        5      23648.29
+        6      34595.13
+        7      33946.39
+        8      27909.47
+        9      81777.35
+        10     31453.39
+        11     78628.72
+        12     69545.62
     """
-    Counts how often characters are followed by themselves for
-    n times.
+    if year not in [2013,2014,2015,2016]:
+        raise ValueError(f"The year {year} is not included in the report!")
 
-    text: UTF-8 compliant input text
-    n: How often character should be repeated, defaults to 1
+    result=df[df['year']==year].groupby('only_month')['sales'].sum()
+    result.rename('month')
+    print(" ")
+    print(year)
+    print("Sales")
+    print(result)
+
+#uncomment the following for viewing/testing the reports/code
+# if __name__ == "__main__":
+#     data = process_data(URL)
+#     summary_report(data)
+#     for year in (data["month"].dt.year).unique():
+#         yearly_report(data, year)
+#
+#         yearly_report(data, 2013)
+#
+#     yearly_report(data, 2020)
+
+import base64
+import csv
+import io
+import json
+import os
+from pathlib import Path
+from typing import Dict, List, Union
+
+import pandas as pd  # type: ignore
+import requests
+
+URL: str = "https://bites-data.s3.us-east-2.amazonaws.com/MonthlySales.csv"
+STATS: List[str] = ["sum", "mean", "max"]
+TMP: Path = Path(os.getenv("TMP", "/tmp")) / "MonthlySales.csv"
+
+
+def get_data(url: str) -> Dict[str, str]:
+    """Get data from Github
+
+    Args:
+        url (str): The URL where the data is located.
+
+    Returns:
+        Dict[str, str]: The dictionary extracted from the data
     """
-
-    hits = re.findall(
-        rf"""
-        (.)  # Matches any character, with DOTALL even newlines
-        (?=  # Start look-ahead group
-            \1{{{n}}}  # match char n-times
-        )    # End look-ahead group
-        """,
-        text,
-        flags=re.DOTALL | re.VERBOSE,
-    )
-    return len(hits)
+    if TMP.exists():
+        data = json.loads(TMP.read_text())
+    else:
+        response = requests.get(url)
+        response.raise_for_status()
+        data = json.loads(response.text)
+        with TMP.open("w") as tmp:
+            json.dump(data, tmp)
+    return data
 
 
-def count_n_reps_or_n_chars_following(text, n=1, char=""):
+def process_data(url: str) -> pd.DataFrame:
+    """Process the data from the Github API
+
+    Args:
+        url (str): The URL where the data is located.
+
+    Returns:
+        pd.DataFrame: Pandas DataFrame generated from the processed data
     """
-    Counts how often characters are repeated for n times, or
-    followed by char n times.
+    data = get_data(url)
+    bytes_data = base64.b64decode(data["content"])
+    raw_data = csv.DictReader(io.StringIO(bytes_data.decode("utf-8")))
+    df = pd.DataFrame([row for row in raw_data])
+    df["month"] = pd.to_datetime(df["month"], format="%Y-%m-%d")
+    df["sales"] = df["sales"].astype(float)
+    return df
 
-    text: UTF-8 compliant input text
-    n: How often character should be repeated, defaults to 1
-    char: Character which also counts if repeated n times
+
+def summary_report(df: pd.DataFrame, stats: Union[List[str], None] = STATS) -> None:
+    """Summary report generated from the DataFrame and list of stats
+
+    Will aggregate statistics for sum, mean, and max by default.
+
+    Args:
+        df (pd.DataFrame): Pandas DataFrame of the Github API data
+        stats (List[str], optional): List of summaries to aggregate. Defaults to STATS.
+
+    Returns:
+        None (prints to standard output)
     """
-    # Functions could be merged together, but for easy reference, we keep them spearated
-    if char == "":
-        return count_n_repetitions(text, n)
+    yearly_df = df.copy()
+    yearly_df.columns = ["year", "sales"]
+    print(yearly_df.groupby(yearly_df["year"].dt.year)["sales"].agg(stats))
 
-    # escape chars if necessary for usage in square regex brackets
-    escaped_chars = re.escape(char)
 
-    hits = re.findall(
-        rf"""
-        (.)  # Matches any character, with DOTALL even newlines
-        (?=  # Start look-ahead group
-            (?:  # Start non-capturing group -> () around or would be capturing group again
-                \1{{{n}}}  # matched char followed by repetitions
-                |    # OR
-                [{escaped_chars}]{{{n}}}  # followed by escaped char in square brackets n times
-            )    # End non capturing group
-        )    # End lookahead group
-        """,
-        text,
-        flags=re.DOTALL | re.VERBOSE,
-    )
+def yearly_report(df: pd.DataFrame, year: int) -> None:
+    """Generate a sales report for the given year
 
-    return len(hits)
+    Args:
+        df (pd.DataFrame): Pandas DataFrame of the Github API data
+        year (int): The year to generate the report for
 
-# Pybite solutions:
-def check_surrounding_chars(text, surrounding_chars):
+    Raises:
+        ValueError: Error raised if the year requested is not in the data.
+        Should be in the form of "The year YEAR is not included in the report!"
     """
-    Count the number of times a character is surrounded by
-    characters from the surrounding_chars list.
+    yearly_df = df[df["month"].dt.year == year].copy()
+    if yearly_df.empty:
+        raise ValueError(f"The year {year} is not included in the report!")
 
-    text: UTF-8 compliant input text
-    surrounding_chars: List of characters
-    """
-    escaped_surround_chars = re.escape("".join(surrounding_chars))
-    surround_pattern = "[" + escaped_surround_chars + "]"
-    hits = re.findall(
-        rf"""
-        (?<=  # Start look-behind group
-            {surround_pattern} # include escaped surround pattern
-        )     # End look-behind group
-        (.)   # match all character
-        (?=  # Start look-ahead group
-            {surround_pattern} # include escaped surround pattern
-        )     # End look-ahead group
-        """,
-        text,
-        flags=re.DOTALL | re.VERBOSE,
-    )
+    yearly_df = yearly_df.set_index(yearly_df["month"].dt.month)
+    yearly_df = yearly_df.drop(["month"], axis=1)
+    print(f"\n{year}\n{yearly_df}")
 
-    return len(hits)
 
+# uncomment the following for viewing/testing the reports/code
+if __name__ == "__main__":
+    data = process_data(URL)
+    summary_report(data)
+    for year in (data["month"].dt.year).unique():
+        yearly_report(data, year)
+
+    yearly_report(data, 2020)
